@@ -1,0 +1,154 @@
+\documentclass{article}
+\usepackage[polish]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper, total={6in, 10in}]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage{cite}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{listing}
+\usepackage{subcaption}
+
+\graphicspath{ {images/} }
+
+\immediate\write18{bibtex \jobname}
+
+
+\title{
+Sprawozdanie z pracy w ramach Pracowni Dyplomowej Inżynierskiej 2
+\begin{large}
+\\Temat: Aplikacja do testowania odporności
+modeli klasyfikacyjnych na ataki z użyciem złośliwych danych
+\end{large}}
+
+\date{21 Czerwca 2018}
+\author{Jan Ambroziak \\ Opiekun Pracy: dr.inż Paweł Zawistowski}
+
+\begin{document}
+\maketitle
+
+\section{Wstep}
+Wraz z rozwojem i upowszechnianiem się modeli klasyfikujących obrazy graficzne,
+pojawiają się nowe zagrożenia związane z bezpieczeństwem tej klasy rozwiązań.
+Jednym z nich są złośliwe dane, które powodować mogą,
+że pozornie dobrze działający klasyfikator zaczyna udzielać błędnych odpowiedzi.
+Może to stanowić realne zagrożenie nawet dla życia i zdrowia ludzkiego
+np. w przypadku gdy taki atak dotyczy systemu automatycznie sterującego pojazdem.
+
+\section{Cel}
+\label{sec:target}
+Celem pracy inżynierskiej jest stworzenie aplikacji która ma wspierać testowanie
+odporności modeli klasyfikacyjnych na ataki z użyciem złośliwych danych
+Dla dostarczonego w narzuconej postaci modelu klasyfikatora możliwe będzie
+przeprowadzenie ataku przy pomocy jednej z dostępnych metod.
+
+\section{Praca w ciągu semestru}
+\label{sec:work}
+
+Główną technologią na której opiera się moja praca jest biblioteka tensorflow\cite{tensorflow}.
+Główną zaletą jest możliwość akceleracji obliczeń z wykorzystaniem biblioteki CUDA i cuDNN, które
+umożliwiają zrównoleglenie obliczeń na karcie graficznej.
+Ponieważ jednym z założeń pracy inżynierskiej jest znajomość modelu, to rodzaj
+ataków jakimi będę się zajmuję to tak zwane ataki "white-box".
+Jedna z najbardziej znanych metod tworzenia złośliwych danych w to
+Fast Gradient Sign Method (w skrócie FGSM) opisana w \cite{harnessing}.
+Jest to też metoda którą udało mi się zaimplementować na wytrenowanych przeze mnie
+modelach klasyfikacyjnych (patrz punkt ~\ref{sec:fgsm}).
+
+Innymi metody nad których implementacją pracuje są
+Jacobian-based Saliency Map Attack (JSMA)\cite{DBLP:journals/corr/PapernotMJFCS15}
+oraz DeepFool\cite{DBLP:journals/corr/Moosavi-Dezfooli15}.
+Po zakończeniu implementacji i wykazaniu ich skutecznośći chciałbym
+przetestować ich działanie dla bardziej skomplikowanych modeli klasyfikacyjnych
+niż te z których korzystałem dotychczas(patrz punkt ~\ref{sec:fgsm}).
+Końcowym zadaniem będzie utworzenie prostego interfejsu do obsługi aplikacji
+(linia komend, bądź interfejs graficzny) oraz przetestowanie ataków na już
+wytrenowanych modelach dostępnych publicznie
+
+
+\section{Ataki z użyciem Fast Gradient Sign Method}
+\label{sec:fgsm}
+W celu sprawdzenia poprawności działania mojej implementacji metody FGSM utworzyłem
+i wytrenowałem dwa proste modele klasyfikacyjne będące
+splotowymi sieciami neuronowymi dla zbiorów CIFAR-10\cite{cifar_10} oraz MNIST\cite{mnist}
+mające praktycznie taką samą strukturę oprócz wymiarów.
+Struktura operacji ewaluacji uzyskana za pomocą narzędzia tensorboard zarówno dla
+zbioru MNIST i CIFAR-10 znajduje się poniżej
+
+\newpage
+\vfill
+
+\begin{figure}[ht]
+  \begin{subfigure}{.55\textwidth}
+    \includegraphics[width=\textwidth]{mnist_structure}
+    \caption{MNIST}
+    \centering
+  \end{subfigure}
+  \begin{subfigure}{.55\textwidth}
+    \includegraphics[width=\textwidth]{cifar_structure}
+    \caption{CIFAR}
+    \centering
+  \end{subfigure}
+\end{figure}
+
+\vfill
+\clearpage
+
+Poniżej można zobaczyc porównanie prawdopodobieństw przydziału do klasy dla
+orignalnych danych wejściowych oraz dla spreparownych złośliwych danych.
+Dla zbioru MNIST znacznie większy wpływ na skuteczność metody ma poziom
+perturbacji niż liczba dokonanych iteracji. Zadowlajace wyniki pojawiają
+się dopiero dla perturbacji na poziomie ~40 procent.
+W przypadku zbioru CIFAR-10 można aby uzyskać przypisanie spreparowanych danych
+do zadanej przez nas klasy z wysokim prawdopodobieństwem wystarczy 200 iteracji
+przy poziomie perturbacji ~10 procent.
+
+% \newpage
+% \vfill
+\begin{figure}[ht]
+  \begin{subfigure}{.55\textwidth}
+    \includegraphics[width=\textwidth]{mnist_orig}
+    \caption{MNIST Klasyfikacja oryginalnego obrazu}
+    \centering
+  \end{subfigure}
+  \begin{subfigure}{.55\textwidth}
+    \includegraphics[width=\textwidth]{mnist_adver}
+    \caption{MNIST Klasyfikacja spreparowanego obrazu dla zadanej klasy 1, 200 iteracji}
+    \centering
+  \end{subfigure}
+  \begin{subfigure}{.55\textwidth}
+    \includegraphics[width=\textwidth]{mnist_pert}
+    \caption{MNIST wprowadzona perturbacja}
+    \centering
+  \end{subfigure}
+\end{figure}
+\begin{figure}[ht]
+  \begin{subfigure}{.55\textwidth}
+    \includegraphics[width=\textwidth]{cifar_orig.png}
+    \caption{CIFAR Klasyfikacja oryginalnego obrazu}
+    \centering
+  \end{subfigure}
+  \begin{subfigure}{.55\textwidth}
+    \includegraphics[width=\textwidth]{cifar_adver}
+    \caption{CIFAR Klasyfikacja spreparowanego obrazu dla zadanej klasy 1, 200 iteracji}
+    \centering
+  \end{subfigure}
+  \begin{subfigure}{.55\textwidth}
+    \includegraphics[width=\textwidth]{cifar_pert}
+    \caption{CIFAR wprowadzona perturbacja}
+    \centering
+  \end{subfigure}
+\end{figure}
+
+% \vfill
+\clearpage
+
+
+
+
+
+\bibliography{pdi}
+\bibliographystyle{ieeetr}
+
+\end{document}
