@@ -39,6 +39,6 @@ def test_fgsm_mnist():
     target_label = tf.constant(7, dtype=tf.int64, shape=(1))
     for i in eval_dataset.take(1):
         image, label = i['image'], i['label']
-        fgsm(image, target_label, model, 50000, 0.00001)
+        fgsm(image, target_label, model, 10000, 0.00001)
 
 test_fgsm_mnist()
