@@ -1,10 +1,13 @@
 import tensorflow as tf
 import tensorflow_datasets as tfds
 import matplotlib.pyplot as plt
+from os.path import *
 
 
 NMB_CLASSES = 10
-SAVE_DIR = '/home/sackhorn/tensorflow_models/mnist'
+MODEL_DIR_NAME = "saved_models"
+PARENT_DIR = dirname(__file__)
+SAVE_DIR = join(PARENT_DIR, MODEL_DIR_NAME, "mnist_model")
 
 class MNISTModel(tf.keras.Model):
     def __init__(self):
@@ -61,7 +64,6 @@ class MNISTModel(tf.keras.Model):
 
     def load_model(self):
         self.load_weights(SAVE_DIR)
-        self.evaluate(self.eval_dataset)
 
     def train(self, train_data=None, optimizer=tf.train.AdamOptimizer()):
         """
