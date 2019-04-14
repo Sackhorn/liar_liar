@@ -3,11 +3,11 @@ import tensorflow_datasets as tfds
 import matplotlib.pyplot as plt
 from os.path import *
 
-
-NMB_CLASSES = 10
-MODEL_DIR_NAME = "saved_models"
 PARENT_DIR = dirname(__file__)
-SAVE_DIR = join(PARENT_DIR, MODEL_DIR_NAME, "mnist_model")
+MODEL_DIR_NAME = "saved_models"
+SAVE_FILE_NAME = "mnist_model"
+SAVE_DIR = join(PARENT_DIR, MODEL_DIR_NAME, SAVE_FILE_NAME)
+
 
 class MNISTModel(tf.keras.Model):
     def __init__(self):
@@ -24,7 +24,7 @@ class MNISTModel(tf.keras.Model):
         self.dense2 = tf.keras.layers.Dense(10)
         self.loss_history = []
         self.train_dataset = self.get_dataset(tfds.Split.TRAIN)
-        self.eval_dataset = self.get_dataset(tfds.Split.TEST)
+        self.test_dataset = self.get_dataset(tfds.Split.TEST)
 
     def call(self, input):
         result = self.conv1(input)
@@ -39,31 +39,29 @@ class MNISTModel(tf.keras.Model):
         result = self.dense2(result)
         return result
 
-    def evaluate(self, eval_data):
-        """
-
-        :type eval_data: tf.data.Dataset
-        """
-        accuracy = tf.contrib.eager.metrics.Accuracy()
-        for input in eval_data:
-            images, labels = input['image'],input['label']
-            logits = self(images)
-            prediction = tf.math.argmax(logits, axis=1)
-            accuracy(labels, prediction)
-        print("Eval set accuracy is: {:.2%}".format(accuracy.result()))
-
-
     def get_dataset(self, type, batch_size=32):
+
         def cast_mnist(dictionary):
-            dictionary['image'] = tf.cast(dictionary['image'], tf.float32) / 255.0
+            dictionary['image'] = tf.cast(dictionary['image'], tf.float32)
             return dictionary
-        dataset, info = tfds.load("mnist", split=type, with_info=True)  # type: (tf.data.Dataset, tfds.core.DatasetInfo)
+
+        dataset = tfds.load("mnist", split=type)  # type: tf.data.Dataset
         dataset = dataset.map(cast_mnist)
         dataset = dataset.shuffle(1024).batch(batch_size)
         return dataset
 
-    def load_model(self):
-        self.load_weights(SAVE_DIR)
+    def test(self, test_data=None):
+        """
+        :type test_data: tf.data.Dataset
+        """
+        test_data = self.test_dataset if test_data is None else test_data
+        accuracy = tf.contrib.eager.metrics.Accuracy()
+        for input in test_data:
+            images, labels = input['image'], input['label']
+            logits = self(images)
+            prediction = tf.math.argmax(logits, axis=1)
+            accuracy(labels, prediction)
+        print("Evaluation set accuracy is: {:.2%}".format(accuracy.result()))
 
     def train(self, train_data=None, optimizer=tf.train.AdamOptimizer()):
         """
@@ -72,7 +70,7 @@ class MNISTModel(tf.keras.Model):
         """
         train_data = self.train_dataset if train_data is None else train_data
         for batch, input in enumerate(train_data):
-            if batch%100==0:
+            if batch % 100 == 0:
                 print(batch)
             images, labels = input['image'], input['label']
             with tf.GradientTape() as tape:
@@ -84,4 +82,29 @@ class MNISTModel(tf.keras.Model):
 
         plt.plot(self.loss_history)
         plt.show()
-        self.save_weights(SAVE_DIR)
+        print("Loss value is: {:.2%}".format(self.loss_history[-1]))
+        self.test()
+        self.save_model_data()
+
+    def load_model_data(self):
+        try:
+            self.load_weights(SAVE_DIR)
+        except:
+            print("There was an issue while loading model from file")
+            raise
+        print("Successfully loaded model from file: " + SAVE_DIR)
+        self.test()
+
+    def save_model_data(self):
+        try:
+            self.save_weights(SAVE_DIR)
+        except:
+            print("There was an issue while saving model from file")
+            raise
+        print("Successfully saved model data to: " + SAVE_DIR)
+
+
+if __name__ == "__main__":
+    tf.enable_eager_execution()
+    model = MNISTModel()
+    model.train()

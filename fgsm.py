@@ -2,11 +2,6 @@ import tensorflow as tf
 from MNISTModel import *
 import numpy as np
 
-from train_and_eval_mnist import cast_mnist
-
-tf.enable_eager_execution()
-
-
 
 def show_plot(logits, image):
     probs = tf.nn.softmax(logits)
@@ -36,17 +31,13 @@ def fgsm(x, y_target, model, i, eps, min=0.0, max=1.0):
 
 def test_fgsm_mnist():
     model = MNISTModel()
-    model.load_model()
-    mnist_eval = tfds.load("mnist", split=tfds.Split.TEST)
-    mnist_eval = mnist_eval.map(cast_mnist)
-    mnist_eval = mnist_eval.shuffle(1024).batch(32)
-    model.evaluate(mnist_eval)
-    return
+    model.load_model_data()
     eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1)
     target_label = tf.constant(7, dtype=tf.int64, shape=(1))
     for i in eval_dataset.take(1):
         image, label = i['image'], i['label']
-        fgsm(image, target_label, model, 10000, 0.00001)
+        fgsm(image, target_label, model, 100, 0.001)
 
 if __name__ == "__main__":
+    tf.enable_eager_execution()
     test_fgsm_mnist()
