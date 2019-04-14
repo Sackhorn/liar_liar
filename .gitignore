@@ -5,6 +5,7 @@ __pycache__/
 *$py.class
 venv/
 latex/images/*
+saved_models/
 
 
 ####################JETBRAINS IGNORE############
