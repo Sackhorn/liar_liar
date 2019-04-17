@@ -14,7 +14,7 @@ def show_plot(logits, image):
     bar_plt.set_xticks(np.arange(10))
     plt.show()
 
-def fgsm(x, y_target, model, i, eps, min=0.0, max=1.0):
+def fgsm(x, y_target, model, i, eps, min=0.0, max=255.0):
     show_plot(model(x), x)
 
     for i in range(i):
@@ -36,7 +36,7 @@ def test_fgsm_mnist():
     target_label = tf.constant(7, dtype=tf.int64, shape=(1))
     for i in eval_dataset.take(1):
         image, label = i['image'], i['label']
-        fgsm(image, target_label, model, 100, 0.001)
+        fgsm(image, target_label, model, 100, 0.01)
 
 if __name__ == "__main__":
     tf.enable_eager_execution()
