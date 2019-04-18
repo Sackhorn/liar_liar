@@ -2,16 +2,12 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 import matplotlib.pyplot as plt
 from os.path import *
+from models.ModelBase import ModelBase
 
-PARENT_DIR = dirname(__file__)
-MODEL_DIR_NAME = "saved_models"
-SAVE_FILE_NAME = "mnist_model"
-SAVE_DIR = join(PARENT_DIR, MODEL_DIR_NAME, SAVE_FILE_NAME)
+class MNISTModel(ModelBase):
 
-
-class MNISTModel(tf.keras.Model):
     def __init__(self):
-        super(MNISTModel, self).__init__()
+        super(MNISTModel, self).__init__(MODEL_NAME="mnist_model")
         self.conv1 = tf.keras.layers.Conv2D(32, [3, 3], activation='relu')
         self.conv2 = tf.keras.layers.Conv2D(32, [3, 3], activation='relu')
         self.pool1 = tf.keras.layers.MaxPool2D()
@@ -23,6 +19,7 @@ class MNISTModel(tf.keras.Model):
         self.dropout2 = tf.keras.layers.Dropout(0.5)
         self.dense2 = tf.keras.layers.Dense(10)
         self.loss_history = []
+
         self.train_dataset = self.get_dataset(tfds.Split.TRAIN)
         self.test_dataset = self.get_dataset(tfds.Split.TEST)
 
@@ -85,24 +82,6 @@ class MNISTModel(tf.keras.Model):
         print("Loss value is: {:.2%}".format(self.loss_history[-1]))
         self.test()
         self.save_model_data()
-
-    def load_model_data(self):
-        try:
-            self.load_weights(SAVE_DIR)
-        except:
-            print("There was an issue while loading model from file")
-            raise
-        print("Successfully loaded model from file: " + SAVE_DIR)
-        self.test()
-
-    def save_model_data(self):
-        try:
-            self.save_weights(SAVE_DIR)
-        except:
-            print("There was an issue while saving model from file")
-            raise
-        print("Successfully saved model data to: " + SAVE_DIR)
-
 
 if __name__ == "__main__":
     tf.enable_eager_execution()
