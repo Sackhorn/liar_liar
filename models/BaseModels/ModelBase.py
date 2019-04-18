@@ -17,6 +17,7 @@ class ModelBase(tf.keras.Model):
         if MODEL_NAME == "":
             raise NotImplementedError("Please support model name in subclass super call to this base class")
         self.SAVE_DIR = join(ModelBase.ROOT_DIR, ModelBase.MODEL_DIR_NAME, MODEL_NAME)
+        self.loss_history = []
 
     def call(self, input):
         raise NotImplementedError("Implement call when overriding ModelBase")
