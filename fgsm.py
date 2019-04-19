@@ -1,6 +1,10 @@
-import tensorflow as tf
-from MNISTModel import *
+from models.MNISTModels.ConvModel import ConvModel
 import numpy as np
+import tensorflow as tf
+import tensorflow_datasets as tfds
+import matplotlib.pyplot as plt
+
+from models.MNISTModels.DenseModel import DenseModel
 
 
 def show_plot(logits, image):
@@ -14,30 +18,39 @@ def show_plot(logits, image):
     bar_plt.set_xticks(np.arange(10))
     plt.show()
 
-def fgsm(x, y_target, model, i, eps, min=0.0, max=255.0):
-    show_plot(model(x), x)
-
+def _fgsm(data_sample, model, i, eps, y_target=None, min=0.0, max=1.0):
+    image, label = data_sample['image'], data_sample['label']
+    show_plot(model(image), image)
+    eps = eps if y_target is None else -eps
+    label = label if y_target is None else y_target
     for i in range(i):
         with tf.GradientTape() as tape:
-            tape.watch(x)
-            logits = model(x)
-            loss = tf.losses.sparse_softmax_cross_entropy(y_target, logits)
-        gradient = tape.gradient(loss, x)
-        x = x - eps * tf.sign(gradient)
-        x = tf.clip_by_value(x, min, max)
+            tape.watch(image)
+            logits = model(image)
+            loss = tf.losses.sparse_softmax_cross_entropy(label, logits)
+        gradient = tape.gradient(loss, image)
+        image = image + eps * tf.sign(gradient)
+        image = tf.clip_by_value(image, min, max)
+    show_plot(model(image), image)
+    return tf.reduce_all(tf.not_equal(label, tf.math.argmax(logits)))
 
-    show_plot(model(x), x)
-    return x
+def untargeted_fgsm(data_sample, model, i, eps, min=0.0, max=1.0):
+    return _fgsm(data_sample, model, i, eps, min=min, max=max)
+
+def targeted_fgsm(data_sample, model, i, eps, y_target, min=0.0, max=1.0):
+    return _fgsm(data_sample, model, i, eps, y_target=y_target, min=min, max=max)
+
 
 def test_fgsm_mnist():
-    model = MNISTModel()
+    model = DenseModel()
     model.load_model_data()
     eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1)
     target_label = tf.constant(7, dtype=tf.int64, shape=(1))
-    for i in eval_dataset.take(1):
-        image, label = i['image'], i['label']
-        fgsm(image, target_label, model, 100, 0.01)
+    for data_sample in eval_dataset.take(1):
+        targeted_fgsm(data_sample, model, 1, 0.5, target_label)
+        # print(untargeted_fgsm(data_sample, model, 1, 0.50))
 
 if __name__ == "__main__":
     tf.enable_eager_execution()
-    test_fgsm_mnist()
+    for i in range(3):
+        test_fgsm_mnist()
