@@ -21,7 +21,7 @@ class MNISTModel(SequentialModel):
             return dictionary
         dataset = tfds.load("mnist", split=type)  # type: tf.data.Dataset
         dataset = dataset.map(cast_mnist)
-        dataset = dataset.shuffle(1024).batch(batch_size)
+        dataset = dataset.shuffle(1024).batch(batch_size, drop_remainder=True)
         return dataset
 
     def test(self, test_data=None):
