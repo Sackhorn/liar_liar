@@ -19,10 +19,10 @@ def show_plot(logits, image):
     plt.show()
 
 def _fgsm(data_sample, model, i, eps, y_target=None, min=0.0, max=1.0):
-    image, label = data_sample['image'], data_sample['label']
+    image, label = data_sample
     show_plot(model(image), image)
     eps = eps if y_target is None else -eps
-    label = label if y_target is None else y_target
+    label = tf.argmax(label, axis=1) if y_target is None else y_target
     for i in range(i):
         with tf.GradientTape() as tape:
             tape.watch(image)
@@ -47,8 +47,8 @@ def test_fgsm_mnist():
     eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1)
     target_label = tf.constant(7, dtype=tf.int64, shape=(1))
     for data_sample in eval_dataset.take(1):
-        targeted_fgsm(data_sample, model, 1, 0.5, target_label)
-        # print(untargeted_fgsm(data_sample, model, 1, 0.50))
+        # targeted_fgsm(data_sample, model, 100, 0.01, target_label)
+        untargeted_fgsm(data_sample, model, 5000, 0.00005)
 
 if __name__ == "__main__":
     tf.enable_eager_execution()
