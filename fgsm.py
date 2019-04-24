@@ -1,4 +1,7 @@
-from models.MNISTModels.ConvModel import ConvModel
+from tensorflow.python import enable_eager_execution
+from tensorflow.python.ops.losses.losses_impl import sparse_softmax_cross_entropy
+
+from models.CIFAR10Models.ConvModel import ConvModel
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
@@ -27,7 +30,7 @@ def _fgsm(data_sample, model, i, eps, y_target=None, min=0.0, max=1.0):
         with tf.GradientTape() as tape:
             tape.watch(image)
             logits = model(image)
-            loss = tf.losses.sparse_softmax_cross_entropy(label, logits)
+            loss = sparse_softmax_cross_entropy(label, logits)
         gradient = tape.gradient(loss, image)
         image = image + eps * tf.sign(gradient)
         image = tf.clip_by_value(image, min, max)
@@ -48,9 +51,9 @@ def test_fgsm_mnist():
     target_label = tf.constant(7, dtype=tf.int64, shape=(1))
     for data_sample in eval_dataset.take(1):
         # targeted_fgsm(data_sample, model, 100, 0.01, target_label)
-        untargeted_fgsm(data_sample, model, 5000, 0.00005)
+        untargeted_fgsm(data_sample, model, 500, 0.00001)
 
 if __name__ == "__main__":
-    tf.enable_eager_execution()
+    enable_eager_execution()
     for i in range(3):
         test_fgsm_mnist()

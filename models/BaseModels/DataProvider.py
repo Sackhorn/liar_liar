@@ -8,23 +8,28 @@ import matplotlib.pyplot as plt
 
 
 
-class ModelBase(tf.keras.Model):
+class DataProvider():
     ROOT_DIR = join(dirname(__file__), os.pardir)
     MODEL_DIR_NAME = "saved_models"
 
-    def __init__(self, MODEL_NAME=""):
-        super(ModelBase, self).__init__()
+    def __init__(self):
+        pass
+
+    def register_data_provider(self, MODEL_NAME="", nmb_classes=10):
         if MODEL_NAME == "":
             raise NotImplementedError("Please support model name in subclass super call to this base class")
-        self.SAVE_DIR = join(ModelBase.ROOT_DIR, ModelBase.MODEL_DIR_NAME, MODEL_NAME)
+        self.MODEL_NAME = MODEL_NAME
+        self.SAVE_DIR = join(DataProvider.ROOT_DIR, DataProvider.MODEL_DIR_NAME, self.MODEL_NAME)
+        self.train_dataset = self.get_dataset(tfds.Split.TRAIN, nmb_classes=nmb_classes)
+        self.test_dataset = self.get_dataset(tfds.Split.TEST, nmb_classes=nmb_classes)
 
     def call(self, input):
         raise NotImplementedError("Implement call when overriding ModelBase")
 
-    def get_dataset(self, split, name='', batch_size=32, shuffle=10000):
+    def get_dataset(self, split, name='', batch_size=32, shuffle=10000, nmb_classes=10):
         def cast_labels(x, y):
             x = tf.cast(x, tf.float32)
-            y = tf.one_hot(y, 10)
+            y = tf.one_hot(y, nmb_classes)
             return x, y
 
         dataset, info = tfds.load(name, split=split, with_info=True, as_supervised=True)  # type: tf.data.Dataset
@@ -35,16 +40,9 @@ class ModelBase(tf.keras.Model):
         self.test_steps = info.splits['test'].num_examples // batch_size
         return dataset
 
-    def test(self, test_data=None):
-        raise NotImplementedError("Implement test when overriding ModelBase")
-
-    def train(self, epochs=1, train_data=None):
-        raise NotImplementedError()
-
     def load_model_data(self):
         self.load_weights(self.SAVE_DIR)
         print("Successfully loaded model from file: " + self.SAVE_DIR)
-        self.test()
 
     def save_model_data(self):
         self.save_weights(self.SAVE_DIR)

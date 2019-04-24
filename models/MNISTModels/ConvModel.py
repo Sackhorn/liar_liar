@@ -1,11 +1,14 @@
 import tensorflow as tf
+from tensorflow.python import enable_eager_execution
+from tensorflow.python.training.adam import AdamOptimizer
+
 from models.MNISTModels.MNISTModel import MNISTModel
 
 
 class ConvModel(MNISTModel):
 
     def __init__(self,
-                 optimizer=tf.train.AdamOptimizer(),
+                 optimizer=AdamOptimizer(),
                  loss=tf.keras.losses.categorical_crossentropy,
                  metrics=['accuracy']):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="mnist_conv_model")
@@ -22,6 +25,6 @@ class ConvModel(MNISTModel):
             tf.keras.layers.Dense(10, activation='softmax')]
 
 if __name__ == "__main__":
-    tf.enable_eager_execution()
+    enable_eager_execution()
     model = ConvModel()
     model.train()

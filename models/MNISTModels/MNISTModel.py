@@ -1,6 +1,3 @@
-import tensorflow as tf
-import tensorflow_datasets as tfds
-import matplotlib.pyplot as plt
 from models.BaseModels.SequentialModel import SequentialModel
 
 
@@ -13,7 +10,5 @@ class MNISTModel(SequentialModel):
                          metrics=metrics,
                          MODEL_NAME=MODEL_NAME)
 
-    def get_dataset(self, split, name='mnist', batch_size=32, shuffle=10000):
-        dataset =  super().get_dataset(split, name, batch_size, shuffle)
-        dataset = dataset.map(lambda x,y: (tf.div(x, 255), y))
-        return dataset
+    def get_dataset(self, split, name='mnist', batch_size=32, shuffle=10000, nmb_classes=10):
+        return super().get_dataset(split, name, batch_size, shuffle, nmb_classes)

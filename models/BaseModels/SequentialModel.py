@@ -1,17 +1,17 @@
-from models.BaseModels.ModelBase import ModelBase
 import tensorflow as tf
-import tensorflow_datasets as tfds
+from tensorflow.python.keras import Model
+from models.BaseModels.DataProvider import DataProvider
 from matplotlib import pyplot as plt
 
 
 
-class SequentialModel(ModelBase):
+class SequentialModel(Model, DataProvider):
 
     def __init__(self, nmb_classes, optimizer, loss, metrics, MODEL_NAME=""):
-        super(SequentialModel, self).__init__(MODEL_NAME=MODEL_NAME)
+        super(SequentialModel, self).__init__()
+        self.register_data_provider(MODEL_NAME, nmb_classes)
         self.compile(optimizer=optimizer, loss=loss, metrics=metrics)
-        self.train_dataset = self.get_dataset(tfds.Split.TRAIN)
-        self.test_dataset = self.get_dataset(tfds.Split.TEST)
+
 
     def call(self, input):
         result = self.sequential_layers[0](input)
@@ -24,27 +24,39 @@ class SequentialModel(ModelBase):
         shape[-1] = self.num_classes
         return tf.TensorShape(shape)
 
-    def train(self, epochs=1, train_data=None):
+    def train(self, epochs=1, train_data=None, callbacks=None):
         class LossHistory(tf.keras.callbacks.Callback):
             def on_train_begin(self, logs={}):
                 self.losses = []
 
             def on_batch_end(self, batch, logs={}):
                 self.losses.append(logs.get('loss'))
+
+
         history = LossHistory()
+        callback = [history]
+        if callbacks is not None: callback.append(callbacks)
         train = self.train_dataset if train_data is None else train_data
-        self.fit_generator(train.repeat(),
-                           epochs=epochs,
-                           steps_per_epoch=self.train_steps_per_epoch,
-                           callbacks=[history])
-        self.evaluate(self.test_dataset, batch_size=self.batch_size, steps=self.test_steps)
-        # self.evaluate(self.train_dataset, batch_size=self.batch_size, steps=self.train_steps_per_epoch)
+        self.fit(train.repeat(),
+                 epochs=epochs,
+                 steps_per_epoch=self.train_steps_per_epoch,
+                 callbacks=callback,
+                 validation_data=self.train_dataset,
+                 validation_steps=self.test_steps)
+
+        self.evaluate(self.test_dataset,  steps=self.test_steps)
+        self.evaluate(self.train_dataset,  steps=self.train_steps_per_epoch)
         self.save_model_data()
         plt.plot(history.losses)
         plt.show()
 
+    def get_dataset(self, split, name='', batch_size=32, shuffle=10000, nmb_classes=10):
+        dataset =  super().get_dataset(split, name, batch_size, shuffle, nmb_classes)
+        dataset = dataset.map(lambda x,y: (tf.divide(x, 255), y))
+        return dataset
+
     def test(self, test_data=None):
         test = self.test_dataset if test_data is None else test_data
-        self.evaluate(self.test_dataset, batch_size=self.batch_size, steps=self.test_steps)
+        self.evaluate(test, steps=self.test_steps)
 
 
