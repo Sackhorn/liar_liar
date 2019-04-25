@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from os.path import *
 import tensorflow as tf
 import tensorflow_datasets as tfds
@@ -9,8 +10,9 @@ import matplotlib.pyplot as plt
 
 
 class DataProvider():
-    ROOT_DIR = join(dirname(__file__), os.pardir)
+    ROOT_DIR = join(dirname(__file__), os.pardir, os.pardir)
     MODEL_DIR_NAME = "saved_models"
+    TENSORBOARD_NAME = "tboardlog"
 
     def __init__(self):
         pass
@@ -22,6 +24,10 @@ class DataProvider():
         self.SAVE_DIR = join(DataProvider.ROOT_DIR, DataProvider.MODEL_DIR_NAME, self.MODEL_NAME)
         self.train_dataset = self.get_dataset(tfds.Split.TRAIN, nmb_classes=nmb_classes)
         self.test_dataset = self.get_dataset(tfds.Split.TEST, nmb_classes=nmb_classes)
+
+    def get_tensorboard_path(self):
+        date_string = datetime.today().strftime("_%d_%m_%Y_%H_%M")
+        return join(DataProvider.ROOT_DIR, DataProvider.TENSORBOARD_NAME, self.MODEL_NAME, date_string)
 
     def call(self, input):
         raise NotImplementedError("Implement call when overriding ModelBase")

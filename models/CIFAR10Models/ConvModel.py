@@ -4,6 +4,7 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 import matplotlib.pyplot as plt
 from tensorflow.python import enable_eager_execution
+from tensorflow.python.keras.callbacks import LearningRateScheduler
 from tensorflow.python.keras.optimizer_v2.adam import Adam
 from tensorflow.python.training.adam import AdamOptimizer
 
@@ -46,7 +47,6 @@ class ConvModel(CIFAR10Model):
 if __name__ == "__main__":
     enable_eager_execution()
 
-
     def lr_schedule(epoch):
         lrate = 0.001
         if epoch > 75:
@@ -54,6 +54,7 @@ if __name__ == "__main__":
         if epoch > 100:
             lrate = 0.0003
         return lrate
-    w_scheulde = tf.keras.callbacks.LearningRateScheduler(lr_schedule)
+
     model = ConvModel()
-    model.train(epochs=2, callbacks=w_scheulde)
+    w_scheulde = LearningRateScheduler(lr_schedule)
+    model.train(epochs=150, callbacks=[w_scheulde])

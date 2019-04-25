@@ -6,6 +6,7 @@ __pycache__/
 venv/
 latex/images/*
 saved_models/
+tboardlog/
 
 
 ####################JETBRAINS IGNORE############

@@ -1,5 +1,7 @@
 import tensorflow as tf
 from tensorflow.python.keras import Model
+from tensorflow.python.keras.callbacks import TensorBoard
+
 from models.BaseModels.DataProvider import DataProvider
 from matplotlib import pyplot as plt
 
@@ -34,8 +36,9 @@ class SequentialModel(Model, DataProvider):
 
 
         history = LossHistory()
-        callback = [history]
-        if callbacks is not None: callback.append(callbacks)
+        tsboard = TensorBoard(log_dir=self.get_tensorboard_path(), histogram_freq=10, write_images=True)
+        callback = [history, tsboard]
+        callback = callback if callbacks is None else callback + callbacks
         train = self.train_dataset if train_data is None else train_data
         self.fit(train.repeat(),
                  epochs=epochs,
