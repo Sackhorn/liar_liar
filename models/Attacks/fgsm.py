@@ -1,7 +1,8 @@
-from tensorflow.python import enable_eager_execution
+from tensorflow.python import enable_eager_execution, Tensor
+from tensorflow.python.framework.ops import EagerTensor
 from tensorflow.python.ops.losses.losses_impl import sparse_softmax_cross_entropy
 
-from models.CIFAR10Models.ConvModel import ConvModel
+from models.MNISTModels.ConvModel import ConvModel
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
@@ -11,11 +12,16 @@ from models.MNISTModels.DenseModel import DenseModel
 
 
 def show_plot(logits, image):
+    """
+
+    :type image: Tensor
+    """
     probs = tf.nn.softmax(logits)
     probs = probs.numpy().reshape(10).tolist()
     fig = plt.figure()
     img_plt = fig.add_subplot(121)
-    img_plt.imshow(image.numpy().reshape(28, 28).astype(np.float32), cmap=plt.get_cmap("gray"))
+    # img_plt.imshow(image.numpy().reshape(28, 28).astype(np.float32), cmap=plt.get_cmap("gray"))
+    img_plt.imshow(tf.squeeze(image), cmap=plt.get_cmap("gray"))
     bar_plt = fig.add_subplot(122)
     bar_plt.bar(np.arange(10), probs)
     bar_plt.set_xticks(np.arange(10))
@@ -45,13 +51,13 @@ def targeted_fgsm(data_sample, model, i, eps, y_target, min=0.0, max=1.0):
 
 
 def test_fgsm_mnist():
-    model = DenseModel()
+    model = ConvModel()
     model.load_model_data()
     eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1)
     target_label = tf.constant(7, dtype=tf.int64, shape=(1))
     for data_sample in eval_dataset.take(1):
         # targeted_fgsm(data_sample, model, 100, 0.01, target_label)
-        untargeted_fgsm(data_sample, model, 500, 0.00001)
+        untargeted_fgsm(data_sample, model, 1000, 0.0001)
 
 if __name__ == "__main__":
     enable_eager_execution()
