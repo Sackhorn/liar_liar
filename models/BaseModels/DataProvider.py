@@ -2,11 +2,8 @@ import os
 from datetime import datetime
 from os.path import *
 
-import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
-import matplotlib.pyplot as plt
-from tensorflow.python import random_uniform
 
 
 class DataProvider():
@@ -41,7 +38,7 @@ class DataProvider():
             return x, y
 
         def augment_data(x, y):
-            if x.shape[3] == 1 and color not in augmentations : augmentations.append(color)
+            if x.shape[3] > 1 and color not in augmentations : augmentations.append(color)
             for f in augmentations:
                 x = tf.cond(tf.random.uniform([], minval=0.0, maxval=1.0) > 0.75, lambda: f(x), lambda: x)
             tf.clip_by_value(x, 0, 1)
