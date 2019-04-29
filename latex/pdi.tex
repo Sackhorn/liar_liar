@@ -14,6 +14,8 @@
 
 \immediate\write18{bibtex \jobname}
 
+\newcommand\todo[1]{\textcolor{red}{#1}}
+
 
 \title{
 Sprawozdanie z pracy w ramach Pracowni Dyplomowej Inżynierskiej 2
@@ -43,106 +45,161 @@ odporności modeli klasyfikacyjnych na ataki z użyciem złośliwych danych
 Dla dostarczonego w narzuconej postaci modelu klasyfikatora możliwe będzie
 przeprowadzenie ataku przy pomocy jednej z dostępnych metod.
 
-\section{Praca w ciągu semestru}
-\label{sec:work}
+\section{Użyte narzędzia}
+Od czasu opublikowania przez firmę Google biblioteka Tensorflow \todo{citation needed}
+stała się jednym z wiodących narzędzi wykorzystywanych w branży. Prostota interfejsu programistycznego
+w języku Python, akceleracja obliczeń z wykorzystaniem procesorów graficznych oraz dobra integracja z
+popularnymi bibliotekami dostępnymi dla języka Python czyni Tensorflow idealnym kandydatem.
+W trakcie pracy wykorzystywałem głownie wysokopoziomowy interfejs Keras, który pozwala na szybkie
+prototypowanie oraz na małą złożoność kodu źródłowego skryptów.
 
-Główną technologią na której opiera się moja praca jest biblioteka tensorflow\cite{tensorflow}.
-Główną zaletą jest możliwość akceleracji obliczeń z wykorzystaniem biblioteki CUDA i cuDNN, które
-umożliwiają zrównoleglenie obliczeń na karcie graficznej.
-Ponieważ jednym z założeń pracy inżynierskiej jest znajomość modelu, to rodzaj
-ataków jakimi będę się zajmuję to tak zwane ataki "white-box".
-Jedna z najbardziej znanych metod tworzenia złośliwych danych w to
-Fast Gradient Sign Method (w skrócie FGSM) opisana w \cite{harnessing}.
-Jest to też metoda którą udało mi się zaimplementować na wytrenowanych przeze mnie
-modelach klasyfikacyjnych (patrz punkt ~\ref{sec:fgsm}).
+\section{Modele i dane testowe}
+Aby sprawdzić poprawność implementacji oraz skuteczność ataków stworzyłem
+kilka modeli klasyfikacyjnych o różnej złożoności, opartych o popularne zbiory danych
+wykorzystywanych jako wspólny mianownik w publikacjach pokrewnych tematyką.
 
-Innymi metody nad których implementacją pracuje są
-Jacobian-based Saliency Map Attack (JSMA)\cite{DBLP:journals/corr/PapernotMJFCS15}
-oraz DeepFool\cite{DBLP:journals/corr/Moosavi-Dezfooli15}.
-Po zakończeniu implementacji i wykazaniu ich skutecznośći chciałbym
-przetestować ich działanie dla bardziej skomplikowanych modeli klasyfikacyjnych
-niż te z których korzystałem dotychczas(patrz punkt ~\ref{sec:fgsm}).
-Końcowym zadaniem będzie utworzenie prostego interfejsu do obsługi aplikacji
-(linia komend, bądź interfejs graficzny) oraz przetestowanie ataków na już
-wytrenowanych modelach dostępnych publicznie
+    \subsection{MNIST}
+    Zbiór danych MNIST \todo{citation needed} to najprawdopodobniej najpopularniejszy zbiór związany z
+    tematyką nauczania maszynowego.
+    Zawiera on 60,000 obrazów o rozmiarach 28 na 28 pikseli, w skali szarości, przedstawiających
+    odręcznie narysowane cyfry. Zbiór dzieli się na 50,000 przykładów używanych do
+    trenowania modelu oraz 10.000 służących do testowania.
+
+    \subsection{CIFAR10}
+    Zbiór CIFAR10 \todo{citation needed} zawiera kolorowe obrazy o rozdzielczości 32 na 32 piksele,
+    podzielone na 10 klas takich jak np. koń, samolot czy żaba. Podobnie jak zbiór MNIST, CIFAR10 zawiera
+    60,000 obrazów podzielonych na 50,000 przykładów używanych do treningu jak i 10,000 do testowania.
+    Aby usunąć problem nadmiernego dopasowania modeli obrazy z zbioru CIFAR10 używane
+    do trenowania są losowo modyfikowane. Każdy obraz ma szanse 0.25 \todo{tutaj uzupełnić} na
+    modyfikacje natężenia, nasycenia, kontrastu oraz odcienia. Dodatkowo każdy obraz może zostać obrócony bądź odbity.
 
 
-\section{Ataki z użyciem Fast Gradient Sign Method}
-\label{sec:fgsm}
-W celu sprawdzenia poprawności działania mojej implementacji metody FGSM utworzyłem
-i wytrenowałem dwa proste modele klasyfikacyjne będące
-splotowymi sieciami neuronowymi dla zbiorów CIFAR-10\cite{cifar_10} oraz MNIST\cite{mnist}
-mające praktycznie taką samą strukturę oprócz wymiarów.
-Struktura operacji ewaluacji uzyskana za pomocą narzędzia tensorboard zarówno dla
-zbioru MNIST i CIFAR-10 znajduje się poniżej
 
-\newpage
-\vfill
 
-\begin{figure}[ht]
-  \begin{subfigure}{.55\textwidth}
-    \includegraphics[width=\textwidth]{mnist_structure}
-    \caption{MNIST}
-    \centering
-  \end{subfigure}
-  \begin{subfigure}{.55\textwidth}
-    \includegraphics[width=\textwidth]{cifar_structure}
-    \caption{CIFAR}
-    \centering
-  \end{subfigure}
-\end{figure}
+\section{Rodzaje Ataków}
+Ideą ataków adwersaryjnych \todo{tu dodać jakąś definicje} jest osiągnięcie jednego z wymienionych celów:
+\begin{enumerate}
+    \item kaczka
+    \item Zmniejszenie prawdopodobieństwa z jakim model klasyfikuje przykład
+    \item Zła klasyfikacja przykładu wejściowego (niezaleznie od końcowej klasy)
+    \item Przyporządkowanie przykładu wejściowego do złej, zadanej z góry klasy
+    \item Tutaj było coś jeszcze \todo{Sprawdzić i dodać cytowanie}
+\end{enumerate}
 
-\vfill
-\clearpage
+Możemy też rozróżnić ataki z uwagi na to jakie dane są dostępne dla algorytmu atakującego:
+\begin{enumerate}
+    \item Dostępny jest gradient, funkcja kosztu i funkcja trenująca
+    \item Dostepna jest tylko funkcja kosztu
+    \item Dostępny jest przykład i coś tam
+    \item Dostępne są tylko dane wejściowe i klasa do jakiej model przyporządkowuje dany przykład
+    \item \todo{poprawić powyższe i dodać cytowanie}
+\end{enumerate}
 
-Poniżej można zobaczyc porównanie prawdopodobieństw przydziału do klasy dla
-orignalnych danych wejściowych oraz dla spreparownych złośliwych danych.
-Dla zbioru MNIST znacznie większy wpływ na skuteczność metody ma poziom
-perturbacji niż liczba dokonanych iteracji. Zadowlajace wyniki pojawiają
-się dopiero dla perturbacji na poziomie ~40 procent.
-W przypadku zbioru CIFAR-10 można aby uzyskać przypisanie spreparowanych danych
-do zadanej przez nas klasy z wysokim prawdopodobieństwem wystarczy 200 iteracji
-przy poziomie perturbacji ~10 procent.
 
-% \newpage
-% \vfill
-\begin{figure}[ht]
-  \begin{subfigure}{.55\textwidth}
-    \includegraphics[width=\textwidth]{mnist_orig}
-    \caption{MNIST Klasyfikacja oryginalnego obrazu}
-    \centering
-  \end{subfigure}
-  \begin{subfigure}{.55\textwidth}
-    \includegraphics[width=\textwidth]{mnist_adver}
-    \caption{MNIST Klasyfikacja spreparowanego obrazu dla zadanej klasy 1, 200 iteracji}
-    \centering
-  \end{subfigure}
-  \begin{subfigure}{.55\textwidth}
-    \includegraphics[width=\textwidth]{mnist_pert}
-    \caption{MNIST wprowadzona perturbacja}
-    \centering
-  \end{subfigure}
-\end{figure}
-\begin{figure}[ht]
-  \begin{subfigure}{.55\textwidth}
-    \includegraphics[width=\textwidth]{cifar_orig.png}
-    \caption{CIFAR Klasyfikacja oryginalnego obrazu}
-    \centering
-  \end{subfigure}
-  \begin{subfigure}{.55\textwidth}
-    \includegraphics[width=\textwidth]{cifar_adver}
-    \caption{CIFAR Klasyfikacja spreparowanego obrazu dla zadanej klasy 1, 200 iteracji}
-    \centering
-  \end{subfigure}
-  \begin{subfigure}{.55\textwidth}
-    \includegraphics[width=\textwidth]{cifar_pert}
-    \caption{CIFAR wprowadzona perturbacja}
-    \centering
-  \end{subfigure}
-\end{figure}
 
-% \vfill
-\clearpage
+
+
+
+%\section{Praca w ciągu semestru}
+%\label{sec:work}
+%
+%Główną technologią na której opiera się moja praca jest biblioteka tensorflow\cite{tensorflow}.
+%Główną zaletą jest możliwość akceleracji obliczeń z wykorzystaniem biblioteki CUDA i cuDNN, które
+%umożliwiają zrównoleglenie obliczeń na karcie graficznej.
+%Ponieważ jednym z założeń pracy inżynierskiej jest znajomość modelu, to rodzaj
+%ataków jakimi będę się zajmuję to tak zwane ataki "white-box".
+%Jedna z najbardziej znanych metod tworzenia złośliwych danych w to
+%Fast Gradient Sign Method (w skrócie FGSM) opisana w \cite{harnessing}.
+%Jest to też metoda którą udało mi się zaimplementować na wytrenowanych przeze mnie
+%modelach klasyfikacyjnych (patrz punkt ~\ref{sec:fgsm}).
+%
+%Innymi metody nad których implementacją pracuje są
+%Jacobian-based Saliency Map Attack (JSMA)\cite{DBLP:journals/corr/PapernotMJFCS15}
+%oraz DeepFool\cite{DBLP:journals/corr/Moosavi-Dezfooli15}.
+%Po zakończeniu implementacji i wykazaniu ich skutecznośći chciałbym
+%przetestować ich działanie dla bardziej skomplikowanych modeli klasyfikacyjnych
+%niż te z których korzystałem dotychczas(patrz punkt ~\ref{sec:fgsm}).
+%Końcowym zadaniem będzie utworzenie prostego interfejsu do obsługi aplikacji
+%(linia komend, bądź interfejs graficzny) oraz przetestowanie ataków na już
+%wytrenowanych modelach dostępnych publicznie
+
+
+%\section{Ataki z użyciem Fast Gradient Sign Method}
+%\label{sec:fgsm}
+%W celu sprawdzenia poprawności działania mojej implementacji metody FGSM utworzyłem
+%i wytrenowałem dwa proste modele klasyfikacyjne będące
+%splotowymi sieciami neuronowymi dla zbiorów CIFAR-10\cite{cifar_10} oraz MNIST\cite{mnist}
+%mające praktycznie taką samą strukturę oprócz wymiarów.
+%Struktura operacji ewaluacji uzyskana za pomocą narzędzia tensorboard zarówno dla
+%zbioru MNIST i CIFAR-10 znajduje się poniżej
+%
+%\newpage
+%\vfill
+%
+%\begin{figure}[ht]
+%  \begin{subfigure}{.55\textwidth}
+%    \includegraphics[width=\textwidth]{mnist_structure}
+%    \caption{MNIST}
+%    \centering
+%  \end{subfigure}
+%  \begin{subfigure}{.55\textwidth}
+%    \includegraphics[width=\textwidth]{cifar_structure}
+%    \caption{CIFAR}
+%    \centering
+%  \end{subfigure}
+%\end{figure}
+%
+%\vfill
+%\clearpage
+%
+%Poniżej można zobaczyc porównanie prawdopodobieństw przydziału do klasy dla
+%orignalnych danych wejściowych oraz dla spreparownych złośliwych danych.
+%Dla zbioru MNIST znacznie większy wpływ na skuteczność metody ma poziom
+%perturbacji niż liczba dokonanych iteracji. Zadowlajace wyniki pojawiają
+%się dopiero dla perturbacji na poziomie ~40 procent.
+%W przypadku zbioru CIFAR-10 można aby uzyskać przypisanie spreparowanych danych
+%do zadanej przez nas klasy z wysokim prawdopodobieństwem wystarczy 200 iteracji
+%przy poziomie perturbacji ~10 procent.
+%
+%% \newpage
+%% \vfill
+%\begin{figure}[ht]
+%  \begin{subfigure}{.55\textwidth}
+%    \includegraphics[width=\textwidth]{mnist_orig}
+%    \caption{MNIST Klasyfikacja oryginalnego obrazu}
+%    \centering
+%  \end{subfigure}
+%  \begin{subfigure}{.55\textwidth}
+%    \includegraphics[width=\textwidth]{mnist_adver}
+%    \caption{MNIST Klasyfikacja spreparowanego obrazu dla zadanej klasy 1, 200 iteracji}
+%    \centering
+%  \end{subfigure}
+%  \begin{subfigure}{.55\textwidth}
+%    \includegraphics[width=\textwidth]{mnist_pert}
+%    \caption{MNIST wprowadzona perturbacja}
+%    \centering
+%  \end{subfigure}
+%\end{figure}
+%\begin{figure}[ht]
+%  \begin{subfigure}{.55\textwidth}
+%    \includegraphics[width=\textwidth]{cifar_orig.png}
+%    \caption{CIFAR Klasyfikacja oryginalnego obrazu}
+%    \centering
+%  \end{subfigure}
+%  \begin{subfigure}{.55\textwidth}
+%    \includegraphics[width=\textwidth]{cifar_adver}
+%    \caption{CIFAR Klasyfikacja spreparowanego obrazu dla zadanej klasy 1, 200 iteracji}
+%    \centering
+%  \end{subfigure}
+%  \begin{subfigure}{.55\textwidth}
+%    \includegraphics[width=\textwidth]{cifar_pert}
+%    \caption{CIFAR wprowadzona perturbacja}
+%    \centering
+%  \end{subfigure}
+%\end{figure}
+%
+%% \vfill
+%\clearpage
 
 
 
