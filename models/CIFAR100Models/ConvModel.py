@@ -2,7 +2,7 @@ import os
 
 import tensorflow as tf
 from tensorflow.python import enable_eager_execution
-from tensorflow.python.keras.callbacks import LearningRateScheduler, TensorBoard
+from tensorflow.python.keras.callbacks import LearningRateScheduler, TensorBoard, ReduceLROnPlateau
 from tensorflow.python.keras.layers import Conv2D, Flatten, Dense, Dropout, MaxPool2D, BatchNormalization
 from tensorflow.python.keras.losses import categorical_crossentropy
 from tensorflow.python.keras.metrics import categorical_accuracy
@@ -48,23 +48,5 @@ class ConvModel(CIFAR100Model):
 
 if __name__ == "__main__":
     enable_eager_execution()
-
-    def lr_schedule(epoch):
-        lrate = 0.001
-        if epoch > 50:
-            lrate = 0.0005
-        if epoch > 100:
-            lrate = 0.00025
-        if epoch > 150:
-            lrate = 0.000125
-        if epoch > 200:
-            lrate = 0.000062
-        if epoch > 250:
-            lrate = 0.000031
-        if epoch > 300:
-            lrate = 0.000015
-        return lrate
-
     model = ConvModel()
-    lr_callback = LearningRateScheduler(lr_schedule)
-    model.train(epochs=350, callbacks=[lr_callback])
+    model.train(epochs=1000)

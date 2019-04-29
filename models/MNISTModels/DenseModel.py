@@ -1,5 +1,6 @@
 import tensorflow as tf
 from tensorflow.python import enable_eager_execution
+from tensorflow.python.keras.optimizer_v2.adam import Adam
 from tensorflow.python.training.adam import AdamOptimizer
 
 from models.MNISTModels.MNISTModel import MNISTModel
@@ -8,9 +9,9 @@ from models.MNISTModels.MNISTModel import MNISTModel
 class DenseModel(MNISTModel):
 
     def __init__(self,
-                 optimizer=AdamOptimizer(),
+                 optimizer=Adam(),
                  loss=tf.keras.losses.categorical_crossentropy,
-                 metrics=['accuracy']):
+                 metrics=['categorical_accuracy']):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="mnist_dense_model")
         self.sequential_layers = [
             tf.keras.layers.Flatten(),
@@ -24,4 +25,4 @@ class DenseModel(MNISTModel):
 if __name__ == "__main__":
     enable_eager_execution()
     model = DenseModel()
-    model.train(epochs=3)
+    model.train(epochs=50)

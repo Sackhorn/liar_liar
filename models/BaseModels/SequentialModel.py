@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.python.keras import Model
-from tensorflow.python.keras.callbacks import TensorBoard
+from tensorflow.python.keras.callbacks import TensorBoard, ReduceLROnPlateau
 
 from models.BaseModels.DataProvider import DataProvider
 from matplotlib import pyplot as plt
@@ -34,21 +34,21 @@ class SequentialModel(Model, DataProvider):
             def on_batch_end(self, batch, logs={}):
                 self.losses.append(logs.get('loss'))
 
-
         history = LossHistory()
-        tsboard = TensorBoard(log_dir=self.get_tensorboard_path(), histogram_freq=10, write_images=True)
-        callback = [history, tsboard]
+        tsboard = TensorBoard(log_dir=self.get_tensorboard_path(), histogram_freq=10, write_graph=True)
+        lr_callback = ReduceLROnPlateau(factor=0.5, patience=10, verbose=1, min_delta=0.005)
+        callback = [history, tsboard, lr_callback]
         callback = callback if callbacks is None else callback + callbacks
         train = self.train_dataset if train_data is None else train_data
         self.fit(train.repeat(),
                  epochs=epochs,
                  steps_per_epoch=self.train_steps_per_epoch,
                  callbacks=callback,
-                 validation_data=self.train_dataset,
+                 validation_data=self.test_dataset,
                  validation_steps=self.test_steps)
 
         self.evaluate(self.test_dataset,  steps=self.test_steps)
-        self.evaluate(self.train_dataset,  steps=self.train_steps_per_epoch)
+        # self.evaluate(self.train_dataset,  steps=self.train_steps_per_epoch)
         self.save_model_data()
         plt.plot(history.losses)
         plt.show()

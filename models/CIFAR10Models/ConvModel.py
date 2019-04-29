@@ -14,7 +14,7 @@ from models.CIFAR10Models.CIFAR10Model import CIFAR10Model
 class ConvModel(CIFAR10Model):
 
     def __init__(self,
-                 optimizer=Adam(decay=1e-6),
+                 optimizer=Adam(),
                  loss=tf.keras.losses.categorical_crossentropy,
                  metrics=[tf.keras.metrics.categorical_accuracy]):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="cifar10_conv_model")
@@ -46,15 +46,5 @@ class ConvModel(CIFAR10Model):
 
 if __name__ == "__main__":
     enable_eager_execution()
-
-    def lr_schedule(epoch):
-        lrate = 0.001
-        if epoch > 75:
-            lrate = 0.0005
-        if epoch > 100:
-            lrate = 0.0003
-        return lrate
-
     model = ConvModel()
-    w_scheulde = LearningRateScheduler(lr_schedule)
-    model.train(epochs=150, callbacks=[w_scheulde])
+    model.train(epochs=150)
