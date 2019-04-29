@@ -55,7 +55,7 @@ class SequentialModel(Model, DataProvider):
 
     def get_dataset(self, split, name='', batch_size=32, shuffle=10000, nmb_classes=10):
         dataset =  super().get_dataset(split, name, batch_size, shuffle, nmb_classes)
-        dataset = dataset.map(lambda x,y: (tf.divide(x, 255), y))
+        # dataset = dataset.map(lambda x,y: (tf.divide(x, 255), y))
         return dataset
 
     def test(self, test_data=None):
