@@ -27,18 +27,17 @@ def show_plot(logits, image):
     bar_plt.set_xticks(np.arange(10))
     plt.show()
 
-def deepfool(data_sample, model, min=0.0, max=1.0):
+def deepfool(data_sample, model, max_iter=100, min=0.0, max=1.0):
     image, label = data_sample
     label = tf.argmax(tf.squeeze(label)).numpy()
     show_plot(model(image), image)
     iter = 0
-    while tf.argmax(tf.squeeze(model(image))).numpy() == label:
-
+    while tf.argmax(tf.squeeze(model(image))).numpy() == label and iter < max_iter:
         logits = None
         gradients_by_cls = []
         with tf.GradientTape(persistent=True) as tape:
             tape.watch(image)
-            logits = model(image)
+            logits = model(image, get_raw=True)
             for k in range(10):
                 gradients_by_cls.append(tf.squeeze(tape.gradient(logits[0][k], image)).numpy())
 
@@ -57,13 +56,12 @@ def deepfool(data_sample, model, min=0.0, max=1.0):
             if k == tf.squeeze(label).numpy():
                 tmp.append(float("+inf"))
                 continue
-            tmp.append(abs(f_prime[k]) / np.linalg.norm(w_prime[k], ord=2))
+            tmp.append(abs(f_prime[k]) / np.linalg.norm(w_prime[k]))
         l = np.argmin(tmp)
-        perturbation = (abs(f_prime[l]) * w_prime[l]) / np.square(np.linalg.norm(w_prime[l], ord=2))
+        perturbation = (abs(f_prime[l]) * w_prime[l]) / np.square(np.linalg.norm(w_prime[l]))
         image = image + tf.reshape(tf.convert_to_tensor(perturbation, dtype=tf.float32), (1, 28, 28, 1))
         image = tf.clip_by_value(image, min, max)
-        # show_plot(model(image), image)
-
+        iter += 1
     show_plot(model(image), image)
 
 
@@ -72,7 +70,7 @@ def test_deepfool():
     model.load_model_data()
     eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1)
     target_label = 5
-    for data_sample in eval_dataset.take(1):
+    for data_sample in eval_dataset.take(10):
         deepfool(data_sample, model)
 
 if __name__ == "__main__":
