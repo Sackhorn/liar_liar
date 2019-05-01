@@ -1,5 +1,4 @@
 from tensorflow.python import enable_eager_execution, Tensor
-from tensorflow.python.framework.ops import EagerTensor
 from tensorflow.python.ops.losses.losses_impl import sparse_softmax_cross_entropy
 
 from models.MNISTModels.ConvModel import ConvModel
@@ -8,7 +7,10 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 import matplotlib.pyplot as plt
 
-from models.MNISTModels.DenseModel import DenseModel
+# TODO: Generalize for all models
+# jedno krokowe : https://arxiv.org/pdf/1412.6572.pdf
+# iteracyjne : dodać żródło ?
+
 
 
 def show_plot(logits, image):

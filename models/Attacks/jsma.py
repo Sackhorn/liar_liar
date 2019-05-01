@@ -6,6 +6,10 @@ import tensorflow_datasets as tfds
 import matplotlib.pyplot as plt
 
 
+# TODO: Generalize for all models
+# Source https://arxiv.org/pdf/1511.07528.pdf
+
+
 
 def show_plot(logits, image):
     """
