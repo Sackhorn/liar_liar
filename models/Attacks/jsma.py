@@ -1,7 +1,4 @@
-from mpl_toolkits import mplot3d
 from tensorflow.python import enable_eager_execution, Tensor
-from tensorflow.python.ops.losses.losses_impl import sparse_softmax_cross_entropy
-
 from models.MNISTModels.ConvModel import ConvModel
 import numpy as np
 import tensorflow as tf
@@ -20,65 +17,88 @@ def show_plot(logits, image):
     fig = plt.figure()
     img_plt = fig.add_subplot(121)
     img_plt.imshow(image.numpy().reshape(28, 28).astype(np.float32), cmap=plt.get_cmap("gray"))
-    # img_plt.imshow(tf.squeeze(image), cmap=plt.get_cmap("gray"))
     bar_plt = fig.add_subplot(122)
     bar_plt.bar(np.arange(10), probs)
     bar_plt.set_xticks(np.arange(10))
     plt.show()
 
-def _fgsm(data_sample, model, i, eps, y_target=None, min=0.0, max=1.0):
+def jsma(data_sample, model, i, eps, y_target=None, min=0.0, max=1.0):
     image, label = data_sample
     show_plot(model(image), image)
-    for p in range(i):
-        grds_by_cls = []
-        with tf.GradientTape(persistent=True) as tape:
-            tape.watch(image)
-            logits = model(image)
-            # gradient = tape.gradient(logits, image)
-            for k in range(10):
-                grds_by_cls.append(tf.squeeze(tape.gradient(logits[0][k], image)).numpy())
-        saliency_map = np.zeros((10,28,28))
-        for t in range(10):
-            for x in range(28):
-                for y in range(28):
-                    sum_of_other = 0.0
-                    for j in range(10):
-                        sum_of_other += grds_by_cls[j][x][y] if j!=t else 0.0
-                    if grds_by_cls[t][x][y] < 0.0 or sum_of_other > 0.0:
-                        saliency_map[t][x][y] = 0.0
-                    else:
-                        saliency_map[t][x][y] = grds_by_cls[t][x][y]*abs(sum_of_other)
-        # fig = plt.figure()
-        # ax = plt.axes(projection='3d')
-        # X, Y = np.meshgrid(np.arange(28), np.arange(28))
-        # ax.plot_surface(X, Y, saliency_map[1])
-        # plt.show()
-
+    all_pixels = generate_all_pixels(tf.squeeze(image).shape)
+    iter = 0
+    while iter < i and len(all_pixels) > 0:
+        all_pixel_pairs = generate_all_pixel_pairs(all_pixels)
+        chosen_pixel_pair = saliency_map(model, image, label, all_pixel_pairs)
         add_tensor = np.zeros((28,28))
-        max_index = np.unravel_index(np.argmax(saliency_map[1]), saliency_map[1].shape)
-        add_tensor[max_index] = 0.8
+        for pixel in chosen_pixel_pair:
+            add_tensor[pixel[0]][pixel[1]] = 0.6
+            pixel_val = image.numpy()[0][pixel[0]][pixel[1]]
+            if pixel_val < 1e-10 or pixel_val > 0.99:
+                all_pixels.remove(pixel)
         add_tensor = add_tensor.reshape((1,28,28,1))
         add_tensor = tf.convert_to_tensor(add_tensor, dtype=tf.float32)
-        # show_plot(logits, add_tensor)
         tf.reshape(add_tensor, (1,28,28,1))
         image = image + add_tensor
         image = tf.clip_by_value(image, min, max)
+        show_plot(model(image), image)
+
+        iter += 1
     show_plot(model(image), image)
 
-def untargeted_fgsm(data_sample, model, i, eps, min=0.0, max=1.0):
-    return _fgsm(data_sample, model, i, eps, min=min, max=max)
+def saliency_map(model, image, label, all_pixel_pairs):
+    target_label = 9
+    # true_label = tf.argmax(tf.squeeze(label)).numpy()
+    grds_by_cls = []
+    with tf.GradientTape(persistent=True) as tape:
+        tape.watch(image)
+        logits = model(image)
+        for k in range(10):
+            grds_by_cls.append(tf.squeeze(tape.gradient(logits[0][k], image)).numpy())
+    max = float("-inf")
+    return_pixel_pair = None
+    for pair in all_pixel_pairs:
+        alpha = 0.0
+        beta = 0.0
+        for pixel in pair:
+            alpha += grds_by_cls[target_label][pixel[0]][pixel[1]]
+            for class_nmb in range(10):
+                if class_nmb != target_label:
+                    beta += grds_by_cls[class_nmb][pixel[0]][pixel[1]]
+        if alpha > 0.0 and beta < 0 and -alpha*beta > max:
+            return_pixel_pair = pair
+            max = -alpha*beta
+    return return_pixel_pair
 
-def targeted_fgsm(data_sample, model, i, eps, y_target, min=0.0, max=1.0):
-    return _fgsm(data_sample, model, i, eps, y_target=y_target, min=min, max=max)
 
+
+def generate_all_pixels(shape):
+    x, y = shape
+    all_pixels = []
+    for i in range(x):
+        for j in range(y):
+            all_pixels.append((i, j))
+    return all_pixels
+
+def generate_all_pixel_pairs(all_pixels):
+    all_pairs = []
+    for i in range(len(all_pixels)):
+        first = all_pixels[i]
+        for j in all_pixels[i+1:]:
+            second = j
+            all_pairs.append((first, second))
+    return all_pairs
+
+
+def execute_jsma(data_sample, model, i, eps, min=0.0, max=1.0):
+    return jsma(data_sample, model, i, eps, min=min, max=max)
 
 def test_fgsm_mnist():
     model = ConvModel()
     model.load_model_data()
     eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1)
-    target_label = tf.constant(7, dtype=tf.int64, shape=(1))
     for data_sample in eval_dataset.take(1):
-        untargeted_fgsm(data_sample, model, 1000, 0.0001)
+        execute_jsma(data_sample, model, 80, 0.0001)
 
 if __name__ == "__main__":
     enable_eager_execution()
