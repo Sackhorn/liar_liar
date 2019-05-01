@@ -18,7 +18,8 @@ def show_plot(logits, image):
 
     :type image: Tensor
     """
-    probs = tf.nn.softmax(logits)
+    # probs = tf.nn.softmax(logits)
+    probs = logits
     probs = probs.numpy().reshape(10).tolist()
     fig = plt.figure()
     img_plt = fig.add_subplot(121)
