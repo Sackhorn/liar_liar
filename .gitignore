@@ -7,6 +7,7 @@ venv/
 latex/images/*
 saved_models/
 tboardlog/
+*.png
 
 
 ####################JETBRAINS IGNORE############
