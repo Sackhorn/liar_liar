@@ -1,4 +1,7 @@
+from typing import List, Any
+
 import tensorflow as tf
+from tensorflow.python import keras
 from tensorflow.python.keras import Model
 from tensorflow.python.keras.callbacks import TensorBoard, ReduceLROnPlateau
 
@@ -9,16 +12,26 @@ from matplotlib import pyplot as plt
 
 class SequentialModel(Model, DataProvider):
 
+    sequential_layers: List[keras.layers.Layer]
+
     def __init__(self, nmb_classes, optimizer, loss, metrics, MODEL_NAME=""):
         super(SequentialModel, self).__init__()
         self.register_data_provider(MODEL_NAME, nmb_classes)
         self.compile(optimizer=optimizer, loss=loss, metrics=metrics)
+        self.sequential_layers = []
 
 
-    def call(self, input):
-        result = self.sequential_layers[0](input)
-        for layer in self.sequential_layers[1:]:
+    def call(self, input, get_raw=False, **kwargs):
+        result = input
+        for layer in self.sequential_layers[:-1]:
             result = layer(result)
+        if get_raw:
+            activation_function = self.sequential_layers[-1].activation
+            self.sequential_layers[-1].activation = lambda x: x
+            result = self.sequential_layers[-1](result)
+            self.sequential_layers[-1].activation = activation_function
+        else:
+            result = self.sequential_layers[-1](result)
         return result
 
     def compute_output_shape(self, input_shape):
