@@ -1,15 +1,10 @@
-import os
-
-import tensorflow as tf
 from tensorflow.python import enable_eager_execution
-from tensorflow.python.keras.callbacks import LearningRateScheduler, TensorBoard, ReduceLROnPlateau
 from tensorflow.python.keras.layers import Conv2D, Flatten, Dense, Dropout, MaxPool2D, BatchNormalization
 from tensorflow.python.keras.losses import categorical_crossentropy
 from tensorflow.python.keras.metrics import categorical_accuracy
 from tensorflow.python.keras.optimizer_v2.adam import Adam
 from tensorflow.python.keras.regularizers import l2
 
-from models.BaseModels.DataProvider import DataProvider
 from models.CIFAR100Models.CIFAR100Model import CIFAR100Model
 
 
