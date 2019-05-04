@@ -13,7 +13,7 @@ class ConvModel(MNISTModel):
                  metrics=['categorical_accuracy']):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="mnist_conv_model")
         self.sequential_layers = [
-            tf.keras.layers.Conv2D(32, [3, 3], activation='relu'),
+            tf.keras.layers.Conv2D(32, [4, 4], activation='relu'),
             tf.keras.layers.Dropout(0.1),
             tf.keras.layers.MaxPool2D(),
 
