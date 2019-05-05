@@ -1,4 +1,3 @@
-import tensorflow as tf
 from tensorflow.python import enable_eager_execution
 from tensorflow.python.keras.layers import Flatten, Dense
 from tensorflow.python.keras.losses import categorical_crossentropy
@@ -10,10 +9,7 @@ from models.MNISTModels.MNISTModel import MNISTModel
 
 class DenseModel(MNISTModel):
 
-    def __init__(self,
-                 optimizer=Adam(),
-                 loss=categorical_crossentropy,
-                 metrics=[categorical_accuracy]):
+    def __init__(self, optimizer=Adam(), loss=categorical_crossentropy, metrics=[categorical_accuracy]):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="mnist_dense_model")
         self.sequential_layers = [
             Flatten(),

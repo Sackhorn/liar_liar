@@ -10,10 +10,7 @@ from models.CIFAR100Models.CIFAR100Model import CIFAR100Model
 
 class ConvModel(CIFAR100Model):
 
-    def __init__(self,
-                 optimizer=Adam(),
-                 loss=categorical_crossentropy,
-                 metrics=[categorical_accuracy]):
+    def __init__(self, optimizer=Adam(), loss=categorical_crossentropy, metrics=[categorical_accuracy]):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="cifar100_conv_model")
         self.sequential_layers = [
             Conv2D(64, [3, 3], padding='same', activation='elu', kernel_regularizer=l2(), input_shape=(32,32,3)),
