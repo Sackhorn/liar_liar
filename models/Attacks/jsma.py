@@ -14,7 +14,7 @@ import tensorflow_datasets as tfds
 def jsma(data_sample, model, i, eps, min=0.0, max=1.0):
     image, label = data_sample
     label = tf.argmax(tf.squeeze(label)).numpy()
-    show_plot(model(image), image)
+    show_plot(model(image), image, model.get_label_names())
     input_shape = model.get_input_shape()
     all_pixels = generate_all_pixels(input_shape)
     iter = 0
@@ -38,10 +38,10 @@ def jsma(data_sample, model, i, eps, min=0.0, max=1.0):
         tf.reshape(add_tensor, input_shape)
         image = image + add_tensor
         image = tf.clip_by_value(image, min, max)
-        show_plot(model(image), image)
+        show_plot(model(image), image, model.get_label_names())
 
         iter += 1
-    show_plot(model(image), image)
+    show_plot(model(image), image, model.get_label_names())
 
 # TODO:nie traktować każdej barwy jako osobny ficzer tylko sumować i zmieniać intensywność
 def saliency_map(model, image, true_label, all_pixels):

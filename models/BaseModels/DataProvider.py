@@ -21,6 +21,7 @@ class DataProvider():
         self.MODEL_NAME = MODEL_NAME
         self.SAVE_DIR = join(DataProvider.ROOT_DIR, DataProvider.MODEL_DIR_NAME, self.MODEL_NAME)
         self.dataset_name = dataset_name
+        self.builder = tfds.builder(self.dataset_name)
 
     def get_tensorboard_path(self):
         date_string = datetime.today().strftime("%d_%m_%Y_%H_%M")
@@ -30,13 +31,13 @@ class DataProvider():
         raise NotImplementedError("Implement call when overriding ModelBase")
 
     def get_input_shape(self):
-        info = tfds.builder(self.dataset_name).info
-        return info.features['image'].shape
-
+        return self.builder.info.features['image'].shape
 
     def get_number_of_classes(self):
-        info = tfds.builder(self.dataset_name).info
-        return info.features['label'].num_classes
+        return self.builder.info.features['label'].num_classes
+
+    def get_label_names(self):
+        return self.builder.info.features['label'].names
 
     def get_dataset(self, split, batch_size=32, shuffle=10000):
         augmentations = [rotate, flip]

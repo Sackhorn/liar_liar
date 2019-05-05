@@ -21,7 +21,7 @@ def deepfool(data_sample, model, max_iter=100, min=0.0, max=1.0):
     nmb_classes = model.get_number_of_classes()
     image, label = data_sample
     label = tf.argmax(tf.squeeze(label)).numpy()
-    show_plot(model(image), image)
+    show_plot(model(image), image, model.get_label_names())
     iter = 0
     while tf.argmax(tf.squeeze(model(image))).numpy() == label and iter < max_iter:
         logits = None
@@ -53,7 +53,7 @@ def deepfool(data_sample, model, max_iter=100, min=0.0, max=1.0):
         image = image + tf.reshape(tf.convert_to_tensor(perturbation, dtype=tf.float32), model.get_input_shape())
         image = tf.clip_by_value(image, min, max)
         iter += 1
-    show_plot(model(image), image)
+    show_plot(model(image), image, model.get_label_names())
 
 
 def test_deepfool():

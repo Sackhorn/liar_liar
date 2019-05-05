@@ -13,7 +13,7 @@ import tensorflow as tf
 
 def _fgsm(data_sample, model, i, eps, y_target=None, min=0.0, max=1.0):
     image, label = data_sample
-    show_plot(model(image), image)
+    show_plot(model(image), image, model.get_label_names())
     eps = eps if y_target is None else -eps
     label = tf.argmax(label, axis=1) if y_target is None else y_target
     for i in range(i):
@@ -24,7 +24,7 @@ def _fgsm(data_sample, model, i, eps, y_target=None, min=0.0, max=1.0):
         gradient = tape.gradient(loss, image)
         image = image + eps * tf.sign(gradient)
         image = tf.clip_by_value(image, min, max)
-    show_plot(model(image), image)
+    show_plot(model(image), image, model.get_label_names())
 
 def untargeted_fgsm(data_sample, model, i, eps, min=0.0, max=1.0):
     return _fgsm(data_sample, model, i, eps, min=min, max=max)
