@@ -4,6 +4,7 @@ from os.path import *
 
 import tensorflow as tf
 import tensorflow_datasets as tfds
+from tensorflow_datasets import Split
 
 
 class DataProvider():
@@ -14,12 +15,12 @@ class DataProvider():
     def __init__(self):
         pass
 
-    def register_data_provider(self, MODEL_NAME="", nmb_classes=10):
-        if MODEL_NAME == "":
-            raise NotImplementedError("Please support model name in subclass super call to this base class")
+    def register_data_provider(self, MODEL_NAME, dataset_name):
+        if MODEL_NAME == "" or dataset_name=="":
+            raise NotImplementedError("Please support model and dataset name in subclass super call to this base class")
         self.MODEL_NAME = MODEL_NAME
         self.SAVE_DIR = join(DataProvider.ROOT_DIR, DataProvider.MODEL_DIR_NAME, self.MODEL_NAME)
-        self.nmb_classes = nmb_classes
+        self.dataset_name = dataset_name
 
     def get_tensorboard_path(self):
         date_string = datetime.today().strftime("%d_%m_%Y_%H_%M")
@@ -28,12 +29,21 @@ class DataProvider():
     def call(self, input):
         raise NotImplementedError("Implement call when overriding ModelBase")
 
-    def get_dataset(self, split, name='', batch_size=32, shuffle=10000):
+    def get_input_shape(self):
+        info = tfds.builder(self.dataset_name).info
+        return info.features['image'].shape
+
+
+    def get_number_of_classes(self):
+        info = tfds.builder(self.dataset_name).info
+        return info.features['label'].num_classes
+
+    def get_dataset(self, split, batch_size=32, shuffle=10000):
         augmentations = [rotate, flip]
 
         def cast_labels(x, y):
             x = tf.cast(x, tf.float32)/255.0
-            y = tf.one_hot(y, self.nmb_classes)
+            y = tf.one_hot(y, self.get_number_of_classes())
             return x, y
 
         def augment_data(x, y):
@@ -43,7 +53,7 @@ class DataProvider():
             tf.clip_by_value(x, 0, 1)
             return x, y
 
-        dataset, info = tfds.load(name, split=split, with_info=True, as_supervised=True)  # type: tf.data.Dataset
+        dataset, info = tfds.load(self.dataset_name, split=split, with_info=True, as_supervised=True)  # type: tf.data.Dataset
         dataset = dataset.map(cast_labels).shuffle(shuffle).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
         if split == tfds.Split.TRAIN:
             dataset = dataset.map(augment_data, num_parallel_calls=tf.data.experimental.AUTOTUNE)

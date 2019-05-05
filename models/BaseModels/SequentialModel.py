@@ -15,9 +15,9 @@ class SequentialModel(Model, DataProvider):
 
     sequential_layers: List[keras.layers.Layer]
 
-    def __init__(self, nmb_classes, optimizer, loss, metrics, MODEL_NAME=""):
+    def __init__(self, optimizer, loss, metrics, MODEL_NAME="", dataset_name=''):
         super(SequentialModel, self).__init__()
-        self.register_data_provider(MODEL_NAME, nmb_classes)
+        self.register_data_provider(MODEL_NAME, dataset_name)
         self.compile(optimizer=optimizer, loss=loss, metrics=metrics)
         self.sequential_layers = []
 
@@ -34,11 +34,6 @@ class SequentialModel(Model, DataProvider):
         else:
             result = self.sequential_layers[-1](result)
         return result
-
-    def compute_output_shape(self, input_shape):
-        shape = tf.TensorShape(input_shape).as_list()
-        shape[-1] = self.num_classes
-        return tf.TensorShape(shape)
 
     def train(self, epochs=1, train_data=None, callbacks=[]):
         tsboard = TensorBoard(log_dir=self.get_tensorboard_path(), histogram_freq=10, write_graph=True)
@@ -57,10 +52,6 @@ class SequentialModel(Model, DataProvider):
 
         self.evaluate(self.test, steps=self.test_steps)
         self.save_model_data()
-
-    def get_dataset(self, split, name='', batch_size=32, shuffle=10000):
-        dataset =  super().get_dataset(split, name, batch_size, shuffle)
-        return dataset
 
     def test(self, test_data=None):
         test = self.get_dataset(Split.TEST) if test_data is None else test_data
