@@ -19,8 +19,7 @@ class DataProvider():
             raise NotImplementedError("Please support model name in subclass super call to this base class")
         self.MODEL_NAME = MODEL_NAME
         self.SAVE_DIR = join(DataProvider.ROOT_DIR, DataProvider.MODEL_DIR_NAME, self.MODEL_NAME)
-        self.train_dataset = self.get_dataset(tfds.Split.TRAIN, nmb_classes=nmb_classes)
-        self.test_dataset = self.get_dataset(tfds.Split.TEST, nmb_classes=nmb_classes)
+        self.nmb_classes = nmb_classes
 
     def get_tensorboard_path(self):
         date_string = datetime.today().strftime("%d_%m_%Y_%H_%M")
@@ -29,12 +28,12 @@ class DataProvider():
     def call(self, input):
         raise NotImplementedError("Implement call when overriding ModelBase")
 
-    def get_dataset(self, split, name='', batch_size=32, shuffle=10000, nmb_classes=10):
+    def get_dataset(self, split, name='', batch_size=32, shuffle=10000):
         augmentations = [rotate, flip]
 
         def cast_labels(x, y):
             x = tf.cast(x, tf.float32)/255.0
-            y = tf.one_hot(y, nmb_classes)
+            y = tf.one_hot(y, self.nmb_classes)
             return x, y
 
         def augment_data(x, y):

@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow.python import keras
 from tensorflow.python.keras import Model
 from tensorflow.python.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint
+from tensorflow_datasets import Split
 
 from models.BaseModels.DataProvider import DataProvider
 from matplotlib import pyplot as plt
@@ -44,23 +45,25 @@ class SequentialModel(Model, DataProvider):
         checkpoint = ModelCheckpoint(self.SAVE_DIR, save_best_only=True, save_weights_only=True)
         lr_callback = ReduceLROnPlateau(factor=0.5, patience=10, verbose=1, min_delta=0.005)
         callback = [tsboard, lr_callback, checkpoint] + callbacks
-        train = self.train_dataset if train_data is None else train_data
+
+        test = self.get_dataset(Split.TEST)
+        train = self.get_dataset(Split.TRAIN) if train_data is None else train_data
         self.fit(train.repeat(),
                  epochs=epochs,
                  steps_per_epoch=self.train_steps_per_epoch,
                  callbacks=callback,
-                 validation_data=self.test_dataset,
+                 validation_data=test,
                  validation_steps=self.test_steps)
 
-        self.evaluate(self.test_dataset, steps=self.test_steps)
+        self.evaluate(self.test, steps=self.test_steps)
         self.save_model_data()
 
-    def get_dataset(self, split, name='', batch_size=32, shuffle=10000, nmb_classes=10):
-        dataset =  super().get_dataset(split, name, batch_size, shuffle, nmb_classes)
+    def get_dataset(self, split, name='', batch_size=32, shuffle=10000):
+        dataset =  super().get_dataset(split, name, batch_size, shuffle)
         return dataset
 
     def test(self, test_data=None):
-        test = self.test_dataset if test_data is None else test_data
+        test = self.get_dataset(Split.TEST) if test_data is None else test_data
         self.evaluate(test, steps=self.test_steps)
 
 

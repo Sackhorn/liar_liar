@@ -10,5 +10,5 @@ class CIFAR100Model(SequentialModel):
                          metrics=metrics,
                          MODEL_NAME=MODEL_NAME)
 
-    def get_dataset(self, split, name='cifar100', batch_size=32, shuffle=10000, nmb_classes=100):
-        return super().get_dataset(split, name, batch_size, shuffle, nmb_classes)
+    def get_dataset(self, split, name='cifar100', batch_size=32, shuffle=10000):
+        return super().get_dataset(split, name, batch_size, shuffle)
