@@ -1,31 +1,15 @@
-from tensorflow.python import enable_eager_execution, Tensor
-from models.MNISTModels.ConvModel import ConvModel
+from tensorflow.python import enable_eager_execution
+from models.utils.images import show_plot
+from models.MNISTModels.DenseModel import DenseModel
+
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
-import matplotlib.pyplot as plt
 
 
 # TODO: Generalize for all models
 # Source https://arxiv.org/pdf/1511.07528.pdf
-from models.MNISTModels.DenseModel import DenseModel
 
-
-def show_plot(logits, image):
-    """
-
-    :type image: Tensor
-    """
-    # probs = tf.nn.softmax(logits)
-    probs = logits
-    probs = probs.numpy().reshape(10).tolist()
-    fig = plt.figure()
-    img_plt = fig.add_subplot(121)
-    img_plt.imshow(image.numpy().reshape(28, 28).astype(np.float32), cmap=plt.get_cmap("gray"))
-    bar_plt = fig.add_subplot(122)
-    bar_plt.bar(np.arange(10), probs)
-    bar_plt.set_xticks(np.arange(10))
-    plt.show()
 
 def deepfool(data_sample, model, max_iter=100, min=0.0, max=1.0):
     image, label = data_sample
