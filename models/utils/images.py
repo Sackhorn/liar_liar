@@ -1,14 +1,15 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from models.BaseModels.SequentialModel import SequentialModel
-
-def show_plot(logits, image, labels_names):
+from tensorflow import Tensor
+def show_plot(logits, image, labels_names=None):
     """
 
-    :type model: Tensor
+    :type logits: Tensor
     :type image: Tensor
     """
+    labels_names = np.arange(logits.numpy().size) if labels_names is None else labels_names
+
     probs = logits.numpy().flatten().tolist()
 
     plt.subplot(1, 2, 1)
