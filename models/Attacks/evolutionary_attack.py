@@ -34,11 +34,13 @@ def evolutionary_attack(model, population_size, iter_max, min=0.0, max=1.0, muta
 
     for i in range(iter_max):
         if i%100==0: print(i)
+        if i%500==0: mutation_chance = mutation_chance * 0.9
         current_specimen = random.choice(population)
         if use_gausian:
-            mutated_specimen = mutate_specimen_gausian(current_specimen, min, max, mutation_chance, mutation_power)
+            mutated_specimen = mutate_specimen_gausian(current_specimen, min, max, mutation_chance)
         else:
             mutated_specimen = mutate_specimen(current_specimen, min, max, mutation_chance, mutation_power)
+
         logits = model(tf.expand_dims(tf.convert_to_tensor(mutated_specimen, dtype=tf.float32), 0))
 
         certainties_per_class = tf.squeeze(logits).numpy()
@@ -71,9 +73,9 @@ def mutate_specimen(specimen, min, max, mutation_chance, mutation_power=15):
                     delta = 1.0 - (2 * (1 - u))** (1 / (1 + mutation_power))
                     new_val = old_val + delta * (max - old_val)
                 old_val[...] = new_val
-    return specimen
+    return np.clip(specimen, min, max)
 
-def mutate_specimen_gausian(specimen, min, max, mutation_chance, mutation_power=15):
+def mutate_specimen_gausian(specimen, min, max, mutation_chance):
     specimen = np.copy(specimen)
     std_dev = 0.5 * (max-min)
     with np.nditer(specimen, op_flags=['readwrite']) as it:
@@ -81,14 +83,14 @@ def mutate_specimen_gausian(specimen, min, max, mutation_chance, mutation_power=
             if np.random.uniform() < mutation_chance:
                 new_val = np.random.normal(old_val, std_dev)
                 old_val[...] = np.clip(new_val, min, max)
-    return specimen
+    return np.clip(specimen, min, max)
 
 
 def test_ea_attack():
     model = DenseModel()
     model.load_model_data()
     model.test()
-    evolutionary_attack(model, 100, 2000, use_normal=True, use_gausian=False)
+    evolutionary_attack(model, 1000, 5000, use_normal=False, use_gausian=False)
 
 
 if __name__ == "__main__":
