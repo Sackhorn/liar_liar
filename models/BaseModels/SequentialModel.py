@@ -50,7 +50,7 @@ class SequentialModel(Model, DataProvider):
                  validation_data=test,
                  validation_steps=self.test_steps)
 
-        self.evaluate(self.test, steps=self.test_steps)
+        self.evaluate(test, steps=self.test_steps)
         self.save_model_data()
 
     def test(self, test_data=None):
