@@ -35,14 +35,14 @@ class SequentialModel(Model, DataProvider):
             result = self.sequential_layers[-1](result)
         return result
 
-    def train(self, epochs=1, train_data=None, callbacks=[]):
+    def train(self, epochs=1, train_data=None, callbacks=[], augment_data=True):
         tsboard = TensorBoard(log_dir=self.get_tensorboard_path(), histogram_freq=10, write_graph=True)
         checkpoint = ModelCheckpoint(self.SAVE_DIR, save_best_only=True, save_weights_only=True)
         lr_callback = ReduceLROnPlateau(factor=0.5, patience=10, verbose=1, min_delta=0.005)
         callback = [tsboard, lr_callback, checkpoint] + callbacks
 
         test = self.get_dataset(Split.TEST)
-        train = self.get_dataset(Split.TRAIN) if train_data is None else train_data
+        train = self.get_dataset(Split.TRAIN, augment_data=augment_data) if train_data is None else train_data
         self.fit(train.repeat(),
                  epochs=epochs,
                  steps_per_epoch=self.train_steps_per_epoch,
