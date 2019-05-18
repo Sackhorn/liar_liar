@@ -23,4 +23,4 @@ class DenseModel(MNISTModel):
 if __name__ == "__main__":
     enable_eager_execution()
     model = DenseModel()
-    model.train(epochs=5, augment_data=False)
+    model.train(epochs=5)
