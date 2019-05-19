@@ -1,5 +1,8 @@
+matplotlib
 numpy==1.16.0
 Pillow==5.1.0
 scipy==1.2.0
-tfds-nightly
-tensorflow-gpu=1.13
+tensorflow_datasets
+tensorflow-gpu=2.0.0a
+pydot==1.4.1
+graphviz==0.10.1
