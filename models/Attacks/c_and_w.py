@@ -48,7 +48,7 @@ def c_and_w(data_sample, model, i_max, target_label, min=0.0, max=1.0):
     c_high = 1000
     c_low = 0
     c_half = None
-    for i in range(20):
+    for i in range(12):
         c_half = (c_high+c_low)/2
         new_image = optimize_c_and_w(data_sample, model, i_max, target_label, c_half, min=min, max=max)
 
@@ -62,13 +62,13 @@ def c_and_w(data_sample, model, i_max, target_label, min=0.0, max=1.0):
         show_plot(model(new_image), new_image, model.get_label_names())
 
     print("c_half = " + str(c_half))
-    new_image = optimize_c_and_w(data_sample, model, 10 * i_max, target_label, c_half, min=min, max=max)
+    new_image = optimize_c_and_w(data_sample, model, 10 * i_max, target_label, c_high, min=min, max=max)
     show_plot(model(new_image), new_image, model.get_label_names())
 
 def test_c_and_w():
     model = ConvModel()
     model.load_model_data()
-    target_label = tf.one_hot(tf.constant(3, dtype=tf.int64, shape=(1)), model.get_number_of_classes())
+    target_label = tf.one_hot(tf.constant(6, dtype=tf.int64, shape=(1)), model.get_number_of_classes())
     for data_sample in  model.get_dataset(Split.TEST, batch_size=1).take(1):
         c_and_w(data_sample, model, 1000, target_label)
         # optimize_c_and_w(data_sample, model, 10000, target_label, 10)
