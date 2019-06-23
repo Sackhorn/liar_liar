@@ -15,9 +15,9 @@ class SequentialModel(Model, DataProvider):
 
     sequential_layers: List[keras.layers.Layer]
 
-    def __init__(self, optimizer, loss, metrics, MODEL_NAME="", dataset_name=''):
+    def __init__(self, optimizer, loss, metrics, MODEL_NAME="", dataset_name='', dataset_dir=''):
         super(SequentialModel, self).__init__()
-        self.register_data_provider(MODEL_NAME, dataset_name)
+        self.register_data_provider(MODEL_NAME, dataset_name, dataset_dir)
         self.compile(optimizer=optimizer, loss=loss, metrics=metrics)
         self.sequential_layers = []
 

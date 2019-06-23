@@ -15,12 +15,13 @@ class DataProvider():
     def __init__(self):
         pass
 
-    def register_data_provider(self, MODEL_NAME, dataset_name):
+    def register_data_provider(self, MODEL_NAME, dataset_name, dataset_dir):
         if MODEL_NAME == "" or dataset_name=="":
             raise NotImplementedError("Please support model and dataset name in subclass super call to this base class")
         self.MODEL_NAME = MODEL_NAME
         self.SAVE_DIR = join(DataProvider.ROOT_DIR, DataProvider.MODEL_DIR_NAME, self.MODEL_NAME)
         self.dataset_name = dataset_name
+        self.data_dir = dataset_dir
         self.builder = tfds.builder(self.dataset_name)
 
     def get_tensorboard_path(self):
@@ -53,8 +54,12 @@ class DataProvider():
                 x = tf.cond(tf.random.uniform([], minval=0.0, maxval=1.0) > 0.75, lambda: f(x), lambda: x)
             tf.clip_by_value(x, 0, 1)
             return x, y
-
-        dataset, info = tfds.load(self.dataset_name, split=split, with_info=True, as_supervised=True)  # type: tf.data.Dataset
+        if self.data_dir != '':
+            builder: tfds.core.DatasetBuilder = tfds.builder(self.dataset_name, data_dir=self.data_dir)
+            dataset = builder.as_dataset(split=split, as_supervised=True)
+            info = builder.info
+        else:
+            dataset, info = tfds.load(self.dataset_name, split=split, with_info=True, as_supervised=True)  # type: tf.data.Dataset
         dataset = dataset.map(cast_labels).shuffle(shuffle).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
         if split == tfds.Split.TRAIN and augment_data:
             dataset = dataset.map(augment_data, num_parallel_calls=tf.data.experimental.AUTOTUNE)
