@@ -2,12 +2,13 @@ import tensorflow as tf
 from tensorflow.python import enable_eager_execution
 from tensorflow.python.keras.applications import InceptionV3
 from tensorflow.python.keras.losses import categorical_crossentropy
-from tensorflow.python.keras.metrics import categorical_accuracy
+from tensorflow.python.keras.metrics import categorical_accuracy, top_k_categorical_accuracy
 from tensorflow.python.keras.optimizer_v2.adam import Adam
 import tensorflow_datasets as tfds
 
 from models.ImageNet.ImageNetModel import ImageNetModel
 
+import tensorflow as tf
 
 class ResNetWrapper(ImageNetModel):
 
@@ -16,7 +17,7 @@ class ResNetWrapper(ImageNetModel):
     def __init__(self,
                  optimizer=Adam(),
                  loss=categorical_crossentropy,
-                 metrics=[categorical_accuracy]):
+                 metrics=[top_k_categorical_accuracy]):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="imagenet_v3")
         self.imagenet = InceptionV3()
 
