@@ -55,9 +55,7 @@ class DataProvider():
             tf.clip_by_value(x, 0, 1)
             return x, y
         if self.data_dir != '':
-            builder: tfds.core.DatasetBuilder = tfds.builder(self.dataset_name, data_dir=self.data_dir)
-            dataset = builder.as_dataset(split=split, as_supervised=True)
-            info = builder.info
+            dataset, info = tfds.load(self.dataset_name, split=tfds.Split.VALIDATION, with_info=True, as_supervised=True, data_dir=self.data_dir)  # type: tf.data.Dataset
         else:
             dataset, info = tfds.load(self.dataset_name, split=split, with_info=True, as_supervised=True)  # type: tf.data.Dataset
         dataset = dataset.map(cast_labels).shuffle(shuffle).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
@@ -66,7 +64,10 @@ class DataProvider():
         self.info = info
         self.batch_size = batch_size
         self.train_steps_per_epoch = info.splits['train'].num_examples // batch_size
-        self.test_steps = info.splits['test'].num_examples // batch_size
+        try:
+            self.test_steps = info.splits['test'].num_examples // batch_size
+        except:
+            self.test_steps = info.splits[tfds.Split.VALIDATION].num_examples // batch_size
         return dataset
 
 
