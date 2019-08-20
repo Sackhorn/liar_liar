@@ -9,6 +9,11 @@
 \usepackage{caption}
 \usepackage{listing}
 \usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{algorithm}% http://ctan.org/pkg/algorithms
+\usepackage{algcompatible}% http://ctan.org/pkg/algorithmicx
+\usepackage[noend]{algpseudocode}
+
 
 \graphicspath{ {images/} }
 
@@ -30,6 +35,8 @@ modeli klasyfikacyjnych na ataki z użyciem złośliwych danych
 \begin{document}
 \maketitle
 
+\
+
 \section{Wstep}
 Wraz z rozwojem i upowszechnianiem się modeli klasyfikujących obrazy graficzne,
 pojawiają się nowe zagrożenia związane z bezpieczeństwem tej klasy rozwiązań.
@@ -50,13 +57,24 @@ Od czasu opublikowania przez firmę Google biblioteka Tensorflow \todo{citation 
 stała się jednym z wiodących narzędzi wykorzystywanych w branży. Prostota interfejsu programistycznego
 w języku Python, akceleracja obliczeń z wykorzystaniem procesorów graficznych oraz dobra integracja z
 popularnymi bibliotekami dostępnymi dla języka Python czyni Tensorflow idealnym kandydatem.
-W trakcie pracy wykorzystywałem głownie wysokopoziomowy interfejs Keras, który pozwala na szybkie
-prototypowanie oraz na małą złożoność kodu źródłowego skryptów.
+W trakcie pracy wykorzystywałem głównie wysokopoziomowy interfejs Keras, który pozwala na szybkie
+prototypowanie oraz na małą złożoność kodu źródłowego.
+Platforma testowa jakiej użyto to:
+\begin{itemize}
+    \item CPU: Intel i5-2500K
+    \item GPU: Nvidia GeForce 1060 GTX 6GB
+    \item RAM: 8GB DDR3
+    \item System Operacyjny: Windows 10
+    \item Tensorflow wersja 2.0.0a
+    \item Interpreter Python 3.6.8 wersja 64bit
+\end{itemize}
+Wszystkie pozostałe biblioteki Python, wraz z wersjami, wykorzystane w projekcie, znajdują się w pliku
+requirements.txt w folderze projektu.
 
 \section{Modele i dane testowe}
 Aby sprawdzić poprawność implementacji oraz skuteczność ataków stworzyłem
 kilka modeli klasyfikacyjnych o różnej złożoności, opartych o popularne zbiory danych
-wykorzystywanych jako wspólny mianownik w publikacjach pokrewnych tematyką.
+wykorzystywanych jako platforma testowa w publikacjach pokrewnych tematyką.
 
     \subsection{MNIST}
     Zbiór danych MNIST \todo{citation needed} to najprawdopodobniej najpopularniejszy zbiór związany z
@@ -72,6 +90,9 @@ wykorzystywanych jako wspólny mianownik w publikacjach pokrewnych tematyką.
     Aby usunąć problem nadmiernego dopasowania modeli obrazy z zbioru CIFAR10 używane
     do trenowania są losowo modyfikowane. Każdy obraz ma szanse 0.25 \todo{tutaj uzupełnić} na
     modyfikacje natężenia, nasycenia, kontrastu oraz odcienia. Dodatkowo każdy obraz może zostać obrócony bądź odbity.
+
+    \subsection{ImageNet}
+    \todo{Tutaj uzupełnić}
 
 
 
@@ -94,6 +115,113 @@ Możemy też rozróżnić ataki z uwagi na to jakie dane są dostępne dla algor
     \item Dostępne są tylko dane wejściowe i klasa do jakiej model przyporządkowuje dany przykład
     \item \todo{poprawić powyższe i dodać cytowanie}
 \end{enumerate}
+
+
+\section{Wykorzystane Ataki}
+W projekcie zaimplementowałem kilka ataków które zostały opisane w anglojęzycznych publikacjach.
+
+\subsection{FGSM}
+    FGSM czyli Metoda szybkiego znaku gradientu (z ang. Fast Gradient Sign Method) opsiana w artykule
+    pod tytułem \textit{Explaining and Harnessing Adversarial Examples}\cite{harnessing} to jedna z pierwszych
+    opisanych metod ataku na modele klasyfikacyjne wykorzystujący złośliwe dane.
+    Aby wygenerować złośliwy przykład metoda ta wymaga znajomości gradientu funkcji kosztu obliczanego względem danych
+    wejściowych oznaczonego jako
+
+    \begin{equation}
+    \(\nabla_{x} J(x, y)\).
+    \qquad\text{gdzie}
+    \begin{tabular}[t]{ll}
+    $x$   & -- dane wejściowe \\
+    $y_{prawdziwe}$   & -- klasa do której należą dane wejściowe\\
+    $J(x, y_{prawdziwe})$  & -- funkcja kosztu \\
+    $\nabla_{x}$  & -- gradient względem danych wejściowych \\
+    \end{tabular}
+    \end{equation}
+
+    Idea metody polega na dodaniu bądź odjęciu małej, arbitralnie ustalonej, wartości (oznaczanej przez \(\epsilon\)) do
+    danych wejściowych w zależności od znaku gradientu tak aby zwiększyć wartość funkcji kosztu,
+    doprowadzając do niepoprawnej klasyfikacji danych wejściowych zmodyfikowanych w niewielkim stopniu.
+    Możemy zapisać to działanie w następujący sposób.
+
+    \begin{equation}
+    x' = x + \epsilon\operatorname{sign}(\nabla_{x} J(x, y_{prawdziwe}))
+    \qquad\text{gdzie}
+    \begin{tabular}[t]{ll}
+    $x'$  & -- spreparowany przykład ze złośliwymi danymi \\
+    \end{tabular}
+    \end{equation}
+
+    Analogiczny przykład do tego znajdującego się w oryginalnej publikacji\cite{harnessing} znajduje się poniżej.
+    \todo{tutaj wstawić przykład z dodawaniem obrazków}
+
+    Podstawową wadą opisywanej metody jest fakt że nie mamy wpływu na to jaka będzie klasa wyjściowa
+    spreparowanych przez nas danych wejściowych. Kolejną jest to że niektóre dane i modele wymagają od nas
+    doboru wysokiej wartości parametru $\epsilon$ aby być w stanie spreparować pożądane dane, co z kolei powoduje dużą
+    różnicę między danymi wejściowymi a tymi utworzonymi w toku stosowania metody.
+    W publikacji pod tytułem \textit{Adversarial examples in the physical world}\cite{DBLP:journals/corr/KurakinGB16}
+    autorzy opisują kilka metod pochodnych do FGSM.
+
+    \subsubsection{I-FGSM}
+    I-FGSM czyli Iteracyjna Metoda Szybkiego Znaku Gradientu (z ang. Iterative Fast Gradient Sign Method) to metoda
+    które rozwiązuje problem konieczności doboru wysokiej wartości $\epsilon$ poprzez zastosowanie metody FGSM kilkakrotnie
+    ,jednocześnie zapewniając pod koniec każdego kroku że przyogotowany każdy piksel obrazu nie różni się od oryginału o więcej
+    niż \epsilon, z niższą wartością parametru $\epsilon$ niż wymagane oryginalnie w metodzie jednokrokowej.
+    Pozwala to  potencjalnie ogarniczyć różnicę między preparowanymi przez nas danymi a oryginalnymi danymi wejściowymi
+    oraz przerwanie działania metody kiedy model przestania poprawnie klasyfikować dane wejściowe.
+
+    \begin{algorithm}
+    \caption{I-FGSM}\label{IFGSM}
+    \begin{algorithmic}[1]
+    \State $i \gets 0$
+    \While{$i <  i_{max}$}
+        \State $x' = x + \alpha\operatorname{sign}(\nabla_{x} J(x, y_{prawdziwe}))$
+        \State $i \gets i+1$
+        \State $Przytnij(x', \epsilon)$
+    \EndWhile
+    \end{algorithmic}
+    \end{algorithm}
+
+    \subsection{LL-FGSM}
+    LL-FGSM (z ang. Least Likely FGSM) to metoda pozwalająca nam na spreparowanie danych które będę przydzielane do
+    konkretnej klasy (ozn. $y_{celu}$), a nie tylko na niepoprawną klasyfikacje. W tym wypadku zamiast starać się
+    zmieniać wartości pikseli obrazu zgodnie z kierunkiem gradientu funkcji kosztu dla prawidłowej klasy
+    staramy się zmieniać wartości pikseli przeciwnie do kierunku gradientu funkcji kosztu dla klasy $y_{celu}$.
+    Intuicyjnie można to opisać jako nie oddalanie się od prawdziwej klasy obrazu, a jako przybliżanie się do zadanej
+    przez nas klasy.
+    Autorzy metody zwracają uwagę na przydatność tej metody
+    w przypadku gdy korzystamy z modeli operujących wielu klasach i gdzie różnice między obiektami z różnych klas mogą
+    być bardzo niewielkie (np. między rasami psów). Metoda ta jest także iteracyjna i zapewnie różnice między
+    odpowiednimi pikselami obrazów nie większą niż $\epsilon$ więc można uznać ją za rozszerzenie metody I-FGSM.
+
+    \begin{algorithm}
+    \caption{LL-FGSM}\label{LLFGSM}
+    \begin{algorithmic}[1]
+    \State $i \gets 0$
+    \While{$i <  i_{max}$}
+        \State $x' = x - \alpha\operatorname{sign}(\nabla_{x} J(x, y_{celu}))$
+        \State $i \gets i+1$
+        \State $Przytnij(x', \epsilon)$
+    \EndWhile
+    \end{algorithmic}
+    \end{algorithm}
+
+
+\subsection{L-BFGS}
+First described in \cite{DBLP:journals/corr/SzegedyZSBEGF13}
+
+\subsection{DeepFool}
+First described in \cite{DBLP:journals/corr/Moosavi-Dezfooli15}
+
+\subsection{JSMA}
+First \cite{DBLP:journals/corr/PapernotMJFCS15}
+
+\subsection{Carlini & Wagner}
+First in \cite{DBLP:journals/corr/CarliniW16a}
+
+\subsection{Evolutionary Attack}
+First in \cite{DBLP:journals/corr/NguyenYC14}
+
+
 
 
 
