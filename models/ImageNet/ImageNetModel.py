@@ -13,6 +13,8 @@ class ImageNetModel(SequentialModel):
                          dataset_name='imagenet2012',
                          dataset_dir='E:\\')
 
+    def get_input_shape(self):
+        return (299,299,3)
 
     def get_dataset(self, split, batch_size=32, shuffle=10000, augment_data=True):
         def cast_labels(x, y):
