@@ -205,15 +205,53 @@ W projekcie zaimplementowałem kilka ataków które zostały opisane w anglojęz
     \end{algorithmic}
     \end{algorithm}
 
+\subsection{DeepFool}
+W publikacji \textit{DeepFool: a simple and accurate method to fool deep neural networks}\cite{DBLP:journals/corr/Moosavi-Dezfooli15}
+autorzy proponują metodę alternatywną do FGSM mającą minimalizować wprowadzaną do danych wejściowych perturbacje jednocześnie
+osiągając zmianę klasy do której model przyporządkowuje dane wejściowe. Punktem wyjściowym rozważań autorów było założenie
+że model z którego korzystamy jest przekształceniem afinicznym, opracowanie metody pozwalającej na
+uzyskanie zminimalizowanej perturbacji, a następnie zgeneralizowanie metody dla modeli nie będących przekształceniami afinicznymi.
+Wadą DeepFool jest brak możliwości narzucenia klasy do której chcielibyśmy aby przyporządkowywane były nasze zmodyfikowane dane.
+Metoda ta jest nieco bardziej złożona obliczeniowo jako że pojedynczy krok algorytmu wymaga od nas obliczenia gradientu dla
+prawdopodobieństwa każdej klasy względem danych wejściowych, co przy zbiorach danych z wieloma klasami
+takich jak np. ImageNet może być problematyczne. Poniżej znajduje się pseudokod opisujący metodę DeepFool dla modelu
+wieloklasowego.
+
 
 \subsection{L-BFGS}
-First described in \cite{DBLP:journals/corr/SzegedyZSBEGF13}
+Metoda opisana w \textit{Intriguing properties of neural networks}\cite{DBLP:journals/corr/SzegedyZSBEGF13}
+to próba rozwiązania poniższego problemu optymalizacyjnego w celu uzyskania minimalnej perturbacji danych wejściowych
+która powoduje niepoprawną klasyfikacje danych przez model:
+    \begin{equation}
+    \min{\| r\|_{2}}
+    \qquad\text{przy warunkach:}
+    \begin{tabular}[t]{ll}
+    f(x + r) = y_{celu} \\
+    x+r \in [0,1]^{m} \\
+    \end{tabular}
+    \qquad\text{gdzie:}
+    \begin{tabular}[t]{ll}
+    r - perturbacja \\
+    \end{tabular}
+    \end{equation}
+Znalezienie dokładnego rozwiązania powyższego problemu jest skomplikowane, dlatego autorzy postanowili szukać aproksymacji
+rozwiązania poprzez liniowe przeszukiwanie w celu znalezienia najmniejszej wartości parametru $c > 0$ dla którego spełniony
+zostaje warunek $f(x+r) = y_{celu}$ gdzie $r$ uzyskujemy z zastosowania algorytmu L-BFGS dla poniższego problemu:
+    \begin{equation}
+    \min{c| r| + J(x+r, y_{celu})}
+    \qquad\text{przy warunkach:}
+    \begin{tabular}[t]{ll}
+    x+r \in [0,1]^{m} \\
+    \end{tabular}
+    \end{equation}
 
-\subsection{DeepFool}
-First described in \cite{DBLP:journals/corr/Moosavi-Dezfooli15}
 
 \subsection{JSMA}
-First \cite{DBLP:journals/corr/PapernotMJFCS15}
+Idea ataku JSMA (Jacobian Saliency Map Attack) opisanego w
+\textit{The Limitations of Deep Learning in Adversarial Settings}\cite{DBLP:journals/corr/PapernotMJFCS15}
+polega na utworzeniu mapy istotności pikseli obrazu dla każdej z klas.
+Dzięki temu jesteśmy w stanie określić jak dane piksele w obrazie wpływają na określanie prawdopodobieństwa należenia
+do danej klasy przez model.
 
 \subsection{Carlini & Wagner}
 First in \cite{DBLP:journals/corr/CarliniW16a}
