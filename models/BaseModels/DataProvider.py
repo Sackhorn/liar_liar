@@ -74,6 +74,7 @@ class DataProvider():
     def load_model_data(self):
         self.load_weights(self.SAVE_DIR)
         print("Successfully loaded model from file: " + self.SAVE_DIR)
+        return self
 
     def save_model_data(self):
         self.save_weights(self.SAVE_DIR)
