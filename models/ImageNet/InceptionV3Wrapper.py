@@ -32,6 +32,9 @@ class ResNetWrapper(ImageNetModel):
         else:
             return self.imagenet(input)
 
+    def load_model_data(self):
+        print("calling load_model_data on InceptionV3Wrapper is unnecessary as keras takes care of that for us")
+        return self
 
 
 if __name__ == "__main__":
