@@ -23,13 +23,13 @@
 
 
 \title{
-Sprawozdanie z pracy w ramach Pracowni Dyplomowej Inżynierskiej 2
+Praca Inżynierska
 \begin{large}
 \\Temat: Aplikacja do testowania odporności
 modeli klasyfikacyjnych na ataki z użyciem złośliwych danych
 \end{large}}
 
-\date{21 Czerwca 2018}
+\date{25 Sierpnia 2019}
 \author{Jan Ambroziak \\ Opiekun Pracy: dr.inż Paweł Zawistowski}
 
 \begin{document}
@@ -54,8 +54,8 @@ przeprowadzenie ataku przy pomocy jednej z dostępnych metod.
 
 \section{Użyte narzędzia}
 Od czasu opublikowania przez firmę Google biblioteka Tensorflow \todo{citation needed}
-stała się jednym z wiodących narzędzi wykorzystywanych w branży. Prostota interfejsu programistycznego
-w języku Python, akceleracja obliczeń z wykorzystaniem procesorów graficznych oraz dobra integracja z
+stała się jednym z wiodących narzędzi wykorzystywanych w branży. Prostota API i intuicyjność
+języka Python, akceleracja obliczeń z wykorzystaniem procesorów graficznych oraz dobra integracja z
 popularnymi bibliotekami dostępnymi dla języka Python czyni Tensorflow idealnym kandydatem.
 W trakcie pracy wykorzystywałem głównie wysokopoziomowy interfejs Keras, który pozwala na szybkie
 prototypowanie oraz na małą złożoność kodu źródłowego.
@@ -65,14 +65,14 @@ Platforma testowa jakiej użyto to:
     \item GPU: Nvidia GeForce 1060 GTX 6GB
     \item RAM: 8GB DDR3
     \item System Operacyjny: Windows 10
-    \item Tensorflow wersja 2.0.0a
+    \item Tensorflow wersja 2.0.0b1
     \item Interpreter Python 3.6.8 wersja 64bit
 \end{itemize}
 Wszystkie pozostałe biblioteki Python, wraz z wersjami, wykorzystane w projekcie, znajdują się w pliku
 requirements.txt w folderze projektu.
 
 \section{Modele i dane testowe}
-Aby sprawdzić poprawność implementacji oraz skuteczność ataków stworzyłem
+Aby sprawdzić poprawność implementacji oraz skuteczność ataków stworzono
 kilka modeli klasyfikacyjnych o różnej złożoności, opartych o popularne zbiory danych
 wykorzystywanych jako platforma testowa w publikacjach pokrewnych tematyką.
 
@@ -118,7 +118,9 @@ Możemy też rozróżnić ataki z uwagi na to jakie dane są dostępne dla algor
 
 
 \section{Wykorzystane Ataki}
-W projekcie zaimplementowałem kilka ataków które zostały opisane w anglojęzycznych publikacjach.
+W projekcie zaimplementowanych zostało kilka ataków które zostały opisane w anglojęzycznych publikacjach.
+Poniżej znajdują się ich opisy, uwagi dotyczące implementacji, przykłady zastosowania oraz wyniki testów
+zastosowanych do oceny ataków. Szersza dyskusja dotycząca użyteczności oraz porównanie znajdują się w sekcji \ref{comparison}
 
 \subsection{FGSM}
     FGSM czyli Metoda szybkiego znaku gradientu (z ang. Fast Gradient Sign Method) opsiana w artykule
@@ -181,7 +183,7 @@ W projekcie zaimplementowałem kilka ataków które zostały opisane w anglojęz
     \end{algorithmic}
     \end{algorithm}
 
-    \subsection{LL-FGSM}
+    \subsubsection{LL-FGSM}
     LL-FGSM (z ang. Least Likely FGSM) to metoda pozwalająca nam na spreparowanie danych które będę przydzielane do
     konkretnej klasy (ozn. $y_{celu}$), a nie tylko na niepoprawną klasyfikacje. W tym wypadku zamiast starać się
     zmieniać wartości pikseli obrazu zgodnie z kierunkiem gradientu funkcji kosztu dla prawidłowej klasy
@@ -189,7 +191,7 @@ W projekcie zaimplementowałem kilka ataków które zostały opisane w anglojęz
     Intuicyjnie można to opisać jako nie oddalanie się od prawdziwej klasy obrazu, a jako przybliżanie się do zadanej
     przez nas klasy.
     Autorzy metody zwracają uwagę na przydatność tej metody
-    w przypadku gdy korzystamy z modeli operujących wielu klasach i gdzie różnice między obiektami z różnych klas mogą
+    w przypadku gdy korzystamy z modeli operujących wieloma klasami i gdzie różnice między obiektami z różnych klas mogą
     być bardzo niewielkie (np. między rasami psów). Metoda ta jest także iteracyjna i zapewnie różnice między
     odpowiednimi pikselami obrazów nie większą niż $\epsilon$ więc można uznać ją za rozszerzenie metody I-FGSM.
 
@@ -205,6 +207,8 @@ W projekcie zaimplementowałem kilka ataków które zostały opisane w anglojęz
     \end{algorithmic}
     \end{algorithm}
 
+\subsubsection{Implementacja}
+
 \subsection{DeepFool}
 W publikacji \textit{DeepFool: a simple and accurate method to fool deep neural networks}\cite{DBLP:journals/corr/Moosavi-Dezfooli15}
 autorzy proponują metodę alternatywną do FGSM mającą minimalizować wprowadzaną do danych wejściowych perturbacje jednocześnie
@@ -216,6 +220,8 @@ Metoda ta jest nieco bardziej złożona obliczeniowo jako że pojedynczy krok al
 prawdopodobieństwa każdej klasy względem danych wejściowych, co przy zbiorach danych z wieloma klasami
 takich jak np. ImageNet może być problematyczne. Poniżej znajduje się pseudokod opisujący metodę DeepFool dla modelu
 wieloklasowego.
+
+\subsubsection{Implementacja}
 
 
 \subsection{L-BFGS}
@@ -245,20 +251,109 @@ zostaje warunek $f(x+r) = y_{celu}$ gdzie $r$ uzyskujemy z zastosowania algorytm
     \end{tabular}
     \end{equation}
 
+\subsubsection{Implementacja}
+
 
 \subsection{JSMA}
 Idea ataku JSMA (Jacobian Saliency Map Attack) opisanego w
 \textit{The Limitations of Deep Learning in Adversarial Settings}\cite{DBLP:journals/corr/PapernotMJFCS15}
-polega na utworzeniu mapy istotności pikseli obrazu dla każdej z klas.
+polega na utworzeniu mapy istotności (z ang. Saliency Map) pikseli obrazu dla każdej z klas.
 Dzięki temu jesteśmy w stanie określić jak dane piksele w obrazie wpływają na określanie prawdopodobieństwa należenia
-do danej klasy przez model.
+do danej klasy przez model. Sposób tworzenia mapy istotności jest zamieszczony poniżej:
+\begin{equation}\label{jsma+}
+S^{+} ( \mathbf { x } , y ) [ i ] = \left\{ \begin{array} { c } { 0 \text { jeśli } \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } < 0 \text { lub } \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } > 0 } \\ { \left( \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } \right) \left| \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } \right| \text { w.p.p } } \end{array} \right.
+\qquad\text{gdzie:}
+\begin{tabular}[t]{ll}
+x - dane wejściowe \\
+${f} _ { y } ({x})$ - prawd. przynależności x do klasy y \\
+$x_{i}$ - i-ty piksel obrazu wejściowego x \\
+S({x},y)[i] - wartość i-tego piksel dla klasy y
+\end{tabular}
+\end{equation}
+
+W powyżej zdefiniowanej mapie nieujemne wartości oznaczają poziom wpływu zwiększenia intensywności danego piksela $i$
+na przynależność dla danej klasy $y$.
+Warunek $\frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } < 0$
+zapewnia że nie będziemy rozpatrywać pikseli które mają negatywny wpływ na wartość prawdopodobieństwa należenia przykładu
+do klasy $y$.
+Natomiast warunek $\sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } > 0 $
+zapewnia że nie będziemy rozpatrywać pikseli które mają pozytywny wpływ na wartość prawdopodobieństwa należenia przykłady do klas
+innych niż narzucona przez nas klasa $y$. Autorzy metody proponują też analogiczną mapę istotności w która
+zamiast określać wpływ zwiększenia intensywności pikseli na przynależność przykładu do danej klasy określa wpływ zmniejszania
+intensywności piksela na przynależność do danej klasy.
+
+\begin{equation}\label{jsma-}
+S^{-} ( \mathbf { x } , y ) [ i ] = \left\{ \begin{array} { c } { 0 \text { jeśli } \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } > 0 \text { lub } \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } < 0 } \\ { \left|( \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } )\right  \left| \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } \right \text { w.p.p } } \end{array} \right.
+\end{equation}
+
+W praktyce jednak większość pikseli nie spełnia warunków określonych w pierwszej linii podanych równań,
+dlatego autorzy zastosowali metodę wyboru par pikseli $p_1$ i $p_2$ zamiast pojedynczego piksela.
+W tym celu stosowana jest opisana poniżej metoda.
+
+\begin{equation} \label{saliency_map}
+\arg \max _ { \left( p _ { 1 } , p _ { 2 } \right) } \left( \sum _ { i = p _ { 1 } , p _ { 2 } } \frac { \partial \mathbf { f } _ { y } ( \mathbf { x } ) } { \partial \mathbf { x } _ { i } } \right) \times \left| \sum _ { i = p _ { 1 } , p _ { 2 } } \sum _ { j \neq y } \frac { \partial \mathbf { f } _ { j } ( \mathbf { x } ) } { \partial \mathbf { x } _ { i } } \right|
+\end{equation}
+
+O ile rozwiązuje to problem znalezienia pikseli które spełniają warunki o tyle metoda ta ma większą złożoność obliczeniową
+z uwagi na to że musimy rozpatrzyć wszystkie możliwe pary pikseli zamiast tylko pojedynczych pikseli.
+Opisany poniżej algorytm oddaje istotę opisanej przez autorów metody.
+
+\begin{algorithm}
+\caption{JSMA}\label{JSMA}
+\begin{algorithmic}[1]
+\State $x' \gets x$
+\While{$f(x') \neq  y_{celu}\ \& \ i < i_{max}$}
+    \State $p_1, p_2$ = S$(x',y_{celu})$ \Comment przez S rozumiemy (\ref{saliency_map})
+    \State zmodyfikuj $p_1$ i $p_2$ o $\theta$
+    \State jeśli $p_1$ lub $p_2$ wynosi 0 albo 1 usuń je z listy pikseli
+    \State $i \gets i+1$
+\EndWhile
+\State \textbf{return} $x'$
+\end{algorithmic}
+\end{algorithm}
+
+Istnieje wiele różnych wariantów metody JSMA, których zasadnicze działanie nie różni się bardzo od tego opisanego powyżej.
+\textit{Maximal Jacobian-based Saliency Map Attack}\cite{DBLP:journals/corr/abs-1808-07945} przeprowadza bardzo
+zwięzłe podsumowanie różnych wariantów metody JSMA. Warto tutaj przytoczyć kilka różnic między opisanymi w tej publikacji
+wariantami JSMA.
+
+\subsubsection{JSMA+ i JSMA-}
+Autorzy \textit{Maximal Jacobian-based Saliency Map Attack}\cite{DBLP:journals/corr/abs-1808-07945} wprowadzają rozróżnienie
+pomiędzy JSMA+ a JSMA- w zależności od tego czy intensywność pikseli jest zmniejszana i wykorzystywane są warunki~(\ref{jsma-})
+czy też intensywność pikseli jest zwiększana i wykorzystywane są warunki~(\ref{jsma+})
+
+\subsubsection{JSMA-F i JSMA-Z}
+W publikacji \textit{Towards Evaluating the Robustness of Neural Networks}\cite{DBLP:journals/corr/CarliniW16a}
+autorzy proponują rozróżnienie pomiędzy JSMA-F, które w metodzie~(\ref{saliency_map}) wykorzystuje do obliczania pochodnej cząstkowej
+wyjście funkcji softmax stosowanej zazwyczaj jako ostatnia warstwa modelu, a JSMA-Z które zamiast tego wykorzystuje wektor
+wyjściowy przedostatniej warstwy określany często jako zazwyczaj jako logits.
+
+\subsubsection{NT-JSMA}
+NT-JSMA czyli wersja JSMA bez zadanej klasy którą chcemy osiągnąć (z ang. Non Targeted JSMA). To postulowany przez autorów
+\textit{Maximal Jacobian-based Saliency Map Attack}\cite{DBLP:journals/corr/abs-1808-07945} wariant metody JSMA
+który poprzez zdjęcie ograniczenia polegającego na tym że spreparowana dane mają być klasyfikowane jako należące do zadanej
+klasy ma umożliwić zmniejszenie perturbacji wymaganej do zmiany klasyfikacji danych przez model. To usprawnienie niesie
+ze sobą jednak dodatkowy koszt obliczeniowy jako że w każdej iteracji rozpatrujemy $S^{-}()$ bądź $S^{+}()$ nie dla
+jednej zadanej klasy tylko dla wszystkich.
+
+\subsubsection{M-JSMA}
+M-JSMA\cite{DBLP:journals/corr/abs-1808-07945} to wariant metody JSMA który łączy w sobie metodę
+
+
+\subsubsection{Implementacja}
+
+
 
 \subsection{Carlini & Wagner}
 First in \cite{DBLP:journals/corr/CarliniW16a}
+\subsubsection{Implementacja}
 
 \subsection{Evolutionary Attack}
 First in \cite{DBLP:journals/corr/NguyenYC14}
+\subsubsection{Implementacja}
 
+
+\section{Porównanie}\label{comparison}
 
 
 
