@@ -35,7 +35,7 @@ def jsma(data_sample,
 
     input_shape = model.get_input_shape()
     all_pixels = generate_all_pixels(input_shape)
-    all_pixels = prune_saturated_pixels(all_pixels, image, is_increasing, min, max)
+    # all_pixels = prune_saturated_pixels(all_pixels, image, is_increasing, min, max)
     iter = 0
 
     if show_plots:
@@ -43,13 +43,13 @@ def jsma(data_sample,
 
     # this function determines whether the algorithm should end work
     def has_met_target(is_targeted, target_label, true_label, current_prediction):
-        # if is_targeted:
-        #     return current_prediction == target_label
-        # else:
-        #     return current_prediction != true_label
-        return current_prediction == target_label
+        if is_targeted:
+            return current_prediction == target_label
+        else:
+            return current_prediction != true_label
 
     while iter < i_max and len(all_pixels) > 0 and not has_met_target(is_targeted, target_label, true_label, current_prediction):
+        start = time.time()
         chosen_pixel_pair, theta_sign = saliency_map(model,
                                                      image,
                                                      true_label,
@@ -68,11 +68,12 @@ def jsma(data_sample,
         image = tf.clip_by_value(image + add_tensor, min, max)
 
         current_prediction = model(image).numpy().squeeze().argmax()
-        # all_pixels = prune_saturated_pixels(all_pixels, image, is_increasing, min, max)
+        all_pixels = prune_saturated_pixels(all_pixels, image, is_increasing, min, max)
         iter += 1
         if show_plots:
             show_plot(model(image), image, labels_names=model.get_label_names())
-        print("iteration: " + str(iter))
+            # print("iteration: " + str(iter) + " took " + str(time.time() - start))
+
 
     return image
 
@@ -96,9 +97,9 @@ def saliency_map(model, image, true_label, target_label, all_pixels, is_targeted
 
     # This is important in case of un-targeted attack when we want to consider all classes except the true one
     # not just the target_class
-    # classes_to_iterate_over = [target_label] if is_targeted else list(range(nmb_classes))
-    # max_value = 0.0
-    # best_pair = None
+    classes_to_iterate_over = [target_label] if is_targeted else list(range(nmb_classes))
+    max_value = 0.0
+    best_pair = None
 
     # for target_class in classes_to_iterate_over:
     alpha = grds_by_cls[target_label, first_pix[:, 0], first_pix[:, 1], first_pix[:, 2]] + grds_by_cls[target_label, second_pix[:, 0], second_pix[:, 1], second_pix[:, 2]]
@@ -107,13 +108,12 @@ def saliency_map(model, image, true_label, target_label, all_pixels, is_targeted
     beta = np.sum(beta, axis=0)
 
     # This way we exclude pixels that don't met our criteria
-    xd = beta > 0
-    xd_2 = alpha < 0
-    alpha[xd] = np.nan
-    beta[xd] = np.nan
-
-    alpha[xd_2] = np.nan
-    beta[xd_2] = np.nan
+    if (is_increasing and is_targeted) or (not is_increasing and not is_targeted):
+        alpha[alpha < 0] = np.nan
+        beta[beta > 0] = np.nan
+    elif not (is_increasing and is_targeted) or (is_increasing and not is_targeted):
+        alpha[alpha > 0] = np.nan
+        beta[beta < 0] = np.nan
 
     pixes = np.multiply(alpha, beta) * -1
         # if pixes.max() > max_value:
@@ -165,7 +165,7 @@ def generate_all_pixels(shape):
                     all_pixels.append([i, j, k])
             else:
                 all_pixels.append([i, j])
-    print("generation of pixels took " + str(time.time() - start))
+    # print("generation of pixels took " + str(time.time() - start))
     return all_pixels
 
 def prune_saturated_pixels(all_pixels, image, is_increasing, min, max):
@@ -202,11 +202,18 @@ def generate_all_pixel_pairs(all_pixels):
     return all_pairs
 
 def generate_test(all_pixels):
-    shape = 32,32,3
-    pairs = np.column_stack(np.unravel_index(np.arange(np.prod(shape)),shape))[np.column_stack(np.triu_indices(np.prod(shape),1))]
-    first = pairs[:,0,:]
-    second = pairs[:,1,:]
+    start = time.time()
 
+    all_pixels = np.array(all_pixels)
+    shape = all_pixels.shape
+    indices = np.column_stack(np.triu_indices(np.prod(shape[0]), 1))
+    first = all_pixels[indices[:,0]]
+    second = all_pixels[indices[:,1]]
+    # print("generating pairs took: " + str(time.time() - start))
+    # shape = 32,32,3
+    # pairs = np.column_stack(np.unravel_index(np.arange(np.prod(shape)),shape))[np.column_stack(np.triu_indices(np.prod(shape),1))]
+    # first = pairs[:,0,:]
+    # second = pairs[:,1,:]
 
     # first_pix = []
     # second_pix = []
