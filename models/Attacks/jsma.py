@@ -1,3 +1,5 @@
+import time
+
 from tensorflow.python import enable_eager_execution, Tensor
 from models.CIFAR10Models.ConvModel import ConvModel
 from models.MNISTModels.DenseModel import DenseModel
@@ -79,11 +81,15 @@ def saliency_map(model, image, true_label, target_label, all_pixels, is_targeted
 
     # Generate forward derivatives for each of the classes
     grds_by_cls = []
+    logits = None
+    logits_list = []
     with tf.GradientTape(persistent=True) as tape:
         tape.watch(image)
         logits = model(image, get_raw=use_logits)
         for k in range(nmb_classes):
-            grds_by_cls.append(tape.gradient(logits[0][k], image).numpy().squeeze())
+            logits_list.append(logits[0][k])
+    for k in range(nmb_classes):
+        grds_by_cls.append(tape.gradient(logits_list[k], image).numpy().squeeze())
 
     # initialize before algorithm run
     max = float("-inf")
@@ -93,24 +99,77 @@ def saliency_map(model, image, true_label, target_label, all_pixels, is_targeted
     # not just the target_class
     classes_to_iterate_over = [target_label] if is_targeted else list(range(nmb_classes))
 
-    for considered_class in classes_to_iterate_over:
-        for pixel_pair in all_pixel_pairs:
-            first, second = pixel_pair
-            beta = 0.0
 
-            alpha = grds_by_cls[considered_class][first] + grds_by_cls[considered_class][second]
-            for class_nmb in range(nmb_classes):
-                if class_nmb != considered_class:
-                    beta += grds_by_cls[class_nmb][first] + grds_by_cls[class_nmb][second]
+    grds_tensor = tf.convert_to_tensor(np.array(grds_by_cls))
 
-            if (is_increasing and is_targeted) or (not is_increasing and not is_targeted):
-                is_pair_accepted = alpha > 0.0 and beta < 0 and -alpha * beta > max
-            elif not (is_increasing and is_targeted) or (is_increasing and not is_targeted):
-                is_pair_accepted = alpha < 0.0 and beta > 0 and -alpha * beta > max
+    @tf.function
+    def my_map(*args, **kwargs):
+        return tf.map_fn(*args, **kwargs)
 
-            if is_pair_accepted:
-                return_pixel_pair = pixel_pair
-                max = -alpha*beta
+    @tf.function
+    def test(pixel):
+        # x = tf.cast(pixel[0], dtype=tf.int32)
+        # y = tf.cast(pixel[1], dtype=tf.int32)
+        # tf.print(x)
+        # tf.print(grds_tensor[0][x][y])
+        beta = 0.0
+        tmp = -10000.0
+        for i in range(nmb_classes):
+            # beta = tf.add(beta, grds_tensor[i][pixel[0]][pixel[1]][pixel[2]])
+            if i == target_label:
+                continue
+            # beta = beta + grds_tensor[i][pixel[0]][pixel[1]][pixel[2]]
+            beta = beta + grds_tensor[i][pixel[0]][pixel[1]][pixel[2]]
+            # beta = beta + grds_tensor[i][pixel[0]][pixel[1]]
+
+        # return (grds_tensor[target_label][pixel[0]][pixel[1]][pixel[2]], beta)
+        # return -grds_tensor[target_label][pixel[0]][pixel[1]][pixel[2]]* beta
+        # alpha = grds_tensor[target_label][pixel[0]][pixel[1]]
+        alpha = grds_tensor[target_label][pixel[0]][pixel[1]][pixel[2]]
+        # if alpha > 0.0:
+        #     if beta < 0.0:
+        #         tmp = -alpha * beta
+        return (alpha, beta)
+
+    tmp = np.array(all_pixels)
+    tmp = tf.convert_to_tensor(all_pixels)
+
+    start = time.time()
+    print("started tf func")
+
+
+    tmp = my_map(test, tmp, parallel_iterations=1000, dtype=(tf.float32, tf.float32))
+    # tmp = my_map(test, tmp, parallel_iterations=1000, dtype=tf.float32)
+    end = time.time()
+    print("tf func took: "+ str(end-start))
+    sorted = np.argsort(tmp[0].numpy())
+    first = all_pixels[sorted[-1]]
+    second = all_pixels[sorted[-2]]
+
+    return_pixel_pair = (first, second)
+
+
+
+
+
+    # for considered_class in classes_to_iterate_over:
+    #     for pixel_pair in all_pixel_pairs:
+    #         first, second = pixel_pair
+    #         beta = 0.0
+    #
+    #         alpha = grds_by_cls[considered_class][first] + grds_by_cls[considered_class][second]
+    #         for class_nmb in range(nmb_classes):
+    #             if class_nmb != considered_class:
+    #                 beta += grds_by_cls[class_nmb][first] + grds_by_cls[class_nmb][second]
+    #
+    #         if (is_increasing and is_targeted) or (not is_increasing and not is_targeted):
+    #             is_pair_accepted = alpha > 0.0 and beta < 0 and -alpha * beta > max
+    #         elif not (is_increasing and is_targeted) or (is_increasing and not is_targeted):
+    #             is_pair_accepted = alpha < 0.0 and beta > 0 and -alpha * beta > max
+    #
+    #         if is_pair_accepted:
+    #             return_pixel_pair = pixel_pair
+    #             max = -alpha*beta
 
     theta_sign = 1 if is_increasing else -1
     return return_pixel_pair, theta_sign
@@ -159,15 +218,15 @@ def untargeted_jsma(data_sample, model, i_max, eps, is_increasing=True, min=0.0,
 def test_jsma():
     # model = DenseModel().load_model_data()
     model = ConvModel().load_model_data()
-    eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1, shuffle=1)
+    eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1, shuffle=2)
     # eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1)
     for data_sample in eval_dataset.take(1):
         image, true_label = data_sample
         target_label = true_label.numpy().squeeze().argmax() + 1 % model.get_number_of_classes()
 
         # show_plot(model(image), image, model.get_label_names())
-        ret_image = untargeted_jsma(data_sample, model, 50, 1.0, is_increasing=True, use_logits=False, show_plots=True)
-        # ret_image = targeted_jsma(data_sample, model, 50, 1.0, target_label, is_increasing=True, use_logits=True, show_plots=True)
+        # ret_image = untargeted_jsma(data_sample, model, 50, 1.0, is_increasing=True, use_logits=False, show_plots=True)
+        ret_image = targeted_jsma(data_sample, model, 50, 1.0, target_label, is_increasing=True, use_logits=True, show_plots=True)
         # show_plot(model(ret_image), ret_image, model.get_label_names())
 
         # show_plot(model(image), image, model.get_label_names())
