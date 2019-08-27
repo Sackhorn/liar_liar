@@ -2,6 +2,7 @@ import time
 
 from tensorflow.python import enable_eager_execution, Tensor
 from models.CIFAR10Models.ConvModel import ConvModel
+from models.ImageNet.InceptionV3Wrapper import ResNetWrapper
 from models.MNISTModels.DenseModel import DenseModel
 from models.utils.images import show_plot
 import numpy as np
@@ -33,7 +34,7 @@ def jsma(data_sample,
 
     input_shape = model.get_input_shape()
     all_pixels = generate_all_pixels(input_shape)
-    all_pixels = prune_saturated_pixels(all_pixels, image, is_increasing, min, max)
+    # all_pixels = prune_saturated_pixels(all_pixels, image, is_increasing, min, max)
     iter = 0
 
     if show_plots:
@@ -75,82 +76,53 @@ def jsma(data_sample,
 
 # TODO:nie traktować każdej barwy jako osobny ficzer tylko sumować i zmieniać intensywność
 def saliency_map(model, image, true_label, target_label, all_pixels, is_targeted, is_increasing, use_logits):
-    all_pixel_pairs = generate_all_pixel_pairs(all_pixels)
+    # all_pixel_pairs = generate_all_pixel_pairs(all_pixels)
     nmb_classes = model.get_number_of_classes()
     input_shape = model.get_input_shape()
 
     # Generate forward derivatives for each of the classes
     grds_by_cls = []
-    logits = None
-    logits_list = []
     with tf.GradientTape(persistent=True) as tape:
         tape.watch(image)
         logits = model(image, get_raw=use_logits)
         for k in range(nmb_classes):
-            logits_list.append(logits[0][k])
-    for k in range(nmb_classes):
-        grds_by_cls.append(tape.gradient(logits_list[k], image).numpy().squeeze())
+            grds_by_cls.append(tape.gradient(logits[0][k], image).numpy().squeeze())
+
 
     # initialize before algorithm run
-    max = float("-inf")
-    return_pixel_pair = None
+    # max = float("-inf")
+    # return_pixel_pair = None
 
     # This is important in case of un-targeted attack when we want to consider all classes except the true one
     # not just the target_class
-    classes_to_iterate_over = [target_label] if is_targeted else list(range(nmb_classes))
+    # classes_to_iterate_over = [target_label] if is_targeted else list(range(nmb_classes))
 
 
-    grds_tensor = tf.convert_to_tensor(np.array(grds_by_cls))
-
-    @tf.function
-    def my_map(*args, **kwargs):
-        return tf.map_fn(*args, **kwargs)
-
-    @tf.function
-    def test(pixel):
-        # x = tf.cast(pixel[0], dtype=tf.int32)
-        # y = tf.cast(pixel[1], dtype=tf.int32)
-        # tf.print(x)
-        # tf.print(grds_tensor[0][x][y])
-        beta = 0.0
-        tmp = -10000.0
-        for i in range(nmb_classes):
-            # beta = tf.add(beta, grds_tensor[i][pixel[0]][pixel[1]][pixel[2]])
-            if i == target_label:
-                continue
-            # beta = beta + grds_tensor[i][pixel[0]][pixel[1]][pixel[2]]
-            beta = beta + grds_tensor[i][pixel[0]][pixel[1]][pixel[2]]
-            # beta = beta + grds_tensor[i][pixel[0]][pixel[1]]
-
-        # return (grds_tensor[target_label][pixel[0]][pixel[1]][pixel[2]], beta)
-        # return -grds_tensor[target_label][pixel[0]][pixel[1]][pixel[2]]* beta
-        # alpha = grds_tensor[target_label][pixel[0]][pixel[1]]
-        alpha = grds_tensor[target_label][pixel[0]][pixel[1]][pixel[2]]
-        # if alpha > 0.0:
-        #     if beta < 0.0:
-        #         tmp = -alpha * beta
-        return (alpha, beta)
-
-    tmp = np.array(all_pixels)
-    tmp = tf.convert_to_tensor(all_pixels)
+    grds_by_cls = np.array(grds_by_cls)
+    first_pix, second_pix = generate_test(all_pixels)
 
     start = time.time()
-    print("started tf func")
+    print("started numpy")
+
+    alpha = grds_by_cls[target_label][first_pix[:,0],first_pix[:,1],first_pix[:,2]] + grds_by_cls[target_label][second_pix[:,0],second_pix[:,1],second_pix[:,2]]
+    beta = np.sum(grds_by_cls[:, first_pix[:,0], first_pix[:,1], first_pix[:,2]] + grds_by_cls[:, second_pix[:,0], second_pix[:,1], second_pix[:,2]], axis=0)
+
+    beta[true_label] = 0.0
+
+    # alpha[alpha < 0] = 0.0
+    # beta[beta > 0] = 0.0
+    alpha[alpha < 0] = np.nan
+    beta[beta > 0] = np.nan
+
+    pixes = np.multiply(alpha, beta) * -1
+    # best_pair = np.argsort(pixes, axis=0)[-1]
+    best_pair = np.nanargmax(pixes)
 
 
-    tmp = my_map(test, tmp, parallel_iterations=1000, dtype=(tf.float32, tf.float32))
-    # tmp = my_map(test, tmp, parallel_iterations=1000, dtype=tf.float32)
     end = time.time()
-    print("tf func took: "+ str(end-start))
-    sorted = np.argsort(tmp[0].numpy())
-    first = all_pixels[sorted[-1]]
-    second = all_pixels[sorted[-2]]
+    print("numpy took: "+ str(end-start))
 
-    return_pixel_pair = (first, second)
-
-
-
-
+    return_pixel_pair = (tuple(first_pix[best_pair].squeeze()), tuple(second_pix[best_pair].squeeze()))
 
     # for considered_class in classes_to_iterate_over:
     #     for pixel_pair in all_pixel_pairs:
@@ -183,18 +155,18 @@ def generate_all_pixels(shape):
         for j in range(y):
             if z > 1:
                 for k in range(z):
-                    all_pixels.append((i, j, k))
+                    all_pixels.append([i, j, k])
             else:
-                all_pixels.append((i, j))
+                all_pixels.append([i, j])
     return all_pixels
 
 def prune_saturated_pixels(all_pixels, image, is_increasing, min, max):
     np_image = image.numpy().squeeze()
     pixels_to_remove = []
     for pixel in all_pixels:
-        if is_increasing and (max-np_image[pixel]) < 1e-5:
+        if is_increasing and (max-np_image[tuple(pixel)]) < 1e-5:
             pixels_to_remove.append(pixel)
-        elif not is_increasing and (np_image[pixel]-min) < 1e-5:
+        elif not is_increasing and (np_image[tuple(pixel)]-min) < 1e-5:
             pixels_to_remove.append(pixel)
     for pixel in pixels_to_remove:
         all_pixels.remove(pixel)
@@ -209,6 +181,17 @@ def generate_all_pixel_pairs(all_pixels):
             all_pairs.append((first, second))
     return all_pairs
 
+def generate_test(all_pixels):
+    first_pix = []
+    second_pix = []
+    for i in range(len(all_pixels)):
+        first = all_pixels[i]
+        for j in all_pixels[i+1:]:
+            second = j
+            first_pix.append(first)
+            second_pix.append(second)
+    return np.array(first_pix), np.array(second_pix)
+
 def targeted_jsma(data_sample, model, i_max, eps, target_label, is_increasing=True, min=0.0, max=1.0, use_logits=False, show_plots=False):
     return jsma(data_sample, model, i_max, eps, target_label=target_label, is_increasing=is_increasing, use_logits=use_logits, min=min, max=max, show_plots=show_plots)
 
@@ -218,16 +201,17 @@ def untargeted_jsma(data_sample, model, i_max, eps, is_increasing=True, min=0.0,
 def test_jsma():
     # model = DenseModel().load_model_data()
     model = ConvModel().load_model_data()
-    eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1, shuffle=2)
-    # eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1)
+    # model = ResNetWrapper().load_model_data()
+    eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1, shuffle=1)
     for data_sample in eval_dataset.take(1):
         image, true_label = data_sample
-        target_label = true_label.numpy().squeeze().argmax() + 1 % model.get_number_of_classes()
-
-        # show_plot(model(image), image, model.get_label_names())
+        target_label = true_label.numpy().squeeze().argmax() - 2 % model.get_number_of_classes()
+        if true_label.numpy().squeeze().argmax() != model(image).numpy().squeeze().argmax():
+            continue
+        show_plot(model(image), image, model.get_label_names())
         # ret_image = untargeted_jsma(data_sample, model, 50, 1.0, is_increasing=True, use_logits=False, show_plots=True)
         ret_image = targeted_jsma(data_sample, model, 50, 1.0, target_label, is_increasing=True, use_logits=True, show_plots=True)
-        # show_plot(model(ret_image), ret_image, model.get_label_names())
+        show_plot(model(ret_image), ret_image, model.get_label_names())
 
         # show_plot(model(image), image, model.get_label_names())
         # ret_image = untargeted_jsma(data_sample, model, 50, 1.0, is_increasing=True, use_logits=False)
