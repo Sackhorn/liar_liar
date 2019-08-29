@@ -70,6 +70,8 @@ class DataProvider():
             self.test_steps = info.splits[tfds.Split.VALIDATION].num_examples // batch_size
         return dataset
 
+    def get_info(self):
+        return self.info
 
     def load_model_data(self):
         self.load_weights(self.SAVE_DIR)

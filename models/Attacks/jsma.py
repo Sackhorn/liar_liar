@@ -2,6 +2,8 @@ import itertools
 import time
 
 from tensorflow.python import enable_eager_execution, Tensor
+
+from models.Attacks.attack import Attack
 from models.CIFAR10Models.ConvModel import ConvModel
 from models.ImageNet.InceptionV3Wrapper import ResNetWrapper
 from models.MNISTModels.DenseModel import DenseModel
@@ -14,19 +16,23 @@ import tensorflow_datasets as tfds
 # TODO: Generalize for all models
 # Source https://arxiv.org/pdf/1511.07528.pdf
 
+class jsma_plus_increasing(Attack):
+    @staticmethod
+    def run_attack(model, dataset, target_class=None, min=0.0, max=1.0):
+        return jsma(dataset, model, 20, target_label=target_class)
 
 def jsma(data_sample,
          model,
          i_max,
-         theta,
-         target_label=-1,
+         theta=1,
+         target_label=None,
          is_increasing=True,
          min=0.0,
          max=1.0,
          show_plots=False,
          use_logits=False):
 
-    is_targeted = target_label != -1
+    is_targeted = target_label != None
     image, true_label = data_sample
     true_label = true_label.numpy().squeeze().argmax()
     current_prediction = model(image).numpy().squeeze().argmax()
@@ -75,7 +81,8 @@ def jsma(data_sample,
             # print("iteration: " + str(iter) + " took " + str(time.time() - start))
 
 
-    return image
+    return image, current_prediction
+
 
 # TODO:nie traktować każdej barwy jako osobny ficzer tylko sumować i zmieniać intensywność
 def saliency_map(model, image, true_label, target_label, all_pixels, is_targeted, is_increasing, use_logits):
