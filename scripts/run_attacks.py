@@ -1,3 +1,5 @@
+from multiprocessing.pool import Pool
+
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from math import floor
@@ -29,5 +31,32 @@ def run_targeted_atacks(attack, model, dataset_percentage):
     print("success_ratio is {0.2f}".format((succesful_attacks/test_samples_nmb)*100))
     return succesful_attacks, failed_attacks
 
+def run_targeted_atacks_multiproccess(model, dataset_percentage):
+    """
 
-run_targeted_atacks(jsma_plus_increasing, ConvModel().load_model_data(), 0.2)
+    :type model: models.BaseModels.SequentialModel
+    """
+
+    dataset = model.get_dataset(tfds.Split.TEST, batch_size=1, shuffle=1)
+    test_samples_nmb = floor(model.get_info().splits['test'].num_examples * dataset_percentage)
+
+    # for data_sample in dataset.take(test_samples_nmb):
+
+    with Pool(5) as p:
+        print(p.map(run_fast_jsma, dataset.take(test_samples_nmb)))
+
+
+def run_fast_jsma(data_sample):
+    model = ConvModel().load_model_data()
+    image, true_class = data_sample
+    true_class = true_class.numpy().squeeze().argmax()
+    target_class = true_class - 1 % model.get_number_of_classes()
+    if true_class != model(image).numpy().squeeze().argmax():
+        return False
+    _, return_class = jsma_plus_increasing().run_attack(model, data_sample, target_class)
+    return return_class == target_class
+
+
+if __name__ == "__main__":
+    run_targeted_atacks_multiproccess(ConvModel().load_model_data(), 0.2)
+    # run_targeted_atacks(jsma_plus_increasing, ConvModel().load_model_data(), 0.2)
