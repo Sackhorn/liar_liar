@@ -1,5 +1,6 @@
 import itertools
 import time
+from math import floor
 
 from tensorflow.python import enable_eager_execution, Tensor
 
@@ -19,11 +20,27 @@ import tensorflow_datasets as tfds
 class jsma_plus_increasing(Attack):
     @staticmethod
     def run_attack(model, dataset, target_class=None, min=0.0, max=1.0):
-        return jsma(dataset, model, 20, target_label=target_class)
+        return jsma(dataset, model, 0.14, target_label=target_class)
+
+class jsma_plus_increasing_logits(Attack):
+    @staticmethod
+    def run_attack(model, dataset, target_class=None, min=0.0, max=1.0):
+        return jsma(dataset, model, 0.14, target_label=target_class, use_logits=True)
+
+class jsma_minus_increasing(Attack):
+    @staticmethod
+    def run_attack(model, dataset, target_class=None, min=0.0, max=1.0):
+        return jsma(dataset, model, 0.14, target_label=target_class, is_increasing=False)
+
+class jsma_minus_increasing_logits(Attack):
+    @staticmethod
+    def run_attack(model, dataset, target_class=None, min=0.0, max=1.0):
+        return jsma(dataset, model, 0.14, target_label=target_class, is_increasing=False, use_logits=True)
+
 
 def jsma(data_sample,
          model,
-         i_max,
+         max_perturbation,
          theta=1,
          target_label=None,
          is_increasing=True,
@@ -31,6 +48,7 @@ def jsma(data_sample,
          max=1.0,
          show_plots=False,
          use_logits=False):
+
 
     is_targeted = target_label != None
     image, true_label = data_sample
@@ -40,8 +58,9 @@ def jsma(data_sample,
         raise ValueError("The image given was wrongly classified in the first place")
 
     input_shape = model.get_input_shape()
+    i_max = floor(np.prod(input_shape) * max_perturbation)
     all_pixels = generate_all_pixels(input_shape)
-    # all_pixels = prune_saturated_pixels(all_pixels, image, is_increasing, min, max)
+    all_pixels = prune_saturated_pixels(all_pixels, image, is_increasing, min, max)
     iter = 0
 
     if show_plots:
@@ -55,7 +74,6 @@ def jsma(data_sample,
             return current_prediction != true_label
 
     while iter < i_max and len(all_pixels) > 0 and not has_met_target(is_targeted, target_label, true_label, current_prediction):
-        start = time.time()
         chosen_pixel_pair, theta_sign = saliency_map(model,
                                                      image,
                                                      true_label,
@@ -78,7 +96,6 @@ def jsma(data_sample,
         iter += 1
         if show_plots:
             show_plot(model(image), image, labels_names=model.get_label_names())
-            # print("iteration: " + str(iter) + " took " + str(time.time() - start))
 
 
     return image, current_prediction
@@ -250,7 +267,8 @@ def test_jsma():
             continue
         show_plot(model(image), image, model.get_label_names())
         # ret_image = untargeted_jsma(data_sample, model, 50, 1.0, is_increasing=True, use_logits=False, show_plots=True)
-        ret_image = targeted_jsma(data_sample, model, 50, 1.0, target_label, is_increasing=True, use_logits=True, show_plots=False)
+        ret_image, ret_label = jsma_minus_increasing_logits.run_attack(model, data_sample, target_label)
+        # ret_image = targeted_jsma(data_sample, model, 50, 1.0, target_label, is_increasing=True, use_logits=True, show_plots=False)
         show_plot(model(ret_image), ret_image, model.get_label_names())
 
 if __name__ == "__main__":
