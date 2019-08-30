@@ -21,7 +21,7 @@ class SequentialModel(Model, DataProvider):
         self.compile(optimizer=optimizer, loss=loss, metrics=metrics)
         self.sequential_layers = []
 
-
+    @tf.function
     def call(self, input, get_raw=False, **kwargs):
         result = input
         for layer in self.sequential_layers[:-1]:
