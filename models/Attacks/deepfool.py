@@ -70,8 +70,8 @@ class DeepFool(Attack):
         show_plot(model(image), image, model.get_label_names())
 
     @staticmethod
-    def run_attack(model, dataset):
-        for data_sample in dataset:
+    def run_attack(model, data_sample):
+        for data_sample in data_sample:
             DeepFool.deepfool(data_sample, model)
 
 if __name__ == "__main__":
