@@ -22,15 +22,14 @@ class ResNetWrapper(ImageNetModel):
                  metrics=[top_k_categorical_accuracy]):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="imagenet_v3")
         self.imagenet = InceptionV3()
-        # self.base_model = InceptionV3()
-        # self.imagenet = Model(inputs=self.base_model.input, outputs=self.base_model.output)
+        self.imagenet.layers[-1].activation = tf.keras.activations.linear
 
+    @tf.function
     def call(self, input, get_raw=False, **kwargs):
         if get_raw:
-            self.imagenet(input)
-            return self.imagenet.layers[-1].output
-        else:
             return self.imagenet(input)
+        else:
+            return tf.nn.softmax(self.imagenet(input))
 
     def load_model_data(self):
         print("calling load_model_data on InceptionV3Wrapper is unnecessary as keras takes care of that for us")
