@@ -1,26 +1,19 @@
-import time
-
-from tensorflow.core.protobuf.config_pb2 import ConfigProto
-from tensorflow.python import enable_eager_execution
-
 from models.Attacks.attack import Attack
-from models.ImageNet import InceptionV3Wrapper
 from models.ImageNet.InceptionV3Wrapper import ResNetWrapper
+from models.CIFAR10Models.ConvModel import ConvModel
 from models.utils.images import show_plot
 from models.BaseModels.SequentialModel import SequentialModel
 import numpy as np
 import tensorflow as tf
 import tensorflow_datasets as tfds
 
-
-# TODO: Generalize for all models
 # Source https://arxiv.org/pdf/1511.07528.pdf
 
 class DeepFool(Attack):
 
-
     @staticmethod
-    def deepfool(data_sample, model, max_iter=10, min=0.0, max=1.0):
+    @tf.function
+    def deepfool(data_sample, model, max_iter=100, min=0.0, max=1.0):
         """
 
         :type model: SequentialModel
@@ -28,59 +21,67 @@ class DeepFool(Attack):
 
         nmb_classes = model.get_number_of_classes()
         image, label = data_sample
-        label = tf.argmax(tf.squeeze(label)).numpy()
-        show_plot(model(image), image, model.get_label_names())
+        batch_size = image.shape[0]
+        width = image[0].shape[0]
+        height = image[0].shape[1]
+        color_space = image[0].shape[2]
         iter = 0
-        while tf.argmax(tf.squeeze(model(image))).numpy() == label and iter < max_iter:
-            logits = None
-            gradients_by_cls = []
-            logits_list = []
+        output = model(image)
+        output = tf.one_hot(tf.argmax(output, axis=1), nmb_classes)
+        is_misclassified = tf.math.reduce_all(tf.math.not_equal(output, label), axis=0)
+
+
+        while not tf.reduce_all(is_misclassified) and iter < max_iter:
+            gradients_by_cls = tf.TensorArray(tf.float32, size=nmb_classes, element_shape=[batch_size, width, height, color_space])
             with tf.GradientTape(persistent=True) as tape:
                 tape.watch(image)
                 logits = model(image)
-                for k in range(nmb_classes):
-                    logits_list.append(logits[0][k])
-            for k in range(nmb_classes):
-                gradient = tape.gradient(logits_list[k], image)
-                gradients_by_cls.append(tf.squeeze(gradient).numpy())
+                for k in tf.range(nmb_classes):
+                    grds = tape.gradient(logits[:, k], image)
+                    gradients_by_cls  = gradients_by_cls.write(k, grds)
             del tape
-            logits = tf.squeeze(logits).numpy()
-            w_prime = []
-            f_prime = []
-            for k in range(nmb_classes):
-                if k == tf.squeeze(label).numpy():
-                    f_prime.append(float('+inf'))
-                    w_prime.append(float("+inf"))
-                    continue
-                w_prime.append(gradients_by_cls[k] - gradients_by_cls[label])
-                f_prime.append(logits[k] - logits[label])
-            tmp = []
-            for k in range(nmb_classes):
-                if k == tf.squeeze(label).numpy():
-                    tmp.append(float("+inf"))
-                    continue
-                tmp.append(abs(f_prime[k]) / np.linalg.norm(w_prime[k]))
-            l = np.argmin(tmp)
-            perturbation = (abs(f_prime[l]) * w_prime[l]) / np.square(np.linalg.norm(w_prime[l]))
-            new_image = image.numpy() + perturbation
-            image = tf.convert_to_tensor(new_image, dtype=tf.float32)
+
+            gradients_by_cls_tensor = tf.reshape(gradients_by_cls.concat(), [nmb_classes, batch_size, width, height, color_space])
+            gradients_by_cls_tensor = tf.transpose(gradients_by_cls_tensor, perm=[1, 0, 2, 3, 4])
+            classified_gradient = tf.gather_nd(gradients_by_cls_tensor, tf.reshape(tf.argmax(label, axis=1), [batch_size, 1]), batch_dims=1)
+            classified_gradient = tf.reshape(tf.tile(classified_gradient, [1, nmb_classes, 1, 1]), [batch_size, nmb_classes, width, height, color_space])
+            w_prime = gradients_by_cls_tensor - classified_gradient
+            classified_logits = tf.tile(tf.reshape(tf.gather_nd(logits, tf.reshape(tf.argmax(label, axis=1), [batch_size, 1]), batch_dims=1), [batch_size, 1]),[1, nmb_classes])
+            f_prime = logits - classified_logits
+            coef_val = tf.abs(f_prime)/tf.norm(tf.norm(w_prime, axis=[-2, -1]), axis=2)
+            coef_val_argmin = tf.math.argmin(coef_val, axis=1)
+            coef_val_argmin = tf.reshape(coef_val_argmin, [batch_size, 1])
+            w_l_prime = tf.gather_nd(w_prime, coef_val_argmin, batch_dims=1)
+            f_l_prime = tf.gather_nd(f_prime, coef_val_argmin, batch_dims=1)
+            scalar = tf.abs(f_l_prime)/tf.norm(tf.norm(w_l_prime, axis=[-2,-1]), axis=1)
+            perturbation = tf.multiply(tf.reshape(scalar, [batch_size,1,1,1]),  w_l_prime)
+            image = image + perturbation
             image = tf.clip_by_value(image, min, max)
             iter += 1
-            print("iteration: " + str(iter))
-        show_plot(model(image), image, model.get_label_names())
+            output = model(image)
+            output = tf.one_hot(tf.argmax(output, axis=1), nmb_classes)
+            is_misclassified = tf.math.reduce_all(tf.math.equal(output, label), axis=0)
+        return image
 
     @staticmethod
-    def run_attack(model, data_sample):
-        for data_sample in data_sample:
-            DeepFool.deepfool(data_sample, model)
+    def run_attack(model, data_sample, target_class):
+
+
+
+        return_images = DeepFool.deepfool(data_sample, model)
+
+        for i in range(2):
+            input_sample = tf.expand_dims(tf.gather_nd(data_sample[0], [i]), axis=0)
+            show_plot(model(input_sample), input_sample, model.get_label_names())
+
+            output_sample = tf.expand_dims(tf.gather_nd(return_images, [i]), axis=0)
+            show_plot(model(output_sample), output_sample, model.get_label_names())
+
+        return (return_images, model(return_images))
 
 if __name__ == "__main__":
-    physical_devices = tf.config.experimental.list_physical_devices('GPU')
-    print("setting memory growth at: " + str(physical_devices))
-    tf.config.experimental.set_memory_growth(physical_devices[0], True)
-    enable_eager_execution()
-
     model = ResNetWrapper()
-    dataset = model.get_dataset(tfds.Split.VALIDATION, batch_size=1, shuffle=2).take(2)
-
-    DeepFool.run_attack(model, dataset)
+    # model = ConvModel().load_model_data()
+    dataset = model.get_dataset(tfds.Split.TEST, batch_size=1).take(1)
+    for data_sample in dataset:
+        DeepFool.run_attack(model, data_sample, None)
