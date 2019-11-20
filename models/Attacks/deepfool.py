@@ -1,6 +1,7 @@
 from models.Attacks.attack import Attack
 from models.ImageNet.InceptionV3Wrapper import ResNetWrapper
 from models.CIFAR10Models.ConvModel import ConvModel
+from models.MNISTModels.DenseModel import DenseModel
 from models.utils.images import show_plot
 from models.BaseModels.SequentialModel import SequentialModel
 import numpy as np
@@ -8,12 +9,14 @@ import tensorflow as tf
 import tensorflow_datasets as tfds
 
 # Source https://arxiv.org/pdf/1511.07528.pdf
+from models.utils.utils import count_untargeted
+
 
 class DeepFool(Attack):
 
     @staticmethod
     @tf.function
-    def deepfool(data_sample, model, max_iter=100, min=0.0, max=1.0):
+    def deepfool(data_sample, model, max_iter=10, min=0.0, max=1.0):
         """
 
         :type model: SequentialModel
@@ -35,9 +38,15 @@ class DeepFool(Attack):
             gradients_by_cls = tf.TensorArray(tf.float32, size=nmb_classes, element_shape=[batch_size, width, height, color_space])
             with tf.GradientTape(persistent=True) as tape:
                 tape.watch(image)
+                tmp_image = tf.transpose(image, perm=[1,0,2,3])
+                tape.watch(tmp_image)
                 logits = model(image)
+
+
                 for k in tf.range(nmb_classes):
-                    grds = tape.gradient(logits[:, k], image)
+                    tmp = logits[:, k]
+                    with tape.stop_recording():
+                        grds = tape.gradient(tmp, image)
                     gradients_by_cls  = gradients_by_cls.write(k, grds)
             del tape
 
@@ -70,18 +79,27 @@ class DeepFool(Attack):
 
         return_images = DeepFool.deepfool(data_sample, model)
 
-        for i in range(2):
+        for i in range(1):
             input_sample = tf.expand_dims(tf.gather_nd(data_sample[0], [i]), axis=0)
             show_plot(model(input_sample), input_sample, model.get_label_names())
 
             output_sample = tf.expand_dims(tf.gather_nd(return_images, [i]), axis=0)
             show_plot(model(output_sample), output_sample, model.get_label_names())
 
+        print(count_untargeted(model, return_images, data_sample[1]))
+
         return (return_images, model(return_images))
 
 if __name__ == "__main__":
+
+
+    physical_devices = tf.config.experimental.list_physical_devices('GPU')
+    assert len(physical_devices) > 0, "Not enough GPU hardware devices available"
+    tf.config.experimental.set_memory_growth(physical_devices[0], True)
+
     model = ResNetWrapper()
     # model = ConvModel().load_model_data()
-    dataset = model.get_dataset(tfds.Split.TEST, batch_size=1).take(1)
+    # model = DenseModel().load_model_data()
+    dataset = model.get_dataset(tfds.Split.TEST, batch_size=1).take(10)
     for data_sample in dataset:
         DeepFool.run_attack(model, data_sample, None)
