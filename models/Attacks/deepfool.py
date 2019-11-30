@@ -1,3 +1,5 @@
+import time
+
 from models.Attacks.attack import Attack
 from models.ImageNet.InceptionV3Wrapper import ResNetWrapper
 from models.CIFAR10Models.ConvModel import ConvModel
@@ -16,7 +18,7 @@ class DeepFool(Attack):
 
     @staticmethod
     @tf.function
-    def deepfool(data_sample, model, max_iter=10, min=0.0, max=1.0):
+    def deepfool(data_sample, model, max_iter=1, min=0.0, max=1.0):
         """
 
         :type model: SequentialModel
@@ -31,17 +33,18 @@ class DeepFool(Attack):
         iter = 0
         output = model(image)
         output = tf.one_hot(tf.argmax(output, axis=1), nmb_classes)
-        is_misclassified = tf.math.reduce_all(tf.math.not_equal(output, label), axis=0)
+        is_properly_classified = tf.math.reduce_all(tf.math.equal(output, label), axis=1)
 
 
-        while not tf.reduce_all(is_misclassified) and iter < max_iter:
+        # while not tf.reduce_all(is_properly_classified) and iter < max_iter:
+        # while tf.math.reduce_all(is_properly_classified) and iter < max_iter:
+        while tf.math.reduce_any(is_properly_classified):
             gradients_by_cls = tf.TensorArray(tf.float32, size=nmb_classes, element_shape=[batch_size, width, height, color_space])
             with tf.GradientTape(persistent=True) as tape:
                 tape.watch(image)
                 tmp_image = tf.transpose(image, perm=[1,0,2,3])
                 tape.watch(tmp_image)
                 logits = model(image)
-
 
                 for k in tf.range(nmb_classes):
                     tmp = logits[:, k]
@@ -69,15 +72,16 @@ class DeepFool(Attack):
             iter += 1
             output = model(image)
             output = tf.one_hot(tf.argmax(output, axis=1), nmb_classes)
-            is_misclassified = tf.math.reduce_all(tf.math.equal(output, label), axis=0)
+            is_properly_classified = tf.math.reduce_all(tf.math.equal(output, label), axis=1)
         return image
 
     @staticmethod
     def run_attack(model, data_sample, target_class):
 
 
-
+        start = time.time()
         return_images = DeepFool.deepfool(data_sample, model)
+        print(time.time() - start)
 
         for i in range(1):
             input_sample = tf.expand_dims(tf.gather_nd(data_sample[0], [i]), axis=0)
@@ -98,8 +102,8 @@ if __name__ == "__main__":
     tf.config.experimental.set_memory_growth(physical_devices[0], True)
 
     model = ResNetWrapper()
+    dataset = model.get_dataset(tfds.Split.TEST, batch_size=1).take(100)
     # model = ConvModel().load_model_data()
-    # model = DenseModel().load_model_data()
-    dataset = model.get_dataset(tfds.Split.TEST, batch_size=1).take(10)
+    # dataset = model.get_dataset(tfds.Split.TEST, batch_size=500).take(20)
     for data_sample in dataset:
         DeepFool.run_attack(model, data_sample, None)
