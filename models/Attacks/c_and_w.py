@@ -2,7 +2,14 @@
 import tensorflow as tf
 import numpy as np
 from tensorflow.python.training.gradient_descent import GradientDescentOptimizer
+from tensorflow_datasets import Split
+
 from models.Attacks.attack import Attack
+from models.CIFAR10Models.ConvModel import ConvModel
+from models.ImageNet.InceptionV3Wrapper import ResNetWrapper
+from models.MNISTModels.DenseModel import DenseModel
+from models.utils.images import show_plot
+
 
 @tf.function
 def optimize_c_and_w(image, model, i_max, target_label, c_val, perturbation, optimizer):
@@ -26,8 +33,8 @@ def optimize_c_and_w(image, model, i_max, target_label, c_val, perturbation, opt
     return 0.5 * (tf.tanh(perturbation) + 1)
 
 @tf.function
-def c_and_w(image, model, target_label, perturbation, optimizer, iter_max=10000, binary_iter_max=10):
-    c_high = tf.fill([image.shape[0]], 100.0)
+def c_and_w(image, model, target_label, perturbation, optimizer, iter_max=10000, binary_iter_max=25):
+    c_high = tf.fill([image.shape[0]], 1000.0)
     c_low = tf.fill([image.shape[0]], 0.01)
     prev_high = c_high
 
@@ -50,7 +57,22 @@ class CarliniWagner(Attack):
         image, label = data_sample
         perturbation = tf.Variable(np.random.uniform(0.0, 1.0, image.shape), dtype=tf.float32)
         optimizer = GradientDescentOptimizer(1e-2)
-        target_label = tf.one_hot(target_class, model.get_number_of_classes())
+        # target_label = tf.one_hot(target_class, model.get_number_of_classes())
         iter_max = 10000
-        return_image = c_and_w(image, model, target_label, perturbation, optimizer, iter_max)
-        return (return_image, model(image))
+        return_image = c_and_w(image, model, target_class, perturbation, optimizer, iter_max)
+        return (return_image, model(return_image))
+
+def test_c_and_w():
+    model = ResNetWrapper()
+    # model = ConvModel().load_model_data()
+    # model = DenseModel().load_model_data()
+    batch_size = 2
+    for data_sample in  model.get_dataset(Split.TEST, batch_size=batch_size, shuffle=1).take(1):
+        ret_image, ret_labels = CarliniWagner.run_attack(model, data_sample, 1)
+        for i in range(int(batch_size/10)):
+            show_plot(model(tf.expand_dims(data_sample[0][i], axis=0)), tf.expand_dims(data_sample[0][i], axis=0), model.get_label_names())
+            show_plot(model(tf.expand_dims(ret_image[i], axis=0)), tf.expand_dims(ret_image[i], axis=0), model.get_label_names())
+
+if __name__ == "__main__":
+    test_c_and_w()
+    tf.S

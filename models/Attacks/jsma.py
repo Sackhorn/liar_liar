@@ -29,8 +29,8 @@ def jsma(data_sample,
          show_plots=False,
          use_logits=False):
 
-
-    is_targeted = target_label != None
+    target_label = target_label.numpy().squeeze().argmax()
+    is_targeted = target_label is not None
     image, true_label = data_sample
     true_label = true_label.numpy().squeeze().argmax()
     current_prediction = model(image).numpy().squeeze().argmax()
@@ -43,8 +43,8 @@ def jsma(data_sample,
     all_pixels = prune_saturated_pixels(all_pixels, image, is_increasing, min, max)
     iter = 0
 
-    if show_plots:
-        show_plot(model(image), image, labels_names=model.get_label_names())
+    # if show_plots:
+    #     show_plot(model(image), image, labels_names=model.get_label_names())
 
     # this function determines whether the algorithm should end work
     def has_met_target(is_targeted, target_label, true_label, current_prediction):
@@ -74,8 +74,8 @@ def jsma(data_sample,
         current_prediction = model(image).numpy().squeeze().argmax()
         all_pixels = prune_saturated_pixels(all_pixels, image, is_increasing, min, max)
         iter += 1
-        if show_plots:
-            show_plot(model(image), image, labels_names=model.get_label_names())
+        # if show_plots:
+        #     show_plot(model(image), image, labels_names=model.get_label_names())
 
 
     return image, current_prediction
@@ -213,21 +213,6 @@ def generate_test(all_pixels):
     indices = np.column_stack(np.triu_indices(np.prod(shape[0]), 1))
     first = all_pixels[indices[:,0]]
     second = all_pixels[indices[:,1]]
-    # print("generating pairs took: " + str(time.time() - start))
-    # shape = 32,32,3
-    # pairs = np.column_stack(np.unravel_index(np.arange(np.prod(shape)),shape))[np.column_stack(np.triu_indices(np.prod(shape),1))]
-    # first = pairs[:,0,:]
-    # second = pairs[:,1,:]
-
-    # first_pix = []
-    # second_pix = []
-    # for i in range(len(all_pixels)):
-    #     first = all_pixels[i]
-    #     for j in all_pixels[i+1:]:
-    #         second = j
-    #         first_pix.append(first)
-    #         second_pix.append(second)
-    # return np.array(first_pix), np.array(second_pix)
     return first, second
 
 class jsma_plus_increasing(Attack):
@@ -253,13 +238,9 @@ class jsma_minus_increasing_logits(Attack):
 
 
 def test_jsma():
-    # model = DenseModel().load_model_data()
     model = ConvModel().load_model_data()
-
     eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1)
-
     for data_sample in eval_dataset.take(20):
-
         image, true_label = data_sample
         target_label = true_label.numpy().squeeze().argmax() - 2 % model.get_number_of_classes()
         if true_label.numpy().squeeze().argmax() != model(image).numpy().squeeze().argmax():
