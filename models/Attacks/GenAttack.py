@@ -4,6 +4,7 @@ import tensorflow as tf
 from tensorflow.python import enable_eager_execution
 from tensorflow_datasets import Split
 
+from models.Attacks.attack import Attack
 from models.CIFAR10Models.ConvModel import ConvModel
 from models.ImageNet.InceptionV3Wrapper import ResNetWrapper
 from models.MNISTModels.DenseModel import DenseModel
@@ -15,12 +16,11 @@ from models.utils.images import show_plot
 from models.utils.utils import count
 
 
-def evolutionary_attack(model, data_sample, target_class, generation_nmb=1000, population_nmb=10, min=0.0, max=1.0, mutation_chance=0.3):
+def evolutionary_attack(model, image, target_class, generation_nmb=1000, population_nmb=10, min=0.0, max=1.0, mutation_chance=0.05):
     """
     :type model: SequentialModel
     """
 
-    image, label = data_sample
     np_image = image.numpy()
     shape = np_image.shape
     old_population = [(np_image + np.random.uniform(-0.05, 0.05, shape)).astype(np.float32) for _ in range(population_nmb)] #creating the initial population
@@ -38,7 +38,6 @@ def evolutionary_attack(model, data_sample, target_class, generation_nmb=1000, p
         else:
             new_population = [old_population[highest_scoring_idx]]
             fitness = list(map(lambda x: eval_specimen(target_class, x, model, get_raw=False), old_population))
-            # print("gen: " + str(k) + " fitness: " + str(np.array(fitness).max()))
             fitness = tf.nn.softmax(fitness)
             fitness = fitness.numpy()
 
@@ -51,7 +50,6 @@ def evolutionary_attack(model, data_sample, target_class, generation_nmb=1000, p
 
         old_population = new_population
 
-    # print("run out of generation numbers")
     fitness = list(map(lambda x: eval_specimen(target_class, x, model, get_raw=True), old_population))
     highest_scoring_idx = np.argmax(fitness)
     output = old_population[highest_scoring_idx].reshape(model.get_input_shape())
@@ -91,7 +89,6 @@ def eval_specimen(target_class, specimen, model, get_raw):
     probs_without_target = np.array([logits[i] for i in range(len(logits)) if i!=target_class ])
     probs_without_target = probs_without_target[np.nonzero(probs_without_target)] # We prune elements that are so close to zero that it doesnt matter
     fitness = np.log(logits[target_class]) - np.log(np.sum(probs_without_target))
-    # fitness = np.log(logits[target_class])
     return fitness
 
 def get_classification(specimen, model):
@@ -111,27 +108,14 @@ def mutate_specimen(specimen, min, max, mutation_chance):
                 old_val[...] = new_val
     return np.clip(new_specimen, min, max)
 
-def test_ea_attack():
-    # model = LeNet5().load_model_data()
-    model = ConvModel().load_model_data()
-    # model = ResNetWrapper().load_model_data()
-    count_arr = []
-    target_class = 9
-    for data_sample in model.get_dataset(Split.TEST, batch_size=1, augment_data=False):
-        image, label = data_sample
-        # model(image)
-        # show_plot(model(image), image, labels_names=model.get_label_names())
-        ret_image = evolutionary_attack(model, data_sample, target_class=target_class, mutation_chance=0.05)
-        # show_plot(model(ret_image), ret_image, labels_names=model.get_label_names())
-        if tf.argmax(model(ret_image), axis=1) == target_class:
-            count_ret = 1.0
-        else:
-            count_ret = 0.0
-        print(count_ret)
-        count_arr.append(count_ret)
-        avg = np.average(np.array(count_arr))
-        print("average: " + str(avg))
-
-if __name__ == "__main__":
-    enable_eager_execution()
-    test_ea_attack()
+class GenAttack(Attack):
+    @staticmethod
+    def run_attack(model, data_sample, target_class):
+        target_class = tf.argmax(target_class).numpy()
+        images, _ = data_sample
+        image_array = tf.TensorArray(tf.float32, size=images.shape[0])
+        for idx in range(images.shape[0]):
+            ret_image = evolutionary_attack(model, images[idx], target_class)
+            image_array.write(idx, ret_image)
+        ret_image = tf.squeeze(image_array.stack())
+        return (ret_image, model(ret_image))
