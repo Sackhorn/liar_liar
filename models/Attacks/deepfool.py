@@ -63,4 +63,4 @@ def _deepfool(data_sample, model, max_iter=1, min=0.0, max=1.0):
         output = model(image)
         output = tf.one_hot(tf.argmax(output, axis=1), nmb_classes)
         is_properly_classified = tf.math.reduce_all(tf.math.equal(output, label), axis=1)
-    return image
+    return (image, model(image))
