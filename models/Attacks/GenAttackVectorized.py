@@ -35,9 +35,8 @@ def evolutionary_attack(model,
 
         if tf.math.equal(classification, target_class):
             break
-        else:
-            new_population = new_population.write(0, tf.expand_dims(old_population[highest_scoring_idx],0))
 
+        new_population = new_population.write(0, tf.expand_dims(old_population[highest_scoring_idx],0))
         for i in tf.range(1, population_nmb-1):
             parents_idxs = pick_parents(fitness)
             first_parent_idx = parents_idxs[0]
@@ -106,5 +105,4 @@ class GenAttackVectorized(Attack):
     def run_attack(model, data_sample, target_class):
         images, _ = data_sample
         ret_image = tf.map_fn(lambda x: evolutionary_attack(model, x, target_class), images)
-        # ret_image = tf.vectorized_map(lambda x: evolutionary_attack(model, x, target_class), images)
         return (ret_image, model(ret_image))
