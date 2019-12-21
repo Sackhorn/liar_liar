@@ -15,6 +15,7 @@ from models.MNISTModels.ConvModel import ConvModel
 from models.MNISTModels.MNISTModel import MNISTModel
 import numpy as np
 from models.utils.images import show_plot
+from models.utils.utils import count
 
 
 class MNISTGenerator(MNISTModel):
@@ -71,7 +72,7 @@ generator = MNISTGenerator()
 discriminator = MNISTDiscriminator()
 
 
-EPOCHS = 200
+EPOCHS = 250
 BATCH_SIZE = 250
 noise_dim = 100
 num_examples_to_generate = 16
@@ -79,13 +80,16 @@ num_examples_to_generate = 16
 
 classifier: SequentialModel = ConvModel().load_model_data()
 classifier.trainable = False
-seed =  None
+seed = None
 for data in classifier.get_dataset(Split.TRAIN, batch_size=4).take(1):
     seed, _ = data
 classifier_loss = CategoricalCrossentropy(from_logits=True)
 target_class = tf.one_hot(tf.constant(1, shape=[BATCH_SIZE], dtype=tf.int32), depth=10, dtype=tf.int32)
 generator.trainable = True
 discriminator.trainable = True
+alpha = tf.constant(1.0, dtype=tf.float32)
+beta = tf.constant(1.0, dtype=tf.float32)
+c_constant = tf.constant(0.0, dtype=tf.float32)
 
 # @tf.function
 def train_step(images):
@@ -98,7 +102,7 @@ def train_step(images):
       fake_output = discriminator(generated_images, train=True)
       classifier_output = classifier(generated_images, train=False)
 
-      gen_loss = generator.generator_loss(fake_output) + 5 * classifier_loss(target_class, classifier_output)
+      gen_loss = generator.generator_loss(fake_output) + alpha * classifier_loss(target_class, classifier_output) + beta * tf.math.maximum(0.0, tf.norm(generated_images-images, axis=1)-c_constant)
       disc_loss = discriminator.discriminator_loss(real_output, fake_output)
 
     gradients_of_generator = gen_tape.gradient(gen_loss, generator.trainable_variables)
@@ -114,13 +118,14 @@ def train(dataset, epochs):
     for image_batch in dataset:
         image, label = image_batch
         train_step(image)
-    generate_and_save_images(generator, epoch + 1, seed)
+    generate_and_save_images(generator, epoch + 1, seed, dataset)
     print ('Time for epoch {} is {} sec'.format(epoch + 1, time.time()-start))
 
-def generate_and_save_images(model, epoch, test_input):
+def generate_and_save_images(model, epoch, test_input, dataset):
   generator.trainable = False
   discriminator.trainable = False
-  predictions = model(test_input, train=False)
+  predictions = model(seed)
+  predictions = generator(seed)
   probs = classifier(predictions, train=False)
 
   for i in range(predictions.shape[0]):
@@ -131,11 +136,20 @@ def generate_and_save_images(model, epoch, test_input):
       plt.subplot(2,4,2*(i+1))
       plt.bar(np.arange(len(probs[i])), probs[i])
       plt.xticks(np.arange(len(probs[i])), np.arange(probs[i].numpy().size), rotation=90)
+      plt.savefig('image_at_epoch_{:04d}.png'.format(epoch))
   plt.show()
-  # plt.savefig('image_at_epoch_{:04d}.png'.format(epoch))
+  accuracy = []
+  diff_norm = []
+  for image, label in dataset:
+      generated = model(image)
+      diff_norm.append(tf.math.reduce_mean(tf.norm(generated - image, axis=1), axis=0).numpy())
+      accuracy.append(count(classifier, generated, target_class))
+  print("accuracy: " + str(np.average(np.array(accuracy))), " mean noise norm: " + str(np.average(np.array(diff_norm))))
 
 def train_gan():
     dataset = generator.get_dataset(Split.TRAIN, batch_size=BATCH_SIZE, augment_data=False)
+    # generator.load_model_data()
+    # discriminator.load_model_data()
     train(dataset, EPOCHS)
     generator.save_model_data()
     discriminator.save_model_data()
@@ -146,7 +160,8 @@ def test_model():
     dataset = generator.get_dataset(Split.TRAIN, batch_size=4, augment_data=False).take(10)
     for data in dataset:
         image, _ = data
-        generate_and_save_images(generator, 0, image)
+        generate_and_save_images(generator, 0, image, dataset)
 
 if __name__=="__main__":
     train_gan()
+    # test_model()
