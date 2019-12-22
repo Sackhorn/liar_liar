@@ -1,10 +1,10 @@
 import os
+import tensorflow as tf
+import tensorflow_datasets as tfds
+
 from datetime import datetime
 from os.path import *
 
-import tensorflow as tf
-import tensorflow_datasets as tfds
-from tensorflow_datasets import Split
 
 
 class DataProvider():
