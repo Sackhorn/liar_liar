@@ -40,7 +40,7 @@ class DataProvider():
     def get_label_names(self):
         return self.builder.info.features['label'].names
 
-    def get_dataset(self, split, batch_size=32, shuffle=10000, augment_data=True):
+    def get_dataset(self, split, batch_size=32, shuffle=10000, augment_data=True, filter=None):
         augmentations = [rotate, flip]
 
         def cast_labels(x, y):
@@ -58,7 +58,9 @@ class DataProvider():
             dataset, info = tfds.load(self.dataset_name, split=tfds.Split.VALIDATION, with_info=True, as_supervised=True, data_dir=self.data_dir)  # type: tf.data.Dataset
         else:
             dataset, info = tfds.load(self.dataset_name, split=split, with_info=True, as_supervised=True)  # type: tf.data.Dataset
-        dataset = dataset.map(cast_labels).shuffle(shuffle).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
+        if filter is not None:
+            dataset = dataset.filter(filter)
+        dataset = dataset.map(cast_labels).shuffle(shuffle).batch(batch_size, drop_remainder=True).prefetch(tf.data.experimental.AUTOTUNE)
         if split == tfds.Split.TRAIN and augment_data:
             dataset = dataset.map(augment_data, num_parallel_calls=tf.data.experimental.AUTOTUNE)
         self.info = info

@@ -1,13 +1,10 @@
-from typing import List, Any
-
+from typing import List
 import tensorflow as tf
 from tensorflow.python import keras
 from tensorflow.python.keras import Model
 from tensorflow.python.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow_datasets import Split
-
 from models.BaseModels.DataProvider import DataProvider
-from matplotlib import pyplot as plt
 
 
 
@@ -22,10 +19,10 @@ class SequentialModel(Model, DataProvider):
         self.sequential_layers = []
 
     @tf.function
-    def call(self, input, get_raw=False, **kwargs):
+    def call(self, input, train=False, get_raw=False, **kwargs):
         result = input
         for layer in self.sequential_layers[:-1]:
-            result = layer(result)
+            result = layer(result, training=train)
         if get_raw:
             activation_function = self.sequential_layers[-1].activation
             self.sequential_layers[-1].activation = lambda x: x
