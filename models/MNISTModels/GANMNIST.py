@@ -12,18 +12,18 @@ class MNISTGenerator(MNISTModel):
     def __init__(self, optimizer=Adam(1e-4), loss=None, metrics=[None]):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="mnist_generator")
         self.sequential_layers = [
-        Flatten(),
-        Dense(7 * 7 * 256, use_bias=False),
+        Conv2DTranspose(256, (5,5), padding='same'),
+        # Dense(7 * 7 * 256, use_bias=False),
         BatchNormalization(),
         LeakyReLU(),
-        Reshape((7, 7, 256)),
-        Conv2DTranspose(128, (5, 5), strides=(1, 1), padding='same', use_bias=False),
+        # Reshape((7, 7, 256)),
+        Conv2DTranspose(128, (5, 5), padding='same', use_bias=False),
         BatchNormalization(),
         LeakyReLU(),
-        Conv2DTranspose(64, (5, 5), strides=(2, 2), padding='same', use_bias=False),
+        Conv2DTranspose(64, (5, 5),  padding='same', use_bias=False),
         BatchNormalization(),
         LeakyReLU(),
-        Conv2DTranspose(1, (5, 5), strides=(2, 2), padding='same', use_bias=False, activation='tanh')
+        Conv2DTranspose(1, (5, 5),  padding='same', use_bias=False, activation='tanh'),
         ]
 
         self.gan_loss = BinaryCrossentropy(from_logits=True)
@@ -31,7 +31,7 @@ class MNISTGenerator(MNISTModel):
 
     def call(self, input, get_raw=False, train=False, **kwargs):
         output = super().call(input, get_raw=get_raw)
-        return output + input
+        return output
 
     def generator_loss(self, fake_output):
         return self.gan_loss(tf.ones_like(fake_output), fake_output)
@@ -61,4 +61,4 @@ class MNISTDiscriminator(MNISTModel):
         return total_loss
 
 GAN = AdvGAN(MNISTGenerator(), MNISTDiscriminator(), ConvModel())
-GAN.gan_train(alpha=10.0, beta=1.0, c_constant=0.0, target_class=1, batch_size=250, epochs=100)
+GAN.gan_train(alpha=20.0, beta=25.0, c_constant=0.3, target_class=1, batch_size=250, epochs=100)

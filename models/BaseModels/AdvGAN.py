@@ -1,3 +1,4 @@
+import datetime
 import time
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -6,7 +7,7 @@ import numpy as np
 from tensorflow_datasets import Split
 from models.BaseModels.DataProvider import DataProvider
 from models.BaseModels.SequentialModel import SequentialModel
-from models.utils.utils import count
+from models.utils.utils import count, plot_to_image
 
 DISPLAY_NUMBER = 6
 class AdvGAN(DataProvider):
@@ -21,7 +22,7 @@ class AdvGAN(DataProvider):
         self.generator = generator_model
         self.discriminator = discriminator_model
         self.classifier = classifier.load_model_data()
-        self.register_data_provider(classifier.MODEL_NAME, classifier.dataset_name, classifier.data_dir)
+        self.register_data_provider(classifier.MODEL_NAME+"_gan", classifier.dataset_name, classifier.data_dir)
 
     @tf.function
     def call(self, input, get_raw=False, train=False, **kwargs):
@@ -40,16 +41,64 @@ class AdvGAN(DataProvider):
         self.generator.trainable = True
         self.discriminator.trainable = True
         self.classifier.trainable = False
+        #Setup metrics
+        self.training_attack_acc = tf.keras.metrics.CategoricalAccuracy('training_attack_accuracy')
+        self.test_attack_acc = tf.keras.metrics.CategoricalAccuracy('test_attack_accuracy')
+        self.training_diff_norm = tf.keras.metrics.Mean('training_diff_norm', dtype=tf.float32)
+        self.test_diff_norm = tf.keras.metrics.Mean('test_diff_norm', dtype=tf.float32)
+        self.gen_loss_mean = tf.keras.metrics.Mean('gen_loss_mean', dtype=tf.float32)
+        self.adv_loss_mean = tf.keras.metrics.Mean('adv_loss_mean', dtype=tf.float32)
+        self.hinge_loss_mean = tf.keras.metrics.Mean('hinge_loss_mean', dtype=tf.float32)
+        self.gen_total_loss_mean = tf.keras.metrics.Mean('gen_total_loss_mean', dtype=tf.float32)
+        self.discriminator_loss = tf.keras.metrics.Mean('discriminator_loss', dtype=tf.float32)
+        train_log_dir = self.get_tensorboard_path() + '/train'
+        test_log_dir = self.get_tensorboard_path() + '/test'
+        self.train_summary_writer = tf.summary.create_file_writer(train_log_dir)
+        self.test_summary_writer = tf.summary.create_file_writer(test_log_dir)
+
         display_input_dataset = self.get_dataset(Split.TRAIN, batch_size=DISPLAY_NUMBER).take(1)
         display_input, _ = tf.data.experimental.get_single_element(display_input_dataset)
         test_dataset = self.get_dataset(Split.TEST, batch_size=batch_size, augment_data=False)
         train_dataset = self.get_dataset(Split.TRAIN, batch_size=batch_size, augment_data=False)
+
         for epoch in range(epochs):
             start = time.time()
             for image_batch in train_dataset:
                 image, _ = image_batch
                 self.train_step(image)
+
+            with self.train_summary_writer.as_default():
+                tf.summary.scalar('attack_accuracy', self.training_attack_acc.result(), step=epoch)
+                tf.summary.scalar('diff_norm', self.training_diff_norm.result(), step=epoch)
+                tf.summary.scalar('gen_loss_mean', self.gen_loss_mean.result(), step=epoch)
+                tf.summary.scalar('adv_loss_mean', self.adv_loss_mean.result(), step=epoch)
+                tf.summary.scalar('hinge_loss_mean', self.hinge_loss_mean.result(), step=epoch)
+                tf.summary.scalar('gen_total_loss_mean', self.gen_total_loss_mean.result(), step=epoch)
+                tf.summary.scalar('discriminator_loss', self.discriminator_loss.result(), step=epoch)
+
             self.accuracy_and_diff(test_dataset)
+
+            with self.test_summary_writer.as_default():
+                tf.summary.scalar('attack_accuracy', self.test_attack_acc.result(), step=epoch)
+                tf.summary.scalar('diff_norm', self.test_diff_norm.result(), step=epoch)
+
+            template = 'epoch {}, train_acc: {}, test_acc: {}, train_diff: {}, test_diff: {}'
+            print(template.format(epoch + 1,
+                                  self.training_attack_acc.result()*100,
+                                  self.test_attack_acc.result()*100,
+                                  self.training_diff_norm.result(),
+                                  self.test_diff_norm.result()))
+
+            self.training_attack_acc.reset_states()
+            self.training_diff_norm.reset_states()
+            self.gen_loss_mean.reset_states()
+            self.adv_loss_mean.reset_states()
+            self.hinge_loss_mean.reset_states()
+            self.gen_total_loss_mean.reset_states()
+            self.discriminator_loss.reset_states()
+            self.test_attack_acc.reset_states()
+            self.test_diff_norm.reset_states()
+
             self.plot_sample_output(display_input, epoch + 1)
             print('Time for epoch {} is {} sec'.format(epoch + 1, time.time() - start))
 
@@ -57,22 +106,34 @@ class AdvGAN(DataProvider):
     @tf.function
     def train_step(self, images):
         with tf.GradientTape() as gen_tape, tf.GradientTape() as disc_tape:
-            generated_images = self.generator(images)
+            generated_noise = self.generator(images)
+            adversary_images = generated_noise + images
             real_output = self.discriminator(images)
-            fake_output = self.discriminator(generated_images)
-            classifier_output = self.classifier(generated_images)
+            fake_output = self.discriminator(adversary_images)
+            classifier_output = self.classifier(adversary_images)
             gen_loss = self.generator.generator_loss(fake_output)
             adv_loss = self.alpha * self.classifier.loss(self.target_class, classifier_output)
-            hinge_distance_loss =  self.beta * tf.math.maximum(0.0, tf.norm(generated_images - images, axis=1) - self.c_constant)
+            hinge_distance_loss =  self.beta * tf.math.maximum(0.0, tf.norm(generated_noise, axis=1)-self.c_constant)
             gen_total_loss = gen_loss + adv_loss + hinge_distance_loss
             disc_loss = self.discriminator.discriminator_loss(real_output, fake_output)
+            diff_norm = tf.math.reduce_mean(tf.norm(generated_noise, axis=1, ord=2), axis=0)
         gradients_of_generator = gen_tape.gradient(gen_total_loss, self.generator.trainable_variables)
         gradients_of_discriminator = disc_tape.gradient(disc_loss, self.discriminator.trainable_variables)
         self.generator.optimizer.apply_gradients(zip(gradients_of_generator, self.generator.trainable_variables))
         self.discriminator.optimizer.apply_gradients(zip(gradients_of_discriminator, self.discriminator.trainable_variables))
 
+        self.training_attack_acc(self.target_class, classifier_output)
+        self.gen_loss_mean(gen_loss)
+        self.adv_loss_mean(adv_loss)
+        self.hinge_loss_mean(hinge_distance_loss)
+        self.gen_total_loss_mean(gen_total_loss)
+        self.discriminator_loss(disc_loss)
+        self.training_diff_norm(diff_norm)
+
+
     def plot_sample_output(self, display_input, epoch):
         generated_images = self.generator(display_input)
+        generated_images = generated_images + display_input
         probs = self.classifier(generated_images)
         figure = plt.figure(figsize=(10, 10))
         for i in range(generated_images.shape[0]):
@@ -82,17 +143,15 @@ class AdvGAN(DataProvider):
             plt.yticks([])
             plt.subplot(3, 4, 2 * (i + 1))
             plt.bar(np.arange(len(probs[i])), probs[i])
-            plt.xticks(np.arange(len(probs[i])), np.arange(probs[i].numpy().size))
-        plt.show()
+            plt.xticks(np.arange(len(probs[i])), np.arange(probs[i].numpy().size), rotation=90)
+        # plt.show()
+        with self.train_summary_writer.as_default():
+            tf.summary.image("Training data", plot_to_image(figure), step=epoch)
         return figure
 
     def accuracy_and_diff(self, test_dataset):
-        accuracy = []
-        diff_norm = []
         for image, label in test_dataset:
             generated = self.generator(image)
-            diff_norm.append(tf.math.reduce_mean(tf.norm(generated - image, axis=1), axis=0).numpy())
-            accuracy.append(count(self.classifier, generated, self.target_class))
-        avg_accuracy = np.average(np.array(accuracy))
-        avg_diff_norm = np.average(np.array(diff_norm))
-        print("accuracy: {} mean noise norm: {}".format(avg_accuracy, avg_diff_norm))
+            diff_norm = tf.math.reduce_mean(tf.norm(generated, axis=1), axis=0)
+            self.test_diff_norm(diff_norm)
+            self.test_attack_acc(self.classifier(generated + image), self.target_class)
