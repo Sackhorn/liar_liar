@@ -1,26 +1,60 @@
-import numpy as np
+#This is the implementation of method given in this paper
+# https://arxiv.org/pdf/1805.11090.pdf
 import tensorflow as tf
 import tensorflow_probability as tfp
+from models.BaseModels.SequentialModel import SequentialModel
 
-from models.Attacks.attack import Attack
-
-# https://arxiv.org/pdf/1805.11090.pdf Strategia ewolucyjna
 # TODO:Add updating parameters during runtime (mutation probability and mutation_range)
-# for vectorization tf.tensor_scatter_nd_add
-# for vectorization tfp.distributions.Bernoulli
+
+def gen_attack(classifier,
+               data_sample,
+               target_class,
+               generation_nmb=100000,
+               population_nmb=6,
+               min=0.0,
+               max=1.0,
+               mutation_probability=0.05,
+               delta=0.05):
+    """
+    Args:
+        classifier (SequentialModel):
+        data_sample (DatasetV2):
+        target_class (Tensor): A one hot encoded label that specifies target class
+        generation_nmb: Number of generations we want the algorithm to perform before returning a failed adversarial image
+        population_nmb: Number of specimens we want to preserve from each generation
+        min: Minimal value of input tensor
+        max: Maximal value of input tensor
+        mutation_probability: Probability of mutating a feature of specimen
+        delta: maximal value by wich mutated value will change
+
+    Returns:
+        A tuple of generated adversarial sample and output of classifier for the adversarial sample
+
+    """
+    images, _ = data_sample
+    ret_image = tf.map_fn(lambda x: _gen_attack(classifier,
+                                                x,
+                                                target_class,
+                                                generation_nmb,
+                                                population_nmb,
+                                                min,
+                                                max,
+                                                mutation_probability,
+                                                delta), images)
+    return (ret_image, classifier(ret_image))
 
 @tf.function
-def evolutionary_attack(model,
-                        image,
-                        target_class,
-                        generation_nmb=100000,
-                        population_nmb=6,
-                        min=0.0,
-                        max=1.0,
-                        mutation_probability=0.05,
-                        delta=0.05):
+def _gen_attack(classifier,
+                image,
+                target_class,
+                generation_nmb=100000,
+                population_nmb=6,
+                min=0.0,
+                max=1.0,
+                mutation_probability=0.05,
+                delta=0.05):
     """
-    :type model: SequentialModel
+    :type classifier: SequentialModel
     """
     target_class = tf.argmax(target_class)
     old_population = tf.tile(tf.expand_dims(image, 0), [population_nmb, 1,1,1])
@@ -28,10 +62,10 @@ def evolutionary_attack(model,
     new_population = tf.TensorArray(tf.float32, size=old_population.shape[0]) #this is just to satisfy the tf.function requirements
 
     for _ in tf.range(generation_nmb):
-        fitness = tf.map_fn(lambda x: eval_specimen(target_class, x, model), old_population)
+        fitness = tf.map_fn(lambda x: eval_specimen(target_class, x, classifier), old_population)
         highest_scoring_idx = tf.argmax(fitness)
         highest_scoring_idx = tf.reshape(highest_scoring_idx, []) #Make the Tensor into scalar tensor
-        classification = tf.argmax(model(tf.expand_dims(old_population[highest_scoring_idx], 0)), axis=1)
+        classification = tf.argmax(classifier(tf.expand_dims(old_population[highest_scoring_idx], 0)), axis=1)
 
         if tf.math.equal(classification, target_class):
             break
@@ -48,7 +82,7 @@ def evolutionary_attack(model,
         # Again reshape is just for tf.function sake
         old_population = tf.reshape(new_population.concat(), old_population.shape)
 
-    fitness = tf.map_fn(lambda x: eval_specimen(target_class, x, model), old_population)
+    fitness = tf.map_fn(lambda x: eval_specimen(target_class, x, classifier), old_population)
     highest_scoring_idx = tf.argmax(fitness)
     highest_scoring_idx = tf.reshape(highest_scoring_idx, [])  # Make the Tensor into scalar tensor
     return tf.squeeze(old_population[highest_scoring_idx])
@@ -98,11 +132,3 @@ def mutate_specimen(specimen, min, max, mutation_probability, delta):
         specimen
     )
     return tf.clip_by_value(mutated, min, max)
-
-
-class GenAttackVectorized(Attack):
-    @staticmethod
-    def run_attack(model, data_sample, target_class):
-        images, _ = data_sample
-        ret_image = tf.map_fn(lambda x: evolutionary_attack(model, x, target_class), images)
-        return (ret_image, model(ret_image))

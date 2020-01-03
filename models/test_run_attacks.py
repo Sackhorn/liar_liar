@@ -1,44 +1,53 @@
 import time
 import tensorflow as tf
-import numpy as np
+from tensorflow_core.python.keras.metrics import CategoricalAccuracy
 from tensorflow_datasets import Split
-
-from models.Attacks.GenAttack import GenAttack
-from models.Attacks.GenAttackVectorized import GenAttackVectorized
-from models.Attacks.c_and_w import CarliniWagner
-from models.Attacks.deepfool import DeepFool
-from models.Attacks.fgsm import FGSM
-from models.Attacks.jsma import jsma_plus_increasing
+from models.Attacks.c_and_w import  carlini_wagner
+from models.Attacks.deepfool import deepfool
+from models.Attacks.fgsm import fgsm
+from models.Attacks.gen_attack import gen_attack
+from models.Attacks.map_elites import map_elites
 from models.CIFAR10Models.ConvModel import ConvModel
 from models.ImageNet.InceptionV3Wrapper import InceptionV3Wrapper
+from models.ImageNet.ResNetWrapper import ResNetWrapper
 from models.utils.images import show_plot
-from models.utils.utils import count
 
-model = ConvModel().load_model_data()
-# model = ResNetWrapper().load_model_data()
-# attacks = [FGSM, DeepFool, CarliniWagner, jsma_plus_increasing]
-attacks = [GenAttackVectorized]
-# attacks = [GenAttack]
+classifier = ResNetWrapper().load_model_data()
 
-target_class = tf.one_hot(2, model.get_number_of_classes())
-avg = []
-for data_sample in  model.get_dataset(Split.TEST, batch_size=20).take(100):
+BATCH_SIZE = 1
+target_class_int = 2
+target_class = tf.one_hot(target_class_int, classifier.get_number_of_classes())
+
+# UNTARGETED ATTACKS
+metric = CategoricalAccuracy()
+for data_sample in  classifier.get_dataset(Split.TEST, batch_size=1).take(5):
     image, labels = data_sample
+    start = time.time()
+    show_plot(classifier(tf.expand_dims(image[0], 0)), image[0], classifier.get_label_names())
+    # ret_image, logits = deepfool(classifier, data_sample, max_iter=1000)
+    ret_image, logits = fgsm(classifier, data_sample, target_class, eps=0.02)
+    show_plot(logits[0], ret_image[0], classifier.get_label_names())
+    metric.update_state(labels, logits)
+    print("TIME: {} ACC: {}".format(str(time.time() - start), str(1.0-metric.result().numpy())))
 
-    #this checks if we don't have a misclassified example in batch
-    if tf.reduce_all(
-        tf.reduce_all(
-            tf.math.not_equal(
-                tf.one_hot(tf.argmax(model(image), axis=1), model.get_number_of_classes()),
-                labels), axis=1), axis=0):
-        continue
+# TARGETED ATTACKS
+# accuracy = CategoricalAccuracy()
+# for data_sample in classifier.get_dataset(Split.TEST, batch_size=BATCH_SIZE).take(10000):
+#     image, labels = data_sample
+#     start = time.time()
+#     show_plot(classifier(tf.expand_dims(image[0], 0)), image[0], classifier.get_label_names())
+    # ret_image, logits = carlini_wagner(classifier, data_sample, target_class, optimization_iter=1000, binary_iter=2, c_high=1.0)
+    # ret_image, logits = fgsm(classifier, data_sample, target_class, eps=0.02)
+    # show_plot(logits[0], ret_image[0], classifier.get_label_names())
+    # accuracy.update_state(target_class, logits)
+    # print("TIME: {:2f} ACC: {:2f}".format(time.time() - start, accuracy.result().numpy()))
+#
 
 
-    for attack in attacks:
-        start = time.time()
-        print("ATTACK: " + attack.__name__)
-        ret_image, logits = attack.run_attack(model, data_sample, target_class)
-        avg.append(count(model, ret_image, target_class))
-        print("COUNT: " + str(count(model, ret_image, target_class)))
-        print("TIME: " + str(time.time() - start))
-    print(np.average(np.array(avg)))
+# MAP-ELITES
+# start = time.time()
+# ret_image, logits = map_elites(model, iter_max=1000)
+# for i in range(10):
+#     show_plot(logits[i], ret_image[i], model.get_label_names())
+# print("TIME: {:2f}".format(time.time() - start))
+

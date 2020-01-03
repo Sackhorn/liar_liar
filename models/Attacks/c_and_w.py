@@ -1,28 +1,52 @@
-#https://arxiv.org/pdf/1312.6199.pdf opis metody + są jeszcze dwie kolejne publikacje tych samych autorów
+#This is the implementation of method given in this paper
+# https://arxiv.org/abs/1608.04644
 import tensorflow as tf
 import numpy as np
 from tensorflow.python.training.gradient_descent import GradientDescentOptimizer
-from tensorflow_datasets import Split
-
-from models.Attacks.attack import Attack
-from models.CIFAR10Models.ConvModel import ConvModel
-from models.ImageNet.InceptionV3Wrapper import InceptionV3Wrapper
-from models.MNISTModels.DenseModel import DenseModel
-from models.utils.images import show_plot
 
 
-@tf.function
-def optimize_c_and_w(image, model, i_max, target_label, c_val, perturbation, optimizer):
-    target_label_index = tf.argmax(target_label, output_type=tf.int32, axis=0)
+def carlini_wagner(classifier,
+                   data_sample,
+                   target_class,
+                   optimizer=GradientDescentOptimizer(1e-2),
+                   optimization_iter=10000,
+                   binary_iter=20,
+                   c_high=1000.0,
+                   c_low=0.0):
+    """
+
+    Args:
+        classifier: A classifier model that we want to attack
+        data_sample: A tuple of tensors of structure (image_tensor, label_tensor) against wich attack is run
+        target_class: One hot encoded target class for the attack
+        optimizer: Optimizer used in algorithm
+        optimization_iter: Number of steps take in optimization for given parameter
+        binary_iter: Number of steps take in binary search for parameter C
+        c_high: Upper limit of range used in binary search for parameter C
+        c_low: lower limit of range used in binary search for parameter C
+
+    Returns: A tuple of structure (adversarial_example, classifier output for examples)
+
+    """
+    image, label = data_sample
+    perturbation = tf.Variable(np.random.uniform(0.0, 1.0, image.shape), dtype=tf.float32)
+    cw = tf.function(_c_and_w)
+    return_image = cw(image, classifier, target_class, perturbation, optimizer, optimization_iter, binary_iter, c_high, c_low)
+    return (return_image, classifier(return_image))
+
+
+def _optimize_c_and_w(image, classifier, iter_max, target_class, c_val, perturbation, optimizer):
+    target_label_index = tf.argmax(target_class, output_type=tf.int32, axis=0)
     target_label_index = tf.reshape(target_label_index, [])
     tf.print(c_val)
 
-    for _ in tf.range(i_max):
+    for _ in tf.range(iter_max):
         with tf.GradientTape() as tape:
             tape.watch(perturbation)
             delta = 0.5 * (tf.tanh(perturbation) + 1)
-            logits = tf.squeeze(model(delta, get_raw=True))
-            first = tf.concat([logits[:, :target_label_index], logits[:, target_label_index + 1:]], 1)  # get all elements except of the one with highest probability
+            logits = tf.squeeze(classifier(delta, get_raw=True))
+            # get all elements except of the one with highest probability
+            first = tf.concat([logits[:, :target_label_index], logits[:, target_label_index + 1:]], 1)
             first = tf.reduce_max(first, axis=1)
             second = logits[:, target_label_index]
             g_func = first - second
@@ -32,47 +56,20 @@ def optimize_c_and_w(image, model, i_max, target_label, c_val, perturbation, opt
 
     return 0.5 * (tf.tanh(perturbation) + 1)
 
-@tf.function
-def c_and_w(image, model, target_label, perturbation, optimizer, iter_max=10000, binary_iter_max=25):
-    c_high = tf.fill([image.shape[0]], 1000.0)
-    c_low = tf.fill([image.shape[0]], 0.01)
+def _c_and_w(image, model, target_class, perturbation, optimizer, optimization_iter=10000, binary_iter=25, c_high=1000.0, c_low=0.0):
+    c_high = tf.fill([image.shape[0]], c_high)
+    c_low = tf.fill([image.shape[0]], c_low)
     prev_high = c_high
 
-    for _ in tf.range(binary_iter_max):
+    for _ in tf.range(binary_iter):
         c_half = (c_high + c_low) / 2
-        new_image = optimize_c_and_w(image, model, iter_max, target_label, c_half, perturbation, optimizer)
+        new_image = _optimize_c_and_w(image, model, optimization_iter, target_class, c_half, perturbation, optimizer)
         output = model(new_image)
         output = tf.one_hot(tf.argmax(output, axis=1), model.get_number_of_classes())
-        has_succeed = tf.math.reduce_all(tf.math.equal(output, target_label), axis=1)
+        has_succeed = tf.math.reduce_all(tf.math.equal(output, target_class), axis=1)
         prev_high = c_high
         c_high = tf.where(has_succeed, c_half, c_high)
         c_low = tf.where(has_succeed, c_low, c_half)
         tf.compat.v1.assign(perturbation, tf.random.uniform(perturbation.shape))
 
-    return optimize_c_and_w(image, model, iter_max, target_label, prev_high, perturbation, optimizer)
-
-class CarliniWagner(Attack):
-    @staticmethod
-    def run_attack(model, data_sample, target_class):
-        image, label = data_sample
-        perturbation = tf.Variable(np.random.uniform(0.0, 1.0, image.shape), dtype=tf.float32)
-        optimizer = GradientDescentOptimizer(1e-2)
-        # target_label = tf.one_hot(target_class, model.get_number_of_classes())
-        iter_max = 10000
-        return_image = c_and_w(image, model, target_class, perturbation, optimizer, iter_max)
-        return (return_image, model(return_image))
-
-def test_c_and_w():
-    model = InceptionV3Wrapper()
-    # model = ConvModel().load_model_data()
-    # model = DenseModel().load_model_data()
-    batch_size = 2
-    for data_sample in  model.get_dataset(Split.TEST, batch_size=batch_size, shuffle=1).take(1):
-        ret_image, ret_labels = CarliniWagner.run_attack(model, data_sample, 1)
-        for i in range(int(batch_size/10)):
-            show_plot(model(tf.expand_dims(data_sample[0][i], axis=0)), tf.expand_dims(data_sample[0][i], axis=0), model.get_label_names())
-            show_plot(model(tf.expand_dims(ret_image[i], axis=0)), tf.expand_dims(ret_image[i], axis=0), model.get_label_names())
-
-if __name__ == "__main__":
-    test_c_and_w()
-    tf.S
+    return _optimize_c_and_w(image, model, optimization_iter, target_class, prev_high, perturbation, optimizer)
