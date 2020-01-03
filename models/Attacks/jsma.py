@@ -1,21 +1,37 @@
-import itertools
+#This is the implementation of method given in this paper
+# Source https://arxiv.org/pdf/1511.07528.pdf
 import time
-from math import floor
-
-from tensorflow.python import enable_eager_execution, Tensor
-
-from models.Attacks.attack import Attack
-from models.CIFAR10Models.ConvModel import ConvModel
-from models.ImageNet.InceptionV3Wrapper import InceptionV3Wrapper
-from models.MNISTModels.DenseModel import DenseModel
-from models.utils.images import show_plot
 import numpy as np
 import tensorflow as tf
-import tensorflow_datasets as tfds
+from math import floor
 
 
-# TODO: Generalize for all models
-# Source https://arxiv.org/pdf/1511.07528.pdf
+def jsma(classifier,
+         data_sample,
+         max_perturbation = 0.1,
+         theta=1,
+         target_label=None,
+         is_increasing=True,
+         min=0.0,
+         max=1.0,
+         show_plots=False,
+         use_logits=False):
+    image, label = data_sample
+    arr_image = []
+    for i in range(len(image)):
+        ret_image, _ = _jsma((tf.expand_dims(image[i], 0), label[i]),
+                                      classifier,
+                                      max_perturbation,
+                                      theta,
+                                      target_label,
+                                      is_increasing,
+                                      min,
+                                      max,
+                                      show_plots,
+                                      use_logits)
+        arr_image.append(ret_image)
+    arr_image = tf.concat(arr_image, 0)
+    return (arr_image, classifier(arr_image))
 
 
 def _jsma(data_sample,
@@ -234,32 +250,6 @@ def generate_test(all_pixels):
 #     def run_attack(model, data_sample, target_class=None):
 #         return _jsma(data_sample, model, 0.14, target_label=target_class, is_increasing=False, use_logits=True)
 
-def jsma(classifier,
-         data_sample,
-         max_perturbation = 0.1,
-         theta=1,
-         target_label=None,
-         is_increasing=True,
-         min=0.0,
-         max=1.0,
-         show_plots=False,
-         use_logits=False):
-    image, label = data_sample
-    arr_image = []
-    for i in range(len(image)):
-        ret_image, _ = _jsma((tf.expand_dims(image[i], 0), label[i]),
-                                      classifier,
-                                      max_perturbation,
-                                      theta,
-                                      target_label,
-                                      is_increasing,
-                                      min,
-                                      max,
-                                      show_plots,
-                                      use_logits)
-        arr_image.append(ret_image)
-    arr_image = tf.concat(arr_image, 0)
-    return (arr_image, classifier(arr_image))
 
 
 # def test_jsma():

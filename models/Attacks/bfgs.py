@@ -1,18 +1,20 @@
+#This is the implementation of method given in this paper
 #https://arxiv.org/pdf/1312.6199.pdf opis metody
-
-from scipy.optimize import fmin_l_bfgs_b
-from tensorflow.python import enable_eager_execution
-from tensorflow.python.keras.losses import categorical_crossentropy, sparse_categorical_crossentropy
-from tensorflow.python.ops.losses.losses_impl import sparse_softmax_cross_entropy
-from tensorflow_datasets import Split
-
-from models.CIFAR10Models.ConvModel import ConvModel
-from models.ImageNet.InceptionV3Wrapper import InceptionV3Wrapper
-from models.MNISTModels.DenseModel import DenseModel
-from models.BaseModels.SequentialModel import SequentialModel
 
 import tensorflow as tf
 import numpy as np
+from scipy.optimize import fmin_l_bfgs_b
+from tensorflow.python.keras.losses import categorical_crossentropy
+from models.BaseModels.SequentialModel import SequentialModel
+
+def bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
+    image, label = data_sample
+    arr_image = []
+    for i in range(len(image)):
+        ret_image = _bfgs((tf.expand_dims(image[i], 0), label[i]), model, i_max, target_label, min, max)
+        arr_image.append(ret_image)
+    arr_image = tf.concat(arr_image, 0)
+    return (arr_image, model(arr_image))
 
 def _bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
     """
@@ -100,25 +102,3 @@ def _bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
     input_tensor = tf.expand_dims(input_tensor, 0)
     return input_tensor
 
-def bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
-    image, label = data_sample
-    arr_image = []
-    for i in range(len(image)):
-        ret_image = _bfgs((tf.expand_dims(image[i], 0), label[i]), model, i_max, target_label, min, max)
-        arr_image.append(ret_image)
-    arr_image = tf.concat(arr_image, 0)
-    return (arr_image, model(arr_image))
-
-
-
-def test_fgsm_mnist():
-    model = ConvModel()
-    model.load_model_data()
-    target_label = tf.one_hot(tf.constant(6, dtype=tf.int64, shape=(1)), model.get_number_of_classes())
-    for data_sample in  model.get_dataset(Split.TEST, batch_size=1).take(1):
-        bfgs(data_sample, model, 10000, target_label)
-
-if __name__ == "__main__":
-    enable_eager_execution()
-    for i in range(1):
-        test_fgsm_mnist()

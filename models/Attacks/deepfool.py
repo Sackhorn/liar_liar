@@ -1,5 +1,5 @@
-# Source https://arxiv.org/pdf/1511.07528.pdf
-from models.Attacks.attack import Attack
+#This is the implementation of method given in this paper
+# Source https://arxiv.org/pdf/1511.04599.pdf
 from models.BaseModels.SequentialModel import SequentialModel
 import tensorflow as tf
 

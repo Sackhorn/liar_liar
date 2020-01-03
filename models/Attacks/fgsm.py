@@ -1,3 +1,5 @@
+#This is the implementation of method given in this paper
+# https://arxiv.org/pdf/1412.6572.pdf
 from tensorflow.python.ops.losses.losses_impl import softmax_cross_entropy
 import tensorflow as tf
 

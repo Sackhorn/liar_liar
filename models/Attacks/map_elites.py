@@ -1,6 +1,7 @@
+#This is the implementation of method given in this paper
 # https://arxiv.org/pdf/1412.1897.pdf
-# https://arxiv.org/pdf/1504.04909.pdf - tutaj jest opisana strategia ewolucyjna
-# https://pdfs.semanticscholar.org/3461/99d0c8fce4bd91be855155bb1fe71844e9ac.pdf - polynomial mutation operator
+# https://arxiv.org/pdf/1504.04909.pdf - here we can find MAP-Elites description
+# https://pdfs.semanticscholar.org/3461/99d0c8fce4bd91be855155bb1fe71844e9ac.pdf - polynomial mutation operator definition
 
 import numpy as np
 import random
