@@ -2,7 +2,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow import Tensor
-def show_plot(logits, image, labels_names=None):
+def show_plot(logits, image, labels_names=None, plot_title=None):
     """
 
     :type logits: Tensor
@@ -27,5 +27,6 @@ def show_plot(logits, image, labels_names=None):
     plt.subplot(1, 2, 2)
     plt.bar(np.arange(len(probs)), probs)
     plt.xticks(np.arange(len(probs)), labels_names, rotation=90)
-
+    if plot_title is not None:
+        plt.title(plot_title)
     plt.show()
