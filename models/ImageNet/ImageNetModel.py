@@ -16,7 +16,7 @@ class ImageNetModel(SequentialModel):
     def get_input_shape(self):
         return (299,299,3)
 
-    def get_dataset(self, split, batch_size=32, shuffle=10000, augment_data=True):
+    def get_dataset(self, split, batch_size=32, shuffle=10000, augment_data=True, **kwargs):
         def cast_labels(x, y):
             x = tf.cast(x, tf.float32)/255.0
             y = tf.one_hot(y, self.get_number_of_classes())

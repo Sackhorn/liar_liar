@@ -19,10 +19,10 @@ class SequentialModel(Model, DataProvider):
         self.sequential_layers = []
 
     @tf.function
-    def call(self, input, train=False, get_raw=False, **kwargs):
+    def call(self, input, training=False, get_raw=False, **kwargs):
         result = input
         for layer in self.sequential_layers[:-1]:
-            result = layer(result, training=train)
+            result = layer(result, training=training)
         if get_raw:
             activation_function = self.sequential_layers[-1].activation
             self.sequential_layers[-1].activation = lambda x: x

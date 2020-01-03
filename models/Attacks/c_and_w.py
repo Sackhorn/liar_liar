@@ -6,7 +6,7 @@ from tensorflow_datasets import Split
 
 from models.Attacks.attack import Attack
 from models.CIFAR10Models.ConvModel import ConvModel
-from models.ImageNet.InceptionV3Wrapper import ResNetWrapper
+from models.ImageNet.InceptionV3Wrapper import InceptionV3Wrapper
 from models.MNISTModels.DenseModel import DenseModel
 from models.utils.images import show_plot
 
@@ -63,7 +63,7 @@ class CarliniWagner(Attack):
         return (return_image, model(return_image))
 
 def test_c_and_w():
-    model = ResNetWrapper()
+    model = InceptionV3Wrapper()
     # model = ConvModel().load_model_data()
     # model = DenseModel().load_model_data()
     batch_size = 2

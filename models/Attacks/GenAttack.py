@@ -6,7 +6,7 @@ from tensorflow_datasets import Split
 
 from models.Attacks.attack import Attack
 from models.CIFAR10Models.ConvModel import ConvModel
-from models.ImageNet.InceptionV3Wrapper import ResNetWrapper
+from models.ImageNet.InceptionV3Wrapper import InceptionV3Wrapper
 from models.MNISTModels.DenseModel import DenseModel
 from models.MNISTModels.LeNet5 import LeNet5
 from models.utils.images import show_plot

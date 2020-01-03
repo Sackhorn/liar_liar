@@ -7,6 +7,7 @@ from tensorflow.python.ops.losses.losses_impl import sparse_softmax_cross_entrop
 from tensorflow_datasets import Split
 
 from models.CIFAR10Models.ConvModel import ConvModel
+from models.ImageNet.InceptionV3Wrapper import InceptionV3Wrapper
 from models.MNISTModels.DenseModel import DenseModel
 from models.utils.images import show_plot
 from models.BaseModels.SequentialModel import SequentialModel

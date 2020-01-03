@@ -118,10 +118,10 @@ class AdvGAN(DataProvider):
     @tf.function
     def train_step(self, train_images, target_images):
         with tf.GradientTape(persistent=True) as gen_tape, tf.GradientTape(persistent=True) as disc_tape:
-            generated_noise = self.generator(train_images, train=True)
+            generated_noise = self.generator(train_images, training=True)
             adversary_images = generated_noise + train_images
-            real_output = self.discriminator(target_images, train=True)
-            fake_output = self.discriminator(adversary_images, train=True)
+            real_output = self.discriminator(target_images, training=True)
+            fake_output = self.discriminator(adversary_images, training=True)
             classifier_output = self.classifier(adversary_images)
             gen_loss = self.alpha * self.generator.generator_loss(fake_output)
             adv_loss = tf.reduce_mean(self.classifier.loss(self.target_class, classifier_output))
