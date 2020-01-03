@@ -8,9 +8,9 @@ from math import floor
 
 def jsma(classifier,
          data_sample,
-         max_perturbation = 0.1,
+         target_class=None,
+         max_perturbation=0.1,
          theta=1,
-         target_label=None,
          is_increasing=True,
          min=0.0,
          max=1.0,
@@ -20,19 +20,57 @@ def jsma(classifier,
     arr_image = []
     for i in range(len(image)):
         ret_image, _ = _jsma((tf.expand_dims(image[i], 0), label[i]),
-                                      classifier,
-                                      max_perturbation,
-                                      theta,
-                                      target_label,
-                                      is_increasing,
-                                      min,
-                                      max,
-                                      show_plots,
-                                      use_logits)
+                             classifier,
+                             max_perturbation,
+                             theta,
+                             target_class,
+                             is_increasing,
+                             min,
+                             max,
+                             show_plots,
+                             use_logits)
         arr_image.append(ret_image)
     arr_image = tf.concat(arr_image, 0)
     return (arr_image, classifier(arr_image))
 
+def jsma_untargeted_wrapper(max_perturbation=0.1,
+                            theta=1,
+                            is_increasing=True,
+                            min=0.0,
+                            max=1.0,
+                            show_plots=False,
+                            use_logits=False):
+    def wrapped_jsma(classifier, data_sample):
+        return jsma(classifier,
+                    data_sample,
+                    max_perturbation=max_perturbation,
+                    theta=theta,
+                    is_increasing=is_increasing,
+                    min=min,
+                    max=max,
+                    show_plots=show_plots,
+                    use_logits=use_logits)
+    return wrapped_jsma
+
+def jsma_targeted_wrapper(max_perturbation=0.1,
+                          theta=1,
+                          is_increasing=True,
+                          min=0.0,
+                          max=1.0,
+                          show_plots=False,
+                          use_logits=False):
+    def wrapped_jsma(classifier, data_sample, target_class):
+        return jsma(classifier,
+                    data_sample,
+                    target_class=target_class,
+                    max_perturbation=max_perturbation,
+                    theta=theta,
+                    is_increasing=is_increasing,
+                    min=min,
+                    max=max,
+                    show_plots=show_plots,
+                    use_logits=use_logits)
+    return wrapped_jsma
 
 def _jsma(data_sample,
          model,

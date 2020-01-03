@@ -19,6 +19,15 @@ def deepfool(classifier, data_sample, max_iter=10000, min=0.0, max=1.0):
     """
     return _deepfool(data_sample, classifier, max_iter=max_iter, min=min, max=max)
 
+def deepfool_wrapper(max_iter=10000, min=0.0, max=1.0):
+    """
+        This wraps deepfool call in a handy way that allows us using this as unspecified untargeted attack method
+        Returns: Wrapped deepfool for untargeted attack format
+    """
+    def wrapper_deepfool(classifier, data_sample):
+        return deepfool(classifier, data_sample, max_iter=max_iter, min=min, max=max)
+    return wrapper_deepfool
+
 @tf.function
 def _deepfool(data_sample, classifier, max_iter=10000, min=0.0, max=1.0):
     """

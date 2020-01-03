@@ -3,7 +3,7 @@
 from tensorflow.python.ops.losses.losses_impl import softmax_cross_entropy
 import tensorflow as tf
 
-def fgsm(classifier, data_sample, target_class=None, i_max=1, eps=0.01, min=0.0, max=1.0):
+def fgsm(classifier, data_sample, target_class=None, iter_max=1, eps=0.01, min=0.0, max=1.0):
     """
 
     Args:
@@ -11,7 +11,7 @@ def fgsm(classifier, data_sample, target_class=None, i_max=1, eps=0.01, min=0.0,
         data_sample: A tuple of tensors of structure (image_tensor, label_tensor) against wich attack is run
         target_class: When passed None function performs an untargeted attack, otherwise it targets the class
             encoded in one hot label.
-        i_max: Number of times the image is update according to FGSM method.
+        iter_max: Number of times the image is update according to FGSM method.
         eps: An amount by wich input image will be modified in each step of the iteration
         min: Minimal value of input image
         max: Maximal value of input image
@@ -19,16 +19,38 @@ def fgsm(classifier, data_sample, target_class=None, i_max=1, eps=0.01, min=0.0,
     Returns: A tuple of structure (adversarial_example, classifier output for examples)
 
     """
-    return_images = _fgsm(data_sample, classifier, i_max, eps, target_class, min, max)
+    return_images = _fgsm(data_sample, classifier, target_class, iter_max, eps, min, max)
     return (return_images, classifier(return_images))
 
+def untargeted_fgsm_wrapper(iter_max=1, eps=0.01, min=0.0, max=1.0):
+    """
+    This wraps FGSM call in a handy way that allows us using this as unspecified untargeted attack method
+    Returns: Wrapped FGSM for untargeted attack format
+
+    """
+    def wrapped_fgsm(classifier, data_sample):
+        return fgsm(classifier, data_sample, None, iter_max, eps, min, max)
+    return wrapped_fgsm
+
+
+def fgsm_targeted_wrapper(iter_max=1, eps=0.01, min=0.0, max=1.0):
+    """
+    This wraps FGSM call in a handy way that allows us using this as unspecified targeted attack method
+    Returns: Wrapped FGSM for targeted attack format
+
+    """
+    def wrapped_fgsm(classifier, data_sample, target_class):
+        return fgsm(classifier, data_sample, target_class, iter_max, eps, min, max)
+    return wrapped_fgsm
+
+
 @tf.function
-def _fgsm(data_sample, classifier, i_max=1, eps=0.35, target_label=None, min=0.0, max=1.0):
+def _fgsm(data_sample, classifier, target_class=None, iter_max=1, eps=0.35, min=0.0, max=1.0):
     image, label = data_sample
-    eps = eps if target_label is None else -eps
+    eps = eps if target_class is None else -eps
     # We stack target_label for each element of batch, otherwise the shapes won't match
-    label = label if target_label is None else tf.stack([target_label]*label.shape[0])
-    for _ in tf.range(i_max):
+    label = label if target_class is None else tf.stack([target_class] * label.shape[0])
+    for _ in tf.range(iter_max):
         with tf.GradientTape() as tape:
             tape.watch(image)
             logits = classifier(image)

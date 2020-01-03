@@ -43,6 +43,24 @@ def gen_attack(classifier,
                                                 delta), images)
     return (ret_image, classifier(ret_image))
 
+def gen_attack_wrapper(generation_nmb=100000, population_nmb=6, min=0.0, max=1.0, mutation_probability=0.05, delta=0.05):
+    """
+    This wraps GenAttack call in a handy way that allows us using this as unspecified targeted attack method
+    Returns: Wrapped GenAttack for targeted attack format
+
+    """
+    def wrapped_gen_attack(classifier, data_sample, target_class):
+        return gen_attack(classifier,
+                          data_sample,
+                          target_class,
+                          generation_nmb=generation_nmb,
+                          population_nmb=population_nmb,
+                          min=min,
+                          max=max,
+                          mutation_probability=mutation_probability,
+                          delta=delta)
+    return wrapped_gen_attack
+
 @tf.function
 def _gen_attack(classifier,
                 image,

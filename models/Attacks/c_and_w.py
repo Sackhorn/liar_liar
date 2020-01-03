@@ -34,6 +34,20 @@ def carlini_wagner(classifier,
     return_image = cw(image, classifier, target_class, perturbation, optimizer, optimization_iter, binary_iter, c_high, c_low)
     return (return_image, classifier(return_image))
 
+def carlini_wagner_wrapper(optimizer=GradientDescentOptimizer(1e-2),
+                           optimization_iter=10000,
+                           binary_iter=20,
+                           c_high=1000.0,
+                           c_low=0.0):
+    """
+    This wraps Carlini and Wagner call in a handy way that allows us using this as unspecified targeted attack method
+    Returns: Wrapped Carlini and Wagner for targeted attack format
+
+    """
+    def wrapped_carlini_wagner(classifier, data_sample, target_class):
+        return carlini_wagner(classifier, data_sample, target_class, optimizer, optimization_iter, binary_iter, c_high, c_low)
+    return wrapped_carlini_wagner
+
 
 def _optimize_c_and_w(image, classifier, iter_max, target_class, c_val, perturbation, optimizer):
     target_label_index = tf.argmax(target_class, output_type=tf.int32, axis=0)

@@ -7,19 +7,32 @@ from scipy.optimize import fmin_l_bfgs_b
 from tensorflow.python.keras.losses import categorical_crossentropy
 from models.BaseModels.SequentialModel import SequentialModel
 
-def bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
+
+
+def bfgs(classifier, data_sample, target_class, iter_max, min=0.0, max=1.0):
     image, label = data_sample
     arr_image = []
     for i in range(len(image)):
-        ret_image = _bfgs((tf.expand_dims(image[i], 0), label[i]), model, i_max, target_label, min, max)
+        ret_image = _bfgs(classifier, (tf.expand_dims(image[i], 0), label[i]), target_class, iter_max, min, max)
         arr_image.append(ret_image)
     arr_image = tf.concat(arr_image, 0)
-    return (arr_image, model(arr_image))
+    return (arr_image, classifier(arr_image))
 
-def _bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
+def bfgs_wrapper(iter_max=100, min=0.0, max=1.0):
+    """
+    This wraps bfgs call in a handy way that allows us using this as unspecified targeted attack method
+
+    Returns: Wrapped BFGS for targeted attack format
+
+    """
+    def wrapped_bfgs(classifier, data_sample, target_class):
+        return bfgs(classifier, data_sample, target_class, iter_max=iter_max, min=min, max=max)
+    return wrapped_bfgs
+
+def _bfgs(classifier, data_sample, target_class, iter_max, min=0.0, max=1.0):
     """
 
-    :type model: SequentialModel
+    :type classifier: SequentialModel
     """
     image, label = data_sample
 
@@ -30,15 +43,15 @@ def _bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
     # perturbation = np.random.uniform(min, max/50, model.get_input_shape()).flatten().astype(dtype=np.float32)
 
 
-    input_np_arr = image.reshape(model.get_input_shape()) + perturbation.reshape(model.get_input_shape())
+    input_np_arr = image.reshape(classifier.get_input_shape()) + perturbation.reshape(classifier.get_input_shape())
     input_tensor = tf.convert_to_tensor(input_np_arr, dtype=tf.float32)
     input_tensor = tf.expand_dims(input_tensor, 0)
 
     def min_func(perturbation, c, image):
-        image = image.reshape(model.get_input_shape())
+        image = image.reshape(classifier.get_input_shape())
         image = tf.convert_to_tensor(image, dtype=tf.float32)
 
-        perturbation = perturbation.reshape(model.get_input_shape())
+        perturbation = perturbation.reshape(classifier.get_input_shape())
         perturbation = tf.convert_to_tensor(perturbation, dtype=tf.float32)
 
 
@@ -48,7 +61,7 @@ def _bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
             input_tensor = tf.add(image, perturbation)
             input_tensor = tf.expand_dims(input_tensor, 0)
             value = tf.add(tf.multiply(c, tf.linalg.norm(perturbation)),
-                           categorical_crossentropy(target_label, model(input_tensor)))
+                           categorical_crossentropy(target_class, classifier(input_tensor)))
         gradient = tape.gradient(value, perturbation)
 
         return value.numpy(), gradient.numpy().flatten().astype(np.float64)
@@ -60,13 +73,13 @@ def _bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
         new_perturbation, min_func_val, ret_dict = fmin_l_bfgs_b(min_func,
                                                                  perturbation,
                                                                  args=(c, image),
-                                                                 maxiter=i_max,
+                                                                 maxiter=iter_max,
                                                                  bounds=bounds)
         # print(ret_dict['grad'])
-        input_np_arr = image.reshape(model.get_input_shape()) + new_perturbation.reshape(model.get_input_shape())
+        input_np_arr = image.reshape(classifier.get_input_shape()) + new_perturbation.reshape(classifier.get_input_shape())
         input_tensor = tf.convert_to_tensor(input_np_arr, dtype=tf.float32)
         input_tensor = tf.expand_dims(input_tensor, 0)
-        if tf.squeeze(model(input_tensor)).numpy().argmax() == tf.argmax(tf.squeeze(target_label)).numpy():
+        if tf.squeeze(classifier(input_tensor)).numpy().argmax() == tf.argmax(tf.squeeze(target_class)).numpy():
             print("max c= " + str(c))
             break
         else:
@@ -81,13 +94,13 @@ def _bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
         new_perturbation, min_func_val, ret_dict = fmin_l_bfgs_b(min_func,
                                                                  perturbation,
                                                                  args=(c_half, image),
-                                                                 maxiter=i_max,
+                                                                 maxiter=iter_max,
                                                                  bounds=bounds)
         # print(ret_dict['grad'])
-        input_np_arr = image.reshape(model.get_input_shape()) + new_perturbation.reshape(model.get_input_shape())
+        input_np_arr = image.reshape(classifier.get_input_shape()) + new_perturbation.reshape(classifier.get_input_shape())
         input_tensor = tf.convert_to_tensor(input_np_arr, dtype=tf.float32)
         input_tensor = tf.expand_dims(input_tensor, 0)
-        if tf.squeeze(model(input_tensor)).numpy().argmax() == tf.argmax(tf.squeeze(target_label)).numpy():
+        if tf.squeeze(classifier(input_tensor)).numpy().argmax() == tf.argmax(tf.squeeze(target_class)).numpy():
             print("tested halfing c= " + str(c_half))
             c_high = c_half
         else:
@@ -97,7 +110,7 @@ def _bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
 
 
 
-    input_np_arr = image.reshape(model.get_input_shape()) + new_perturbation.reshape(model.get_input_shape())
+    input_np_arr = image.reshape(classifier.get_input_shape()) + new_perturbation.reshape(classifier.get_input_shape())
     input_tensor = tf.convert_to_tensor(input_np_arr, dtype=tf.float32)
     input_tensor = tf.expand_dims(input_tensor, 0)
     return input_tensor
