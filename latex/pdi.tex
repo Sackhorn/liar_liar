@@ -13,13 +13,15 @@
 \usepackage{algorithm}% http://ctan.org/pkg/algorithms
 \usepackage{algcompatible}% http://ctan.org/pkg/algorithmicx
 \usepackage[noend]{algpseudocode}
+\usepackage[colorinlistoftodos]{todonotes}
+
 
 
 \graphicspath{ {images/} }
 
 \immediate\write18{bibtex \jobname}
 
-\newcommand\todo[1]{\textcolor{red}{#1}}
+%\newcommand\todo[1]{\textcolor{red}{#1}}
 
 
 \title{
@@ -65,7 +67,7 @@ Platforma testowa jakiej użyto to:
     \item GPU: Nvidia GeForce 1060 GTX 6GB
     \item RAM: 8GB DDR3
     \item System Operacyjny: Windows 10
-    \item Tensorflow wersja 2.0.0b1
+    \item Tensorflow wersja 2.0.0
     \item Interpreter Python 3.6.8 wersja 64bit
 \end{itemize}
 Wszystkie pozostałe biblioteki Python, wraz z wersjami, wykorzystane w projekcie, znajdują się w pliku
@@ -75,6 +77,7 @@ requirements.txt w folderze projektu.
 Aby sprawdzić poprawność implementacji oraz skuteczność ataków stworzono
 kilka modeli klasyfikacyjnych o różnej złożoności, opartych o popularne zbiory danych
 wykorzystywanych jako platforma testowa w publikacjach pokrewnych tematyką.
+\todo {Dodać struktury modeli graficzne oraz ich metryki, optimizery etc.}
 
     \subsection{MNIST}
     Zbiór danych MNIST \todo{citation needed} to najprawdopodobniej najpopularniejszy zbiór związany z
@@ -82,6 +85,17 @@ wykorzystywanych jako platforma testowa w publikacjach pokrewnych tematyką.
     Zawiera on 60,000 obrazów o rozmiarach 28 na 28 pikseli, w skali szarości, przedstawiających
     odręcznie narysowane cyfry. Zbiór dzieli się na 50,000 przykładów używanych do
     trenowania modelu oraz 10.000 służących do testowania.
+
+    \subsubsection{Model Splotowy}
+    Stworzony model splotowy to prosty przykład zastosowania splotowych sieci neuronowych oraz warstw Dropout
+    który w praktyce pozwala osiągnąć bardzo dobre wyniki dla zbioru MNIST
+
+        \subsubsection{Model Fully Connect}
+        Model FC to bardzo prosty model wykorzystujący tylko 4 warstwy perceptronów z sigmoidalną funkcja aktywacji
+
+        \subsubsection{LeNet5}
+        LeNet5 to historycznie istotny model stworzony przez Yana LeCuna stworzony w latach 90tych
+        jest jednym z najbardziej znanych zastosowań splotowych sieci neuronowych
 
     \subsection{CIFAR10}
     Zbiór CIFAR10 \todo{citation needed} zawiera kolorowe obrazy o rozdzielczości 32 na 32 piksele,
@@ -91,27 +105,36 @@ wykorzystywanych jako platforma testowa w publikacjach pokrewnych tematyką.
     do trenowania są losowo modyfikowane. Każdy obraz ma szanse 0.25 \todo{tutaj uzupełnić} na
     modyfikacje natężenia, nasycenia, kontrastu oraz odcienia. Dodatkowo każdy obraz może zostać obrócony bądź odbity.
 
+        \subsubsection{Model Splotowy}
+        Tutaj w porównaniu do modelu dla zbioru MNIST wykorzystujemy także technikę normalizującą wartości wyjściowe
+        funkcji aktywacji w celu zwiększenia stabilności sieci (funkcja aktywacji liniowa nie posiada górnej granicy w
+        przeciwieństwie do funkcji sigmoidalnej)
+
+    \subsection{CIFAR100}
+        \subsection{Model Splotowy}
+
+
     \subsection{ImageNet}
-    \todo{Tutaj uzupełnić}
+        \subsubsection{InceptionV3}
+        \subsubsection{ResNetV2}
 
 
 
 
 \section{Rodzaje Ataków}
-Ideą ataków adwersaryjnych \todo{tu dodać jakąś definicje} jest osiągnięcie jednego z wymienionych celów:
+Ideą ataków adwersaryjnych \todo{tu dodać definicje} jest osiągnięcie jednego z wymienionych celów:
 \begin{enumerate}
-    \item kaczka
     \item Zmniejszenie prawdopodobieństwa z jakim model klasyfikuje przykład
     \item Zła klasyfikacja przykładu wejściowego (niezaleznie od końcowej klasy)
     \item Przyporządkowanie przykładu wejściowego do złej, zadanej z góry klasy
-    \item Tutaj było coś jeszcze \todo{Sprawdzić i dodać cytowanie}
+    \todo{Sprawdzić i dodać cytowanie}
 \end{enumerate}
 
 Możemy też rozróżnić ataki z uwagi na to jakie dane są dostępne dla algorytmu atakującego:
 \begin{enumerate}
     \item Dostępny jest gradient, funkcja kosztu i funkcja trenująca
     \item Dostepna jest tylko funkcja kosztu
-    \item Dostępny jest przykład i coś tam
+    \item Dostępny jest przykład
     \item Dostępne są tylko dane wejściowe i klasa do jakiej model przyporządkowuje dany przykład
     \item \todo{poprawić powyższe i dodać cytowanie}
 \end{enumerate}
@@ -339,25 +362,26 @@ jednej zadanej klasy tylko dla wszystkich.
 \subsubsection{M-JSMA}
 M-JSMA\cite{DBLP:journals/corr/abs-1808-07945} to wariant metody JSMA który łączy w sobie metodę
 
-
-\subsubsection{Implementacja}
-
-
-
 \subsection{Carlini & Wagner}
 First in \cite{DBLP:journals/corr/CarliniW16a}
-\subsubsection{Implementacja}
 
-\subsection{Evolutionary Attack}
+\subsection{MAP-Elites}
 First in \cite{DBLP:journals/corr/NguyenYC14}
-\subsubsection{Implementacja}
+
+\subsection{GenAttack}
+
+\subsection{AdvGAN}
 
 
-\section{Porównanie}\label{comparison}
-
-
-
-
+\section{Wyniki Ataków}\label{comparison}
+\subsection{AdvGAN}
+\subsection{GenAttack}
+\subsection{MAP-Elites}
+\subsection{Carlini & Wagner}
+\subsection{JSMA}
+\subsection{L-BFGS}
+\subsection{DeepFool}
+\subsection{FGSM}
 
 
 
