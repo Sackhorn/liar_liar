@@ -34,28 +34,12 @@ def _bfgs(classifier, data_sample, target_class, iter_max, min=0.0, max=1.0):
 
     :type classifier: SequentialModel
     """
-    image, label = data_sample
-
-    image = image.numpy().flatten()
-
-    perturbation = [np.random.uniform(-image[i]/100, (max - image[i])/100) for i in range(len(image))]
-    perturbation = np.array(perturbation)
-    # perturbation = np.random.uniform(min, max/50, model.get_input_shape()).flatten().astype(dtype=np.float32)
-
-
-    input_np_arr = image.reshape(classifier.get_input_shape()) + perturbation.reshape(classifier.get_input_shape())
-    input_tensor = tf.convert_to_tensor(input_np_arr, dtype=tf.float32)
-    input_tensor = tf.expand_dims(input_tensor, 0)
 
     def min_func(perturbation, c, image):
         image = image.reshape(classifier.get_input_shape())
         image = tf.convert_to_tensor(image, dtype=tf.float32)
-
         perturbation = perturbation.reshape(classifier.get_input_shape())
         perturbation = tf.convert_to_tensor(perturbation, dtype=tf.float32)
-
-
-
         with tf.GradientTape() as tape:
             tape.watch(perturbation)
             input_tensor = tf.add(image, perturbation)
@@ -63,11 +47,14 @@ def _bfgs(classifier, data_sample, target_class, iter_max, min=0.0, max=1.0):
             value = tf.add(tf.multiply(c, tf.linalg.norm(perturbation)),
                            categorical_crossentropy(target_class, classifier(input_tensor)))
         gradient = tape.gradient(value, perturbation)
-
         return value.numpy(), gradient.numpy().flatten().astype(np.float64)
 
-
+    image, label = data_sample
+    image = image.numpy().flatten()
+    perturbation = [np.random.uniform(-image[i]/100, (max - image[i])/100) for i in range(len(image))]
+    perturbation = np.array(perturbation)
     bounds = [(-image[i], max - image[i]) for i in range(len(image))]
+
     c = 1
     for i in range(10):
         new_perturbation, min_func_val, ret_dict = fmin_l_bfgs_b(min_func,
@@ -75,20 +62,13 @@ def _bfgs(classifier, data_sample, target_class, iter_max, min=0.0, max=1.0):
                                                                  args=(c, image),
                                                                  maxiter=iter_max,
                                                                  bounds=bounds)
-        # print(ret_dict['grad'])
-        input_np_arr = image.reshape(classifier.get_input_shape()) + new_perturbation.reshape(classifier.get_input_shape())
-        input_tensor = tf.convert_to_tensor(input_np_arr, dtype=tf.float32)
-        input_tensor = tf.expand_dims(input_tensor, 0)
-        if tf.squeeze(classifier(input_tensor)).numpy().argmax() == tf.argmax(tf.squeeze(target_class)).numpy():
-            print("max c= " + str(c))
+        input_tensor = numpy_to_tensor(classifier, image, new_perturbation)
+        if is_in_target_class(classifier, input_tensor, target_class):
             break
-        else:
-            print("tested incerasing c= " + str(c))
-            c = c*2
+        c = c*2
 
     c_high = c
     c_low = 0.0
-
     while c_high - c_low >= 1:
         c_half = (c_high + c_low)/2
         new_perturbation, min_func_val, ret_dict = fmin_l_bfgs_b(min_func,
@@ -96,22 +76,22 @@ def _bfgs(classifier, data_sample, target_class, iter_max, min=0.0, max=1.0):
                                                                  args=(c_half, image),
                                                                  maxiter=iter_max,
                                                                  bounds=bounds)
-        # print(ret_dict['grad'])
-        input_np_arr = image.reshape(classifier.get_input_shape()) + new_perturbation.reshape(classifier.get_input_shape())
-        input_tensor = tf.convert_to_tensor(input_np_arr, dtype=tf.float32)
-        input_tensor = tf.expand_dims(input_tensor, 0)
-        if tf.squeeze(classifier(input_tensor)).numpy().argmax() == tf.argmax(tf.squeeze(target_class)).numpy():
-            print("tested halfing c= " + str(c_half))
+        input_tensor = numpy_to_tensor(classifier, image, new_perturbation)
+        if is_in_target_class(classifier, input_tensor, target_class):
             c_high = c_half
         else:
-            print("tested halfing c= " + str(c_half))
             c_low = c_half
 
+    input_tensor = numpy_to_tensor(classifier, image, new_perturbation)
+    return input_tensor
 
 
-
+def numpy_to_tensor(classifier, image, new_perturbation):
     input_np_arr = image.reshape(classifier.get_input_shape()) + new_perturbation.reshape(classifier.get_input_shape())
     input_tensor = tf.convert_to_tensor(input_np_arr, dtype=tf.float32)
     input_tensor = tf.expand_dims(input_tensor, 0)
     return input_tensor
+
+def is_in_target_class(classifier, input_tensor, target_class):
+    return tf.squeeze(classifier(input_tensor)).numpy().argmax() == tf.argmax(tf.squeeze(target_class)).numpy()
 
