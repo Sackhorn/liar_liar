@@ -18,7 +18,7 @@ import tensorflow_datasets as tfds
 # Source https://arxiv.org/pdf/1511.07528.pdf
 
 
-def jsma(data_sample,
+def _jsma(data_sample,
          model,
          max_perturbation,
          theta=1,
@@ -29,13 +29,13 @@ def jsma(data_sample,
          show_plots=False,
          use_logits=False):
 
-    target_label = target_label.numpy().squeeze().argmax()
+    target_label = target_label.numpy().squeeze().argmax() if target_label is not None else None
     is_targeted = target_label is not None
     image, true_label = data_sample
     true_label = true_label.numpy().squeeze().argmax()
     current_prediction = model(image).numpy().squeeze().argmax()
-    if true_label != current_prediction:
-        raise ValueError("The image given was wrongly classified in the first place")
+    # if true_label != current_prediction:
+    #     raise ValueError("The image given was wrongly classified in the first place")
 
     input_shape = model.get_input_shape()
     i_max = floor(np.prod(input_shape) * max_perturbation)
@@ -81,7 +81,6 @@ def jsma(data_sample,
     return image, current_prediction
 
 
-# TODO:nie traktować każdej barwy jako osobny ficzer tylko sumować i zmieniać intensywność
 def saliency_map(model, image, true_label, target_label, all_pixels, is_targeted, is_increasing, use_logits):
 
 
@@ -214,42 +213,68 @@ def generate_test(all_pixels):
     first = all_pixels[indices[:,0]]
     second = all_pixels[indices[:,1]]
     return first, second
+#
+# class jsma_plus_increasing(Attack):
+#     @staticmethod
+#     def run_attack(model, data_sample, target_class=None):
+#         return _jsma(data_sample, model, 0.14, target_label=target_class)
+#
+# class jsma_plus_increasing_logits(Attack):
+#     @staticmethod
+#     def run_attack(model, data_sample, target_class=None):
+#         return _jsma(data_sample, model, 0.14, target_label=target_class, use_logits=True)
+#
+# class jsma_minus_increasing(Attack):
+#     @staticmethod
+#     def run_attack(model, data_sample, target_class=None):
+#         return _jsma(data_sample, model, 0.14, target_label=target_class, is_increasing=False)
+#
+# class jsma_minus_increasing_logits(Attack):
+#     @staticmethod
+#     def run_attack(model, data_sample, target_class=None):
+#         return _jsma(data_sample, model, 0.14, target_label=target_class, is_increasing=False, use_logits=True)
 
-class jsma_plus_increasing(Attack):
-    @staticmethod
-    def run_attack(model, data_sample, target_class=None):
-        return jsma(data_sample, model, 0.14, target_label=target_class)
+def jsma(classifier,
+         data_sample,
+         max_perturbation = 0.1,
+         theta=1,
+         target_label=None,
+         is_increasing=True,
+         min=0.0,
+         max=1.0,
+         show_plots=False,
+         use_logits=False):
+    image, label = data_sample
+    arr_image = []
+    for i in range(len(image)):
+        ret_image, _ = _jsma((tf.expand_dims(image[i], 0), label[i]),
+                                      classifier,
+                                      max_perturbation,
+                                      theta,
+                                      target_label,
+                                      is_increasing,
+                                      min,
+                                      max,
+                                      show_plots,
+                                      use_logits)
+        arr_image.append(ret_image)
+    arr_image = tf.concat(arr_image, 0)
+    return (arr_image, classifier(arr_image))
 
-class jsma_plus_increasing_logits(Attack):
-    @staticmethod
-    def run_attack(model, data_sample, target_class=None):
-        return jsma(data_sample, model, 0.14, target_label=target_class, use_logits=True)
 
-class jsma_minus_increasing(Attack):
-    @staticmethod
-    def run_attack(model, data_sample, target_class=None):
-        return jsma(data_sample, model, 0.14, target_label=target_class, is_increasing=False)
-
-class jsma_minus_increasing_logits(Attack):
-    @staticmethod
-    def run_attack(model, data_sample, target_class=None):
-        return jsma(data_sample, model, 0.14, target_label=target_class, is_increasing=False, use_logits=True)
-
-
-
-def test_jsma():
-    model = ConvModel().load_model_data()
-    eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1)
-    for data_sample in eval_dataset.take(20):
-        image, true_label = data_sample
-        target_label = true_label.numpy().squeeze().argmax() - 2 % model.get_number_of_classes()
-        if true_label.numpy().squeeze().argmax() != model(image).numpy().squeeze().argmax():
-            continue
-
-        show_plot(model(image), image, model.get_label_names())
-        ret_image, ret_label = jsma_minus_increasing_logits.run_attack(model, data_sample, target_label)
-        show_plot(model(ret_image), ret_image, model.get_label_names())
-
-if __name__ == "__main__":
-    enable_eager_execution()
-    test_jsma()
+# def test_jsma():
+#     model = ConvModel().load_model_data()
+#     eval_dataset = model.get_dataset(tfds.Split.TEST, batch_size=1)
+#     for data_sample in eval_dataset.take(20):
+#         image, true_label = data_sample
+#         target_label = true_label.numpy().squeeze().argmax() - 2 % model.get_number_of_classes()
+#         if true_label.numpy().squeeze().argmax() != model(image).numpy().squeeze().argmax():
+#             continue
+#
+#         show_plot(model(image), image, model.get_label_names())
+#         ret_image, ret_label = jsma_plus_increasing_logits.run_attack(model, data_sample, target_label)
+#         show_plot(model(ret_image), ret_image, model.get_label_names())
+#
+# if __name__ == "__main__":
+#     enable_eager_execution()
+#     test_jsma()

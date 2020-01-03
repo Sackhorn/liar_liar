@@ -9,13 +9,12 @@ from tensorflow_datasets import Split
 from models.CIFAR10Models.ConvModel import ConvModel
 from models.ImageNet.InceptionV3Wrapper import InceptionV3Wrapper
 from models.MNISTModels.DenseModel import DenseModel
-from models.utils.images import show_plot
 from models.BaseModels.SequentialModel import SequentialModel
 
 import tensorflow as tf
 import numpy as np
 
-def bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
+def _bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
     """
 
     :type model: SequentialModel
@@ -32,7 +31,6 @@ def bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
     input_np_arr = image.reshape(model.get_input_shape()) + perturbation.reshape(model.get_input_shape())
     input_tensor = tf.convert_to_tensor(input_np_arr, dtype=tf.float32)
     input_tensor = tf.expand_dims(input_tensor, 0)
-    show_plot(model(input_tensor), input_np_arr, model.get_label_names())
 
     def min_func(perturbation, c, image):
         image = image.reshape(model.get_input_shape())
@@ -66,7 +64,6 @@ def bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
         input_np_arr = image.reshape(model.get_input_shape()) + new_perturbation.reshape(model.get_input_shape())
         input_tensor = tf.convert_to_tensor(input_np_arr, dtype=tf.float32)
         input_tensor = tf.expand_dims(input_tensor, 0)
-        show_plot(model(input_tensor), input_np_arr, model.get_label_names())
         if tf.squeeze(model(input_tensor)).numpy().argmax() == tf.argmax(tf.squeeze(target_label)).numpy():
             print("max c= " + str(c))
             break
@@ -88,7 +85,6 @@ def bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
         input_np_arr = image.reshape(model.get_input_shape()) + new_perturbation.reshape(model.get_input_shape())
         input_tensor = tf.convert_to_tensor(input_np_arr, dtype=tf.float32)
         input_tensor = tf.expand_dims(input_tensor, 0)
-        show_plot(model(input_tensor), input_np_arr, model.get_label_names())
         if tf.squeeze(model(input_tensor)).numpy().argmax() == tf.argmax(tf.squeeze(target_label)).numpy():
             print("tested halfing c= " + str(c_half))
             c_high = c_half
@@ -102,6 +98,17 @@ def bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
     input_np_arr = image.reshape(model.get_input_shape()) + new_perturbation.reshape(model.get_input_shape())
     input_tensor = tf.convert_to_tensor(input_np_arr, dtype=tf.float32)
     input_tensor = tf.expand_dims(input_tensor, 0)
+    return input_tensor
+
+def bfgs(data_sample, model, i_max, target_label, min=0.0, max=1.0):
+    image, label = data_sample
+    arr_image = []
+    for i in range(len(image)):
+        ret_image = _bfgs((tf.expand_dims(image[i], 0), label[i]), model, i_max, target_label, min, max)
+        arr_image.append(ret_image)
+    arr_image = tf.concat(arr_image, 0)
+    return (arr_image, model(arr_image))
+
 
 
 def test_fgsm_mnist():
