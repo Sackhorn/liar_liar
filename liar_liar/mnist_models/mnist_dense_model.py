@@ -4,10 +4,10 @@ from tensorflow.python.keras.losses import categorical_crossentropy
 from tensorflow.python.keras.metrics import categorical_accuracy
 from tensorflow.python.keras.optimizer_v2.adam import Adam
 
-from models.MNISTModels.MNISTModel import MNISTModel
+from liar_liar.mnist_models.mnist_model_base import MNISTModel
 
 
-class DenseModel(MNISTModel):
+class MNISTDenseModel(MNISTModel):
 
     def __init__(self, optimizer=Adam(), loss=categorical_crossentropy, metrics=[categorical_accuracy]):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="mnist_dense_model")
@@ -22,5 +22,5 @@ class DenseModel(MNISTModel):
 
 if __name__ == "__main__":
     enable_eager_execution()
-    model = DenseModel()
+    model = MNISTDenseModel()
     model.train(epochs=5)

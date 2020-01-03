@@ -4,7 +4,7 @@ from tensorflow.python.keras.losses import categorical_crossentropy
 from tensorflow.python.keras.metrics import categorical_accuracy
 from tensorflow.python.keras.optimizer_v2.adam import Adam
 
-from models.MNISTModels.MNISTModel import MNISTModel
+from liar_liar.mnist_models.mnist_model_base import MNISTModel
 
 
 class LeNet5(MNISTModel):

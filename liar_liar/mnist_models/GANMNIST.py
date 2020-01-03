@@ -3,9 +3,9 @@ import tensorflow as tf
 from tensorflow.python.keras.layers import *
 from tensorflow.python.keras.losses import MeanSquaredError, BinaryCrossentropy
 from tensorflow.python.keras.optimizer_v2.adam import Adam
-from models.BaseModels.AdvGAN import AdvGAN
-from models.MNISTModels.ConvModel import ConvModel
-from models.MNISTModels.MNISTModel import MNISTModel
+from liar_liar.base_models.AdvGAN import AdvGAN
+from liar_liar.mnist_models.mnist_conv_model import MNISTConvModel
+from liar_liar.mnist_models.mnist_model_base import MNISTModel
 
 class MNISTGenerator(MNISTModel):
 
@@ -82,5 +82,5 @@ class MNISTDiscriminator(MNISTModel):
         return total_loss
 
 
-GAN = AdvGAN(MNISTGenerator(), MNISTDiscriminator(), ConvModel())
+GAN = AdvGAN(MNISTGenerator(), MNISTDiscriminator(), MNISTConvModel())
 GAN.gan_train(alpha=1.0, beta=1.0, c_constant=0.3, target_class=5, batch_size=256, epochs=200)

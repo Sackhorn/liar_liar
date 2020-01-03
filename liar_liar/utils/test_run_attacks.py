@@ -2,17 +2,16 @@ import time
 import tensorflow as tf
 from tensorflow_core.python.keras.metrics import CategoricalAccuracy
 from tensorflow_datasets import Split
-from models.Attacks import *
-from models.Attacks.bfgs import bfgs_wrapper
-from models.Attacks.c_and_w import carlini_wagner_wrapper
-from models.Attacks.deepfool import deepfool_wrapper
-from models.Attacks.fgsm import fgsm_targeted_wrapper, untargeted_fgsm_wrapper
-from models.Attacks.gen_attack import gen_attack_wrapper
-from models.Attacks.jsma import jsma_untargeted_wrapper, jsma_targeted_wrapper
-from models.CIFAR10Models.ConvModel import ConvModel
-from models.utils.images import show_plot
 
-
+from liar_liar.attacks import map_elites
+from liar_liar.attacks.bfgs import bfgs_wrapper
+from liar_liar.attacks.c_and_w import carlini_wagner_wrapper
+from liar_liar.attacks.deepfool import deepfool_wrapper
+from liar_liar.attacks.fgsm import fgsm_targeted_wrapper, untargeted_fgsm_wrapper
+from liar_liar.attacks.gen_attack import gen_attack_wrapper
+from liar_liar.attacks.jsma import jsma_targeted_wrapper
+from liar_liar.cifar_10_models.cifar_10_conv_model import CIFAR10ConvModel
+from liar_liar.utils.images import show_plot
 
 
 def run_test(classifier, attack, targeted, batch_size, nmb_elements, target_class=None,):
@@ -64,14 +63,14 @@ cifar10_attacks_targeted = []
 cifar10_attacks_targeted.append(bfgs_wrapper())
 cifar10_attacks_targeted.append(carlini_wagner_wrapper(optimization_iter=100, binary_iter=10))
 cifar10_attacks_targeted.append(fgsm_targeted_wrapper(iter_max=100, eps=0.0001))
-cifar10_attacks_targeted.append(gen_attack_wrapper(generation_nmb=10000))
+cifar10_attacks_targeted.append(gen_attack_wrapper(generation_nmb=1000))
 cifar10_attacks_targeted.append(jsma_targeted_wrapper())
 
 cifar10_attacks_untargeted = []
 cifar10_attacks_untargeted.append(untargeted_fgsm_wrapper(eps=0.005))
 cifar10_attacks_untargeted.append(deepfool_wrapper(max_iter=1000))
 
-classifier = ConvModel().load_model_data()
+classifier = CIFAR10ConvModel().load_model_data()
 BATCH_SIZE = 5
 target_class_int = 5
 target_class = tf.one_hot(target_class_int, classifier.get_number_of_classes())

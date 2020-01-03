@@ -1,13 +1,13 @@
 import tensorflow
 from tensorflow.python import keras
 
-from models.MNISTModels.ConvModel import ConvModel
-from models.MNISTModels.DenseModel import DenseModel
+from liar_liar.mnist_models.mnist_conv_model import MNISTConvModel
+from liar_liar.mnist_models.mnist_dense_model import MNISTDenseModel
 import os
 os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'
 
 
-model = DenseModel()
+model = MNISTDenseModel()
 # TODO: implement model.get_shape() method
 # input = keras.layers.Input(model.get_shape())
 input = keras.layers.Input((28,28,1))

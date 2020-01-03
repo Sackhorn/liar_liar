@@ -1,4 +1,4 @@
-from models.BaseModels.SequentialModel import SequentialModel
+from liar_liar.base_models.sequential_model import SequentialModel
 
 import tensorflow as tf
 import tensorflow_datasets as tfds

@@ -4,10 +4,10 @@ from tensorflow.python.keras.layers import Dense, Flatten, Dropout, MaxPool2D, B
 from tensorflow.python.keras.losses import categorical_crossentropy
 from tensorflow.python.keras.optimizer_v2.adam import Adam
 
-from models.CIFAR10Models.CIFAR10Model import CIFAR10Model
+from liar_liar.cifar_10_models.cifar_10_model_base import CIFAR10Model
 
 
-class ConvModel(CIFAR10Model):
+class CIFAR10ConvModel(CIFAR10Model):
 
     def __init__(self, optimizer=Adam(), loss=categorical_crossentropy, metrics=['categorical_accuracy']):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="cifar10_conv_model")
@@ -39,5 +39,5 @@ class ConvModel(CIFAR10Model):
 
 if __name__ == "__main__":
     enable_eager_execution()
-    model = ConvModel()
+    model = CIFAR10ConvModel()
     model.train(epochs=150)

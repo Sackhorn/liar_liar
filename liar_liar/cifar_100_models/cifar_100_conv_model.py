@@ -5,10 +5,10 @@ from tensorflow.python.keras.metrics import categorical_accuracy
 from tensorflow.python.keras.optimizer_v2.adam import Adam
 from tensorflow.python.keras.regularizers import l2
 
-from models.CIFAR100Models.CIFAR100Model import CIFAR100Model
+from liar_liar.cifar_100_models.cifar_100_model_base import CIFAR100Model
 
 
-class ConvModel(CIFAR100Model):
+class CIFAR10ConvModel(CIFAR100Model):
 
     def __init__(self, optimizer=Adam(), loss=categorical_crossentropy, metrics=[categorical_accuracy]):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="cifar100_conv_model")
@@ -40,5 +40,5 @@ class ConvModel(CIFAR100Model):
 
 if __name__ == "__main__":
     enable_eager_execution()
-    model = ConvModel()
+    model = CIFAR10ConvModel()
     model.train(epochs=1000)

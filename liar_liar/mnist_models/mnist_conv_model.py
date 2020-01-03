@@ -3,10 +3,10 @@ from tensorflow.python.keras.layers import Conv2D, Dropout, MaxPool2D, Flatten, 
 from tensorflow.python.keras.losses import categorical_crossentropy
 from tensorflow.python.keras.metrics import categorical_accuracy
 from tensorflow.python.keras.optimizer_v2.adam import Adam
-from models.MNISTModels.MNISTModel import MNISTModel
+from liar_liar.mnist_models.mnist_model_base import MNISTModel
 
 
-class ConvModel(MNISTModel):
+class MNISTConvModel(MNISTModel):
 
     def __init__(self, optimizer=Adam(), loss=categorical_crossentropy, metrics=[categorical_accuracy]):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="mnist_conv_model")
@@ -28,5 +28,5 @@ class ConvModel(MNISTModel):
 
 if __name__ == "__main__":
     enable_eager_execution()
-    model = ConvModel()
+    model = MNISTConvModel()
     model.train(epochs=5)

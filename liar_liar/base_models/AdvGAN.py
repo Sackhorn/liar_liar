@@ -6,9 +6,9 @@ import numpy as np
 import wandb
 
 from tensorflow_datasets import Split
-from models.BaseModels.DataProvider import DataProvider
-from models.BaseModels.SequentialModel import SequentialModel
-from models.utils.utils import count, plot_to_image
+from liar_liar.base_models.data_provider import DataProvider
+from liar_liar.base_models.sequential_model import SequentialModel
+from liar_liar.utils.utils import count, plot_to_image
 
 DISPLAY_NUMBER = 6
 class AdvGAN(DataProvider):

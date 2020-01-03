@@ -4,7 +4,7 @@ from tensorflow.python import keras
 from tensorflow.python.keras import Model
 from tensorflow.python.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow_datasets import Split
-from models.BaseModels.DataProvider import DataProvider
+from liar_liar.base_models.data_provider import DataProvider
 
 
 

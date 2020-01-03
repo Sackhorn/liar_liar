@@ -6,7 +6,7 @@
 import numpy as np
 import random
 import tensorflow as tf
-from models.BaseModels.SequentialModel import SequentialModel
+from liar_liar.base_models.sequential_model import SequentialModel
 
 
 def map_elites(classifier, iter_max=10000, mutation_chance=0.5, mutation_power=15, min=0.0, max=1.0):

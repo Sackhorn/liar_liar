@@ -1,6 +1,6 @@
 #This is the implementation of method given in this paper
 # Source https://arxiv.org/pdf/1511.04599.pdf
-from models.BaseModels.SequentialModel import SequentialModel
+from liar_liar.base_models.sequential_model import SequentialModel
 import tensorflow as tf
 
 

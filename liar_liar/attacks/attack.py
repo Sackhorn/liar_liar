@@ -1,5 +1,5 @@
 import abc
-import models.BaseModels.SequentialModel
+import models.base_models.sequential_model
 import tensorflow as tf
 
 
