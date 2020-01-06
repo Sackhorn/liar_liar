@@ -77,6 +77,7 @@ def _gen_attack(classifier,
     target_class = tf.argmax(target_class)
     old_population = tf.tile(tf.expand_dims(image, 0), [population_nmb, 1,1,1])
     old_population = old_population + tf.random.uniform(old_population.shape, minval=-delta, maxval=delta)
+    old_population = tf.map_fn(lambda x: clip_specimen(x, image, delta), old_population)
     new_population = tf.TensorArray(tf.float32, size=old_population.shape[0]) #this is just to satisfy the tf.function requirements
 
     for _ in tf.range(generation_nmb):
@@ -88,8 +89,8 @@ def _gen_attack(classifier,
         if tf.math.equal(classification, target_class):
             break
 
-        new_population = new_population.write(0, tf.expand_dims(old_population[highest_scoring_idx],0))
-        for i in tf.range(1, population_nmb-1):
+        new_population = new_population.write(0, tf.expand_dims(clip_specimen(old_population[highest_scoring_idx], image, delta),0))
+        for i in tf.range(1, population_nmb):
             parents_idxs = pick_parents(fitness)
             first_parent_idx = parents_idxs[0]
             second_parent_idx = parents_idxs[1]
@@ -108,9 +109,13 @@ def _gen_attack(classifier,
 # Clipping the specimen so that L-inf norm of org-adv isn't bigger than delta
 @tf.function
 def clip_specimen(child, image, delta):
-    min = image - delta
-    max = image + delta
-    return tf.clip_by_value(child, min, max)
+    min = tf.clip_by_value(image - delta, 0.0, 1.0)
+    max = tf.clip_by_value(image + delta, 0.0, 1.0)
+    less = tf.math.less(child, min)
+    greater = tf.math.greater(child, max)
+    child = tf.where(less, min, child)
+    return tf.where(greater, max, child)
+
 
 # pick two random specimens according to distribution density function given by softmax of fitness function
 @tf.function
@@ -149,4 +154,5 @@ def mutate_specimen(specimen, min, max, mutation_probability, delta):
         specimen + tf.random.uniform(shape, minval=-delta, maxval=delta),
         specimen
     )
-    return tf.clip_by_value(mutated, min, max)
+    # return tf.clip_by_value(mutated, min, max)
+    return mutated
