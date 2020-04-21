@@ -29,7 +29,7 @@ def run_test(classifier, attack, targeted, batch_size, nmb_elements, target_clas
         image, labels = data_sample
         start = time.time()
         if targeted:
-            ret_image, logits = attack(classifier, data_sample, target_class) #TODO: make targeted_class a parameter or choose at random
+            ret_image, logits = attack(classifier, data_sample, target_class)
             accuracy.update_state(target_class, logits)
             accuracy_result = accuracy.result().numpy()
         else:
@@ -61,20 +61,27 @@ def map_elites_test(classifier, iter_max):
 
 
 cifar10_attacks_targeted = []
-cifar10_attacks_targeted.append(fgsm_targeted_wrapper(iter_max=100, eps=0.001))
-cifar10_attacks_targeted.append(bfgs_wrapper())
-cifar10_attacks_targeted.append(carlini_wagner_wrapper(optimization_iter=100, binary_iter=10))
-cifar10_attacks_targeted.append(gen_attack_wrapper(generation_nmb=1000))
-cifar10_attacks_targeted.append(jsma_targeted_wrapper())
+# cifar10_attacks_targeted.append(fgsm_targeted_wrapper(iter_max=100, eps=0.001))
+# cifar10_attacks_targeted.append(bfgs_wrapper(iter_max=1000))
+# cifar10_attacks_targeted.append(carlini_wagner_wrapper(optimization_iter=100, binary_iter=10))
+cifar10_attacks_targeted.append(gen_attack_wrapper(generation_nmb=100000, delta=0.05))
+# cifar10_attacks_targeted.append(jsma_targeted_wrapper())
 
 cifar10_attacks_untargeted = []
 cifar10_attacks_untargeted.append(untargeted_fgsm_wrapper(eps=0.1))
-cifar10_attacks_untargeted.append(deepfool_wrapper(max_iter=1000))
+cifar10_attacks_untargeted.append(deepfool_wrapper(max_iter=10000))
 
 classifier = CIFAR10ConvModel().load_model_data()
-BATCH_SIZE = 5
+BATCH_SIZE = 1
+NMB_ELEMENTS = 1000
 target_class_int = 5
 target_class = tf.one_hot(target_class_int, classifier.get_number_of_classes())
 # map_elites_test(classifier, 1000)
-run_classifier_tests(classifier, cifar10_attacks_targeted, targeted=True, batch_size=BATCH_SIZE, nmb_elements=2, target_class=target_class)
-run_classifier_tests(classifier, cifar10_attacks_untargeted, targeted=False, batch_size=BATCH_SIZE, nmb_elements=2)
+run_classifier_tests(classifier,
+                     cifar10_attacks_targeted,
+                     targeted=True,
+                     batch_size=BATCH_SIZE,
+                     nmb_elements=NMB_ELEMENTS,
+                     target_class=target_class,
+                     show_plots=False)
+# run_classifier_tests(classifier, cifar10_attacks_untargeted, targeted=False, batch_size=BATCH_SIZE, nmb_elements=NMB_ELEMENTS)

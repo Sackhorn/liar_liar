@@ -12,7 +12,7 @@
 \usepackage{amsmath}
 \usepackage{algorithm}% http://ctan.org/pkg/algorithms
 \usepackage{algcompatible}% http://ctan.org/pkg/algorithmicx
-\usepackage[noend]{algpseudocode}
+\usepackage{algpseudocode}
 \usepackage[colorinlistoftodos]{todonotes}
 
 
@@ -31,7 +31,7 @@ Praca Inżynierska
 modeli klasyfikacyjnych na ataki z użyciem złośliwych danych
 \end{large}}
 
-\date{25 Sierpnia 2019}
+\date{3 Stycznia 2020}
 \author{Jan Ambroziak \\ Opiekun Pracy: dr.inż Paweł Zawistowski}
 
 \begin{document}
@@ -86,9 +86,10 @@ wykorzystywanych jako platforma testowa w publikacjach pokrewnych tematyką.
     odręcznie narysowane cyfry. Zbiór dzieli się na 50,000 przykładów używanych do
     trenowania modelu oraz 10.000 służących do testowania.
 
-    \subsubsection{Model Splotowy}
-    Stworzony model splotowy to prosty przykład zastosowania splotowych sieci neuronowych oraz warstw Dropout
-    który w praktyce pozwala osiągnąć bardzo dobre wyniki dla zbioru MNIST
+        \subsubsection{Model Splotowy}
+        Stworzony model splotowy to prosty przykład zastosowania splotowych sieci neuronowych oraz warstw Dropout
+        który w praktyce pozwala osiągnąć bardzo dobre wyniki dla zbioru MNIST
+        \todo{rozszerzyć te opisy}
 
         \subsubsection{Model Fully Connect}
         Model FC to bardzo prosty model wykorzystujący tylko 4 warstwy perceptronów z sigmoidalną funkcja aktywacji
@@ -107,7 +108,7 @@ wykorzystywanych jako platforma testowa w publikacjach pokrewnych tematyką.
 
         \subsubsection{Model Splotowy}
         Tutaj w porównaniu do modelu dla zbioru MNIST wykorzystujemy także technikę normalizującą wartości wyjściowe
-        funkcji aktywacji w celu zwiększenia stabilności sieci (funkcja aktywacji liniowa nie posiada górnej granicy w
+        funkcji aktywacji (BatchNorm) w celu zwiększenia stabilności sieci (funkcja aktywacji ReLU nie posiada górnej granicy w
         przeciwieństwie do funkcji sigmoidalnej)
 
     \subsection{CIFAR100}
@@ -133,7 +134,7 @@ Ideą ataków adwersaryjnych \todo{tu dodać definicje} jest osiągnięcie jedne
 Możemy też rozróżnić ataki z uwagi na to jakie dane są dostępne dla algorytmu atakującego:
 \begin{enumerate}
     \item Dostępny jest gradient, funkcja kosztu i funkcja trenująca
-    \item Dostepna jest tylko funkcja kosztu
+    \item Dostępna jest tylko funkcja kosztu
     \item Dostępny jest przykład
     \item Dostępne są tylko dane wejściowe i klasa do jakiej model przyporządkowuje dany przykład
     \item \todo{poprawić powyższe i dodać cytowanie}
@@ -235,14 +236,33 @@ zastosowanych do oceny ataków. Szersza dyskusja dotycząca użyteczności oraz 
 \subsection{DeepFool}
 W publikacji \textit{DeepFool: a simple and accurate method to fool deep neural networks}\cite{DBLP:journals/corr/Moosavi-Dezfooli15}
 autorzy proponują metodę alternatywną do FGSM mającą minimalizować wprowadzaną do danych wejściowych perturbacje jednocześnie
-osiągając zmianę klasy do której model przyporządkowuje dane wejściowe. Punktem wyjściowym rozważań autorów było założenie
-że model z którego korzystamy jest przekształceniem afinicznym, opracowanie metody pozwalającej na
-uzyskanie zminimalizowanej perturbacji, a następnie zgeneralizowanie metody dla modeli nie będących przekształceniami afinicznymi.
+osiągając zmianę klasy do której model przyporządkowuje dane wejściowe.
+%Punktem wyjściowym rozważań autorów było założenie
+%że model z którego korzystamy jest przekształceniem afinicznym, opracowanie metody pozwalającej na
+%uzyskanie zminimalizowanej perturbacji, a następnie zgeneralizowanie metody dla modeli nie będących przekształceniami afinicznymi.
 Wadą DeepFool jest brak możliwości narzucenia klasy do której chcielibyśmy aby przyporządkowywane były nasze zmodyfikowane dane.
 Metoda ta jest nieco bardziej złożona obliczeniowo jako że pojedynczy krok algorytmu wymaga od nas obliczenia gradientu dla
 prawdopodobieństwa każdej klasy względem danych wejściowych, co przy zbiorach danych z wieloma klasami
 takich jak np. ImageNet może być problematyczne. Poniżej znajduje się pseudokod opisujący metodę DeepFool dla modelu
 wieloklasowego.
+\begin{algorithm}
+\caption{DeepFool}\label{DeepFool}
+\begin{algorithmic}[1]
+\State $x_0 \gets x$
+\While{$f(x_{i}) =  y_{prawdziwe}$}
+\For{$k \neq \hat{k}(x_{0})$}
+    \State $w'_k\gets \nabla f_k(x_i) - \nabla f_{\hat{k}(x_0)}(x_i)$
+    \State $f'_k\gets f_{k}(x_i) - f_{\hat{k}(x_0)}(x_i)$
+\EndFor
+\State $\hat{l}\gets \arg \min_{k\neq\hat{k}(x_0)} \dfrac{|f'_k|}{||w'_k||_2}$
+\State $r_i\gets \dfrac{|f'_{\hat{l}}|}{||w'_{\hat{l}}||^2_2}w'_{\hat{l}}$
+\State $x_{i+1}\gets x_i + r_i$
+\State $i\gets i + 1$
+\EndWhile
+\State \textbf{return} $\hat{r} = \sum_{i} r_i$
+\end{algorithmic}
+\end{algorithm}
+
 
 \subsubsection{Implementacja}
 
@@ -363,12 +383,41 @@ jednej zadanej klasy tylko dla wszystkich.
 M-JSMA\cite{DBLP:journals/corr/abs-1808-07945} to wariant metody JSMA który łączy w sobie metodę
 
 \subsection{Carlini & Wagner}
-First in \cite{DBLP:journals/corr/CarliniW16a}
+Carlini oraz Wagner\cite{DBLP:journals/corr/CarliniW16a} w odpowiedzi na pojawiające się publikacje dotyczące
+ataków adwersaryjnych zaproponowali swoją metodę której celem jest, podobnie jak w innych metodach,
+tworzenie złośliwych danych
+odstających możliwie jak najmniej od danych wejściowych a zarazem klasyfikowanych przez zadany model jako
+zadana klasa. Zaproponowna przez autorów metoda opiera się na zastosowania metod optymalizacyjnych  w nauczaniu
+maszynowym do problemu optymalizacyjnego zadanego w poniższy sposób
+\begin{equation}\label{eq:c_and_w}
+    \text { minimalizuj } \| \frac { 1 } { 2 } ( \tanh ( w ) + 1 ) - x \| _ { 2 } ^ { 2 } + c \cdot f ( \frac { 1 } { 2 } ( \tanh ( w ) + 1 ) )
+\end{equation}
+gdzie $f$ definiujemy jako
+\begin{equation}
+    f ( x ^ { \prime } ) = \max ( \max \{ Z ( x' ) _ { i } : i \neq t \} - Z ( x ^ { \prime } ) _ { t } , - \kappa)
+\end{equation}
+Pierwszy składowa sumy \eqref{eq:c_and_w} odpowiada za minimalizację odstępstwa spreparowanego obrazu
+od oryginału. Druga składowa odpowiada za zwiększanie prawdopodobieństwa z jakim model klasyfikuje nasz przykład
+jako należący do zadanej klasy. Parametr \(\kappa\) odpowiada za pewność z jaką chcemy żeby model klasyfikował nasz
+przykład jako należący do zadanej klasy.
+
 
 \subsection{MAP-Elites}
-First in \cite{DBLP:journals/corr/NguyenYC14}
+Innym podejściem od pozostałych jest jedna z metod opisanych w
+\textit{Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images} \cite{DBLP:journals/corr/NguyenYC14}.
+Autorzy zaproponowali zastosowanie algorytmów ewolucyjnych w celu wygenerowania złośliwych przykładów.
+Zastosowaną strategią ewolucyjną jest MAP-Elites która pozwala na jednoczesne generowanie przykładów adwersaryjnych dla
+wszystkich klas modeli klasyfikującego. Poniżej znajduje się opis strategi ewolucyjnej zastosowanej przez autorów
+\todo{tutaj dodać algo MAP-Elites}
+%https://arxiv.org/pdf/1504.04909.pdf
 
 \subsection{GenAttack}
+Metoda GenAttack opisana w
+\textit{GenAttack: Practical Black-box Attacks with Gradient-Free Optimization}\cite{DBLP:journals/corr/abs-1805-11090}
+to podobnie jak MAP-Elites metoda opierająca się na algorytmach ewolucyjnych, jednak strategia ewolucyjna
+przyjęta tutaj przez autorów jest zgoła inna. W tym przypadku generujemy przykładu adwersaryjne tylko dla jednej klasy naraz
+w przeciwieństwie do wszystkich klas jak w przypadku MAP-Elites.
+\todo{Tutaj dodać opis algo}
 
 \subsection{AdvGAN}
 
