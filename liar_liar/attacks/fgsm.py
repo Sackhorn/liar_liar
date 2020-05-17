@@ -20,7 +20,14 @@ def fgsm(classifier, data_sample, target_class=None, iter_max=1, eps=0.01, min=0
 
     """
     return_images = _fgsm(data_sample, classifier, target_class, iter_max, eps, min, max)
-    return (return_images, classifier(return_images))
+    parameters = {
+        "target_class":target_class,
+        "iter_max":iter_max,
+        "eps":eps,
+        "min":min,
+        "max":max
+    }
+    return (return_images, classifier(return_images), parameters)
 
 def untargeted_fgsm_wrapper(iter_max=1, eps=0.01, min=0.0, max=1.0):
     """

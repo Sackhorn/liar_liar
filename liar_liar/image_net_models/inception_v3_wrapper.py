@@ -3,6 +3,8 @@ from tensorflow.python.keras.applications import InceptionV3
 from tensorflow.python.keras.losses import categorical_crossentropy
 from tensorflow.python.keras.metrics import top_k_categorical_accuracy
 from tensorflow.python.keras.optimizer_v2.adam import Adam
+
+from liar_liar.base_models.model_names import INCEPTION_V3_NAME
 from liar_liar.image_net_models.image_net_model_base import ImageNetModel
 
 
@@ -14,7 +16,7 @@ class InceptionV3Wrapper(ImageNetModel):
                  optimizer=Adam(),
                  loss=categorical_crossentropy,
                  metrics=[top_k_categorical_accuracy]):
-        super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="imagenet_v3")
+        super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME=INCEPTION_V3_NAME)
         self.imagenet = InceptionV3()
         self.imagenet.layers[-1].activation = tf.keras.activations.linear
 

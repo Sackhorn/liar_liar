@@ -10,3 +10,11 @@ class CIFAR10Model(SequentialModel):
                          MODEL_NAME=MODEL_NAME,
                          dataset_name='cifar10')
 
+
+def get_cifar10_models():
+    """
+    Returns:
+        list[CIFAR10Model]:
+    """
+    from liar_liar.cifar_10_models.cifar_10_conv_model import CIFAR10ConvModel
+    return [CIFAR10ConvModel().load_model_data()]

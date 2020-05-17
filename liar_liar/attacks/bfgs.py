@@ -16,7 +16,8 @@ def bfgs(classifier, data_sample, target_class, iter_max, min=0.0, max=1.0):
         ret_image = _bfgs(classifier, (tf.expand_dims(image[i], 0), label[i]), target_class, iter_max, min, max)
         arr_image.append(ret_image)
     arr_image = tf.concat(arr_image, 0)
-    return (arr_image, classifier(arr_image))
+    parameteres = {"target_class":target_class, "iter_max":iter_max, "min":min, "max":max}
+    return (arr_image, classifier(arr_image), parameteres)
 
 def bfgs_wrapper(iter_max=100, min=0.0, max=1.0):
     """

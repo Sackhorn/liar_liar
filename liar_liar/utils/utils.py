@@ -1,29 +1,15 @@
 import io
+import logging
+import os
+
 import tensorflow as tf
 import matplotlib.pyplot as plt
-import numpy as np
 
 
-def count(model, ret_image, labels):
-    """
+def batch_image_norm(image):
+    return tf.norm(tf.norm(tf.norm(image, axis=3), axis=2), axis=1)
 
-    :type labels: EagerTensor
-    """
-    labels = tf.dtypes.cast(labels, tf.float32)
-    ret_labels = model(ret_image)
-    ret_labels = tf.one_hot(tf.argmax(ret_labels, axis=1), model.get_number_of_classes())
-    has_succeeded = tf.math.reduce_all(tf.math.equal(ret_labels, labels), axis=1)
-    has_succeeded = list(has_succeeded.numpy())
-    return has_succeeded.count(True)/len(has_succeeded)
-
-def count_untargeted(model, ret_image, labels):
-    ret_labels = model(ret_image)
-    ret_labels = tf.one_hot(tf.argmax(ret_labels, axis=1), model.get_number_of_classes())
-    has_succeeded = tf.math.reduce_all(tf.math.equal(ret_labels, labels), axis=1)
-    has_succeeded = list(has_succeeded.numpy())
-    return has_succeeded.count(False)/len(has_succeeded)
-
-# This i straight from tensorboard tutorial https://www.tensorflow.org/tensorboard/image_summaries
+# This is straight from tensorboard tutorial https://www.tensorflow.org/tensorboard/image_summaries
 def plot_to_image(figure):
   """Converts the matplotlib plot specified by 'figure' to a PNG image and
   returns it. The supplied figure is closed and inaccessible after this call."""
@@ -39,3 +25,10 @@ def plot_to_image(figure):
   # Add the batch dimension
   image = tf.expand_dims(image, 0)
   return image
+
+def disable_logging():
+    tf.get_logger().setLevel(logging.ERROR)
+    tf.autograph.set_verbosity(0, alsologtostdout=False)
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+    from tensorflow.python.util import deprecation
+    deprecation._PRINT_DEPRECATION_WARNINGS = False

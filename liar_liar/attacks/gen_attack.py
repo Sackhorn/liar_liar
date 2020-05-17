@@ -41,7 +41,16 @@ def gen_attack(classifier,
                                                 max,
                                                 mutation_probability,
                                                 delta), images)
-    return (ret_image, classifier(ret_image))
+    parameters = {
+        "target_class": target_class,
+        "generation_nmb": generation_nmb,
+        "population_nmb": population_nmb,
+        "mutation_probability": mutation_probability,
+        "delta": delta,
+        "min": min,
+        "max": max
+    }
+    return (ret_image, classifier(ret_image), parameters)
 
 def gen_attack_wrapper(generation_nmb=100000, population_nmb=6, min=0.0, max=1.0, mutation_probability=0.05, delta=0.05):
     """

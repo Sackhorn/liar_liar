@@ -31,7 +31,15 @@ def jsma(classifier,
                              use_logits)
         arr_image.append(ret_image)
     arr_image = tf.concat(arr_image, 0)
-    return (arr_image, classifier(arr_image))
+    parameters = {
+        "target_class":target_class,
+        "max_perturbation":max_perturbation,
+        "theta":theta,
+        "is_increasing":is_increasing,
+        "use_logits":use_logits,
+        "min":min,
+        "max":max}
+    return (arr_image, classifier(arr_image), parameters)
 
 def jsma_untargeted_wrapper(max_perturbation=0.1,
                             theta=1,

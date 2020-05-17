@@ -9,3 +9,12 @@ class CIFAR100Model(SequentialModel):
                          metrics=metrics,
                          MODEL_NAME=MODEL_NAME,
                          dataset_name='cifar100')
+
+
+def get_cifar100_models():
+    """
+    Returns:
+        list[CIFAR100Model]:
+    """
+    from liar_liar.cifar_100_models.cifar_100_conv_model import CIFAR100ConvModel
+    return [CIFAR100ConvModel().load_model_data()]

@@ -4,32 +4,38 @@ from liar_liar.base_models.sequential_model import SequentialModel
 import tensorflow as tf
 
 
-def deepfool(classifier, data_sample, max_iter=10000, min=0.0, max=1.0):
+def deepfool(classifier, data_sample, iter_max=10000, min=0.0, max=1.0):
     """
 
     Args:
         classifier: A classifier model that we want to attack
         data_sample: A tuple of tensors of structure (image_tensor, label_tensor)
-        max_iter: Maximal number of iterations before returning
+        iter_max: Maximal number of iterations before returning
         min: Minimal value of input image
         max: Maximal value of input image
 
     Returns: A tuple of structure (adversarial_example, classifier output for examples)
 
     """
-    return _deepfool(data_sample, classifier, max_iter=max_iter, min=min, max=max)
+    ret_image = _deepfool(data_sample, classifier, iter_max=iter_max, min=min, max=max)
+    parameters = {
+        "iter_max":iter_max,
+        "min":min,
+        "max":max
+    }
+    return (ret_image, classifier(ret_image), parameters)
 
-def deepfool_wrapper(max_iter=10000, min=0.0, max=1.0):
+def deepfool_wrapper(iter_max=10000, min=0.0, max=1.0):
     """
         This wraps deepfool call in a handy way that allows us using this as unspecified untargeted attack method
         Returns: Wrapped deepfool for untargeted attack format
     """
     def wrapper_deepfool(classifier, data_sample):
-        return deepfool(classifier, data_sample, max_iter=max_iter, min=min, max=max)
+        return deepfool(classifier, data_sample, iter_max=iter_max, min=min, max=max)
     return wrapper_deepfool
 
 @tf.function
-def _deepfool(data_sample, classifier, max_iter=10000, min=0.0, max=1.0):
+def _deepfool(data_sample, classifier, iter_max=10000, min=0.0, max=1.0):
     """
 
     :type classifier: SequentialModel
@@ -47,7 +53,7 @@ def _deepfool(data_sample, classifier, max_iter=10000, min=0.0, max=1.0):
     is_properly_classified = tf.math.reduce_all(tf.math.equal(output, label), axis=1)
 
 
-    while tf.math.reduce_any(is_properly_classified) and iter < max_iter:
+    while tf.math.reduce_any(is_properly_classified) and iter < iter_max:
         gradients_by_cls = tf.TensorArray(tf.float32, size=nmb_classes, element_shape=[batch_size, width, height, color_space])
         with tf.GradientTape(persistent=True) as tape:
             tape.watch(image)
@@ -81,4 +87,4 @@ def _deepfool(data_sample, classifier, max_iter=10000, min=0.0, max=1.0):
         output = classifier(image)
         output = tf.one_hot(tf.argmax(output, axis=1), nmb_classes)
         is_properly_classified = tf.math.reduce_all(tf.math.equal(output, label), axis=1)
-    return (image, classifier(image))
+    return image

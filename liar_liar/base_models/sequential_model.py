@@ -55,3 +55,18 @@ class SequentialModel(Model, DataProvider):
         self.evaluate(test, steps=self.test_steps)
 
 
+def get_all_models():
+    """
+    Returns:
+        list[SequentialModel]:
+    """
+    from liar_liar.mnist_models.mnist_model_base import get_mnist_models
+    from liar_liar.cifar_100_models.cifar_100_model_base import get_cifar100_models
+    from liar_liar.image_net_models.image_net_model_base import get_imagenet_models
+    from liar_liar.cifar_10_models.cifar_10_model_base import get_cifar10_models
+    models = []
+    models.extend(get_imagenet_models())
+    models.extend(get_mnist_models())
+    models.extend(get_cifar10_models())
+    models.extend(get_cifar100_models())
+    return models

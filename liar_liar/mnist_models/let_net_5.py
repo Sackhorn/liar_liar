@@ -2,15 +2,15 @@ from tensorflow.python import enable_eager_execution
 from tensorflow.python.keras.layers import Flatten, Dense, Conv2D, AveragePooling2D
 from tensorflow.python.keras.losses import categorical_crossentropy
 from tensorflow.python.keras.metrics import categorical_accuracy
-from tensorflow.python.keras.optimizer_v2.adam import Adam
 
+from liar_liar.base_models.model_names import LE_NET_NAME
 from liar_liar.mnist_models.mnist_model_base import MNISTModel
 
 
 class LeNet5(MNISTModel):
 
     def __init__(self, optimizer="sgd", loss=categorical_crossentropy, metrics=[categorical_accuracy]):
-        super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME="mnist_dense_model")
+        super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME=LE_NET_NAME)
         self.sequential_layers = [
             Conv2D(6, [5, 5], activation="tanh"),
             AveragePooling2D(strides=1),

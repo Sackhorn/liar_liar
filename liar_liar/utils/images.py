@@ -1,7 +1,20 @@
+import json
+from os import path
+
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 from tensorflow import Tensor
+
+# imagenet_labels_path = path.dirname(path.realpath(__file__))
+# imagenet_labels_path = path.join(imagenet_labels_path, path.pardir, path.pardir, "imagenet1000_clsidx_to_labels.txt")
+# imagenet_labels_path = imagenet_labels_path.join([path.pardir, path.pardir, "imagenet1000_clsidx_to_labels.txt"])
+# imagenet_labels_dict = None
+# with open(imagenet_labels_path, 'r', encoding='utf-8') as f:
+#     imagenet_labels_dict = json.load(f)
+# print(imagenet_labels_dict)
+
+
 def show_plot(logits, image, labels_names=None, plot_title=None):
     """
 

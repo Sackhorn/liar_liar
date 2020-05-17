@@ -1,87 +1,108 @@
+import json
 import time
+from random import randrange
+from os import path
+
+import numpy as np
 import tensorflow as tf
-from tensorflow_core.python.keras.metrics import CategoricalAccuracy
+
+from tensorflow.python.keras.metrics import CategoricalAccuracy
 from tensorflow_datasets import Split
-
-from liar_liar.attacks import map_elites
-from liar_liar.attacks.bfgs import bfgs_wrapper
-from liar_liar.attacks.c_and_w import carlini_wagner_wrapper
-from liar_liar.attacks.deepfool import deepfool_wrapper
-from liar_liar.attacks.fgsm import fgsm_targeted_wrapper, untargeted_fgsm_wrapper
-from liar_liar.attacks.gen_attack import gen_attack_wrapper
-from liar_liar.attacks.jsma import jsma_targeted_wrapper
-from liar_liar.cifar_10_models.cifar_10_conv_model import CIFAR10ConvModel
+from liar_liar.base_models.sequential_model import SequentialModel, get_all_models
+from liar_liar.utils.general_names import *
 from liar_liar.utils.images import show_plot
+from liar_liar.utils.utils import batch_image_norm, disable_logging
 
 
-def run_test(classifier, attack, targeted, batch_size, nmb_elements, target_class=None, show_plots=True):
+def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=False):
+    disable_logging()
+    results_arr = []
+    all_models = get_all_models()
+    for model in all_models:
+        model_dict = attack_params[model.MODEL_NAME]
+        batches = model_dict[DATASET_KEY]
+        parameters = model_dict[PARAMETERS_KEY]
+        for parameter_set in parameters:
+            nmb_classes = model.get_number_of_classes()
+            target_class = tf.one_hot(randrange(0, nmb_classes), nmb_classes) #TODO: Find a way to choose target class
+            target_class = target_class if targeted else None
+            results = run_test(model,
+                     attack_wrapper(**parameter_set),
+                     target_class=target_class,
+                     batch_size=batches[BATCHES_KEY],
+                     nmb_elements=batches[NMB_ELEMENTS_KEY],
+                     show_plots=show_plot)
+            results_arr.append(results)
+    json_file_path = path.dirname(path.realpath(__file__))
+    json_file_path = path.join(json_file_path, path.pardir, path.pardir, "json_results", attack_wrapper.__name__)
+    with open(json_file_path, 'w', encoding='utf-8') as f:
+        json.dump(results_arr, f, ensure_ascii=False, indent=4)
+
+
+def run_test(classifier, attack, batch_size, target_class, nmb_elements=None, show_plots=True):
     """
 
     Args:
-        classifier: A classifier we attack
+        classifier (SequentialModel): A classifier we attack
         attack: A wrapped attack method
         targeted: wether the attack is targeted or not
         batch_size: number of elements being put at once into the attack
         nmb_elements: number of batches we want to run through attack
     """
+    # Filter to remove all examples that are misclassified by classifier
+    def remove_misclassified_and_target_class(image, label):
+        image = tf.expand_dims(image, 0)
+        classification = tf.one_hot(tf.argmax(classifier(image), 1), classifier.get_number_of_classes())
+        classified_fine = tf.math.reduce_all(tf.math.equal(classification, label))
+        in_target_class = tf.math.reduce_all(tf.math.equal(target_class, label))
+        ret_val = tf.math.logical_and(classified_fine, tf.logical_not(in_target_class))
+        return ret_val
+
+    # Filter to remove just misclassified examples
+    def remove_misclassified(image, label):
+        image = tf.expand_dims(image, 0)
+        classification = tf.one_hot(tf.argmax(classifier(image), 1), classifier.get_number_of_classes())
+        return tf.math.reduce_all(tf.math.equal(classification, label))
+
+    filter_fnc = remove_misclassified if target_class is None else remove_misclassified_and_target_class
     accuracy = CategoricalAccuracy()
-    for data_sample in classifier.get_dataset(Split.TEST, batch_size=batch_size).take(nmb_elements): #TODO: Prune misclassified elements from dataset and elements that already are in target class
+    l2_distance = np.array([])
+    time_per_batch = np.array([])
+    dataset = classifier.get_dataset(Split.TEST, shuffle=1, batch_size=batch_size, filter=filter_fnc)
+    print("MODEL: {} ATTACK: {}".format(classifier.MODEL_NAME, attack.__name__))
+    for data_sample in dataset.take(nmb_elements):
         image, labels = data_sample
         start = time.time()
-        if targeted:
-            ret_image, logits = attack(classifier, data_sample, target_class)
+        if target_class is not None:
+            ret_image, logits, parameters = attack(classifier, data_sample, target_class)
             accuracy.update_state(target_class, logits)
             accuracy_result = accuracy.result().numpy()
         else:
-            ret_image, logits = attack(classifier, data_sample)
-            accuracy.update_state(labels, logits)
+            ret_image, logits, parameters = attack(classifier, data_sample)
+            accuracy.update_state(labels, logits) #TODO: This is wrong for deepfool with imagenet
             accuracy_result = 1.0 - accuracy.result().numpy()
+
+        l2_distance = np.append(l2_distance, batch_image_norm(image - ret_image).numpy().flatten())
+        cur_l2_median = np.median(l2_distance)
+        cur_l2_average = np.mean(l2_distance)
+
         if show_plots:
             show_plot(classifier(tf.expand_dims(image[0], 0)), image[0], classifier.get_label_names(), plot_title=attack.__name__)
-            show_plot(logits[0], ret_image[0], classifier.get_label_names(), plot_title=attack.__name__)
-        print("TIME: {:2f} ATACK_ACC: {:2f}".format(time.time() - start, accuracy_result))
-    return accuracy_result
+            show_plot(logits[0], ret_image[0], classifier.get_label_names(), plot_title=attack.__name__ + " " + classifier.MODEL_NAME)
 
-def run_classifier_tests(classifier, attack_list, targeted, batch_size, nmb_elements, target_class=None, show_plots=True):
-    acc_arr = []
-    for attack in attack_list:
-        acc_result = run_test(classifier, attack, targeted, batch_size, nmb_elements, target_class=target_class, show_plots=show_plots)
-        acc_arr.append(acc_result)
-        print("Attack {} Attack Accuracy {:2f}".format(attack.__name__, acc_result))
-    for attack, accuracy in zip(attack_list, acc_arr):
-        print("Attack {} Attack Accuracy {:2f}".format(attack.__name__, accuracy))
+        cur_time_per_batch = time.time() - start
+        time_per_batch = np.append(time_per_batch, cur_time_per_batch)
 
-def map_elites_test(classifier, iter_max):
-    start = time.time()
-    ret_image, logits = map_elites.map_elites(classifier, iter_max=iter_max)
-    for i in range(10):
-        show_plot(logits[i], ret_image[i], classifier.get_label_names(), plot_title='map_elites')
-    print("TIME: {:2f}".format(time.time() - start))
+        print("TIME: {:2f} ATACK_ACC: {:2f} MEDIAN_L2 {:2f} MEAN_L2 {:2f}"
+              .format(cur_time_per_batch, accuracy_result, float(cur_l2_median), float(cur_l2_average)))
 
-
-
-cifar10_attacks_targeted = []
-# cifar10_attacks_targeted.append(fgsm_targeted_wrapper(iter_max=100, eps=0.001))
-# cifar10_attacks_targeted.append(bfgs_wrapper(iter_max=1000))
-# cifar10_attacks_targeted.append(carlini_wagner_wrapper(optimization_iter=100, binary_iter=10))
-cifar10_attacks_targeted.append(gen_attack_wrapper(generation_nmb=100000, delta=0.05))
-# cifar10_attacks_targeted.append(jsma_targeted_wrapper())
-
-cifar10_attacks_untargeted = []
-cifar10_attacks_untargeted.append(untargeted_fgsm_wrapper(eps=0.1))
-cifar10_attacks_untargeted.append(deepfool_wrapper(max_iter=10000))
-
-classifier = CIFAR10ConvModel().load_model_data()
-BATCH_SIZE = 1
-NMB_ELEMENTS = 1000
-target_class_int = 5
-target_class = tf.one_hot(target_class_int, classifier.get_number_of_classes())
-# map_elites_test(classifier, 1000)
-run_classifier_tests(classifier,
-                     cifar10_attacks_targeted,
-                     targeted=True,
-                     batch_size=BATCH_SIZE,
-                     nmb_elements=NMB_ELEMENTS,
-                     target_class=target_class,
-                     show_plots=False)
-# run_classifier_tests(classifier, cifar10_attacks_untargeted, targeted=False, batch_size=BATCH_SIZE, nmb_elements=NMB_ELEMENTS)
+    results = {
+        "accuracy_result": accuracy_result,
+        "L2_median": cur_l2_median,
+        "L2_average": cur_l2_average,
+        "parameters": parameters,
+        "average_time_per_batch": np.mean(time_per_batch),
+        "model_name": classifier.MODEL_NAME,
+        "attack_name": attack.__name__
+    }
+    return results
