@@ -1,4 +1,6 @@
+import errno
 import json
+import os
 import time
 from random import randrange
 from os import path
@@ -19,7 +21,10 @@ def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=F
     results_arr = []
     all_models = get_all_models()
     for model in all_models:
-        model_dict = attack_params[model.MODEL_NAME]
+        try:
+            model_dict = attack_params[model.MODEL_NAME]
+        except:
+            continue
         batches = model_dict[DATASET_KEY]
         parameters = model_dict[PARAMETERS_KEY]
         for parameter_set in parameters:
@@ -33,8 +38,22 @@ def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=F
                      nmb_elements=batches[NMB_ELEMENTS_KEY],
                      show_plots=show_plot)
             results_arr.append(results)
+
+    create_results_json(attack_wrapper.__name__, results_arr)
+    # json_file_path = path.dirname(path.realpath(__file__))
+    # json_file_path = path.join(json_file_path, path.pardir, path.pardir, "json_results", attack_wrapper.__name__ + ".json")
+    # with open(json_file_path, 'w', encoding='utf-8') as f:
+    #     json.dump(results_arr, f, ensure_ascii=False, indent=4)
+
+def create_results_json(attack_wrapper_name, results_arr):
     json_file_path = path.dirname(path.realpath(__file__))
-    json_file_path = path.join(json_file_path, path.pardir, path.pardir, "json_results", attack_wrapper.__name__)
+    json_file_path = path.join(json_file_path, path.pardir, path.pardir, "json_results", attack_wrapper_name + ".json")
+    if not path.exists(path.dirname(json_file_path)):
+        try:
+            os.mkdir(path.dirname(json_file_path))
+        except OSError as exc:
+            if exc.errno != errno.EEXIST:
+                raise
     with open(json_file_path, 'w', encoding='utf-8') as f:
         json.dump(results_arr, f, ensure_ascii=False, indent=4)
 
@@ -97,11 +116,11 @@ def run_test(classifier, attack, batch_size, target_class, nmb_elements=None, sh
               .format(cur_time_per_batch, accuracy_result, float(cur_l2_median), float(cur_l2_average)))
 
     results = {
-        "accuracy_result": accuracy_result,
-        "L2_median": cur_l2_median,
-        "L2_average": cur_l2_average,
+        "accuracy_result": float(accuracy_result),
+        "L2_median": float(cur_l2_median),
+        "L2_average": float(cur_l2_average),
         "parameters": parameters,
-        "average_time_per_batch": np.mean(time_per_batch),
+        "average_time_per_batch": float(np.mean(time_per_batch)),
         "model_name": classifier.MODEL_NAME,
         "attack_name": attack.__name__
     }

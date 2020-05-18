@@ -51,8 +51,9 @@ def get_imagenet_models():
     from liar_liar.image_net_models.inception_v3_wrapper import InceptionV3Wrapper
     from liar_liar.image_net_models.res_net_wrapper import ResNetWrapper
     return [
+        ResNetWrapper(),
         InceptionV3Wrapper(),
-        ResNetWrapper()]
+    ]
 
 
 

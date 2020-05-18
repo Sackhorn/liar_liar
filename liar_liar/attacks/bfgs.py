@@ -16,7 +16,12 @@ def bfgs(classifier, data_sample, target_class, iter_max, min=0.0, max=1.0):
         ret_image = _bfgs(classifier, (tf.expand_dims(image[i], 0), label[i]), target_class, iter_max, min, max)
         arr_image.append(ret_image)
     arr_image = tf.concat(arr_image, 0)
-    parameteres = {"target_class":target_class, "iter_max":iter_max, "min":min, "max":max}
+    parameteres = {
+        "target_class":int(tf.argmax(target_class.numpy())),
+        "iter_max":iter_max,
+        "min":min,
+        "max":max
+    }
     return (arr_image, classifier(arr_image), parameteres)
 
 def bfgs_wrapper(iter_max=100, min=0.0, max=1.0):
@@ -41,6 +46,7 @@ def _bfgs(classifier, data_sample, target_class, iter_max, min=0.0, max=1.0):
         image = tf.convert_to_tensor(image, dtype=tf.float32)
         perturbation = perturbation.reshape(classifier.get_input_shape())
         perturbation = tf.convert_to_tensor(perturbation, dtype=tf.float32)
+
         with tf.GradientTape() as tape:
             tape.watch(perturbation)
             input_tensor = tf.add(image, perturbation)
@@ -50,6 +56,7 @@ def _bfgs(classifier, data_sample, target_class, iter_max, min=0.0, max=1.0):
         gradient = tape.gradient(value, perturbation)
         return value.numpy(), gradient.numpy().flatten().astype(np.float64)
 
+    target_class = tf.expand_dims(target_class, 0)
     image, label = data_sample
     image = image.numpy().flatten()
     perturbation = [np.random.uniform(-image[i]/100, (max - image[i])/100) for i in range(len(image))]

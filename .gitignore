@@ -8,6 +8,7 @@ latex/images/*
 saved_models/
 tboardlog/
 *.png
+json_results/
 
 
 ####################JETBRAINS IGNORE############

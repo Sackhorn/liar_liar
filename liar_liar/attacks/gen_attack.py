@@ -42,7 +42,7 @@ def gen_attack(classifier,
                                                 mutation_probability,
                                                 delta), images)
     parameters = {
-        "target_class": target_class,
+        "target_class": int(tf.argmax(target_class).numpy()),
         "generation_nmb": generation_nmb,
         "population_nmb": population_nmb,
         "mutation_probability": mutation_probability,
@@ -113,7 +113,8 @@ def _gen_attack(classifier,
     fitness = tf.map_fn(lambda x: eval_specimen(target_class, x, classifier), old_population)
     highest_scoring_idx = tf.argmax(fitness)
     highest_scoring_idx = tf.reshape(highest_scoring_idx, [])  # Make the Tensor into scalar tensor
-    return tf.squeeze(old_population[highest_scoring_idx])
+    # return tf.squeeze(old_population[highest_scoring_idx])
+    return old_population[highest_scoring_idx]
 
 # Clipping the specimen so that L-inf norm of org-adv isn't bigger than delta
 @tf.function

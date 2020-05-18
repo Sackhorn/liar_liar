@@ -1,5 +1,6 @@
 import tensorflow as tf
-from tensorflow.python.keras.applications import ResNet152V2
+# from tensorflow.python.keras.applications import ResNet152V2
+from tensorflow.keras.applications import ResNet50V2
 from tensorflow.python.keras.losses import categorical_crossentropy
 from tensorflow.python.keras.metrics import top_k_categorical_accuracy
 from tensorflow.python.keras.optimizer_v2.adam import Adam
@@ -17,7 +18,7 @@ class ResNetWrapper(ImageNetModel):
                  loss=categorical_crossentropy,
                  metrics=[top_k_categorical_accuracy]):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME=RESNET_NAME)
-        self.resnet = ResNet152V2()
+        self.resnet = ResNet50V2()
         self.resnet.layers[-1].activation = tf.keras.activations.linear
 
     @tf.function

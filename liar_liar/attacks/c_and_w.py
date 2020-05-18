@@ -37,7 +37,8 @@ def carlini_wagner(classifier,
     # cw = _c_and_w
     return_image = cw(image, classifier, target_class, perturbation, optimizer, optimization_iter, binary_iter, c_high, c_low, kappa)
     parameters = {
-        "optimizer":optimizer,
+        "optimizer":optimizer.__class__.__name__,
+        "learning_rate":optimizer._learning_rate,
         "optimization_iter":optimization_iter,
         "binary_iter":binary_iter,
         "C_high":c_high,
@@ -64,7 +65,7 @@ def carlini_wagner_wrapper(optimizer=GradientDescentOptimizer(1e-2),
 def _optimize_c_and_w(image, classifier, iter_max, target_class, c_val, perturbation, optimizer, kappa):
     target_label_index = tf.argmax(target_class, output_type=tf.int32, axis=0)
     target_label_index = tf.reshape(target_label_index, [])
-    tf.print(c_val)
+    # tf.print(c_val)
 
     for _ in tf.range(iter_max):
         with tf.GradientTape() as tape:

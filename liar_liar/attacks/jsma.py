@@ -32,7 +32,7 @@ def jsma(classifier,
         arr_image.append(ret_image)
     arr_image = tf.concat(arr_image, 0)
     parameters = {
-        "target_class":target_class,
+        "target_class":int(tf.argmax(target_class).numpy()) if target_class is not None else "None",
         "max_perturbation":max_perturbation,
         "theta":theta,
         "is_increasing":is_increasing,

@@ -1,9 +1,9 @@
 import tensorflow as tf
-from tensorflow.python.keras.applications import InceptionV3
+# from tensorflow.python.keras.applications import InceptionV3
+from tensorflow.keras.applications import InceptionV3
 from tensorflow.python.keras.losses import categorical_crossentropy
 from tensorflow.python.keras.metrics import top_k_categorical_accuracy
 from tensorflow.python.keras.optimizer_v2.adam import Adam
-
 from liar_liar.base_models.model_names import INCEPTION_V3_NAME
 from liar_liar.image_net_models.image_net_model_base import ImageNetModel
 
