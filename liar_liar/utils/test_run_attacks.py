@@ -12,7 +12,7 @@ from tensorflow.python.keras.metrics import CategoricalAccuracy
 from tensorflow_datasets import Split
 from liar_liar.base_models.sequential_model import SequentialModel, get_all_models
 from liar_liar.utils.general_names import *
-from liar_liar.utils.images import show_plot
+from liar_liar.utils.images import show_plot, show_plot_comparison
 from liar_liar.utils.utils import batch_image_norm, disable_logging
 
 
@@ -23,7 +23,7 @@ def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=F
     for model in all_models:
         try:
             model_dict = attack_params[model.MODEL_NAME]
-        except:
+        except KeyError:
             continue
         batches = model_dict[DATASET_KEY]
         parameters = model_dict[PARAMETERS_KEY]
@@ -38,12 +38,8 @@ def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=F
                      nmb_elements=batches[NMB_ELEMENTS_KEY],
                      show_plots=show_plot)
             results_arr.append(results)
-
-    create_results_json(attack_wrapper.__name__, results_arr)
-    # json_file_path = path.dirname(path.realpath(__file__))
-    # json_file_path = path.join(json_file_path, path.pardir, path.pardir, "json_results", attack_wrapper.__name__ + ".json")
-    # with open(json_file_path, 'w', encoding='utf-8') as f:
-    #     json.dump(results_arr, f, ensure_ascii=False, indent=4)
+        #We do this after every completed test to store information in case of fufure error
+        create_results_json(attack_wrapper.__name__, results_arr)
 
 def create_results_json(attack_wrapper_name, results_arr):
     json_file_path = path.dirname(path.realpath(__file__))
@@ -86,7 +82,7 @@ def run_test(classifier, attack, batch_size, target_class, nmb_elements=None, sh
     filter_fnc = remove_misclassified if target_class is None else remove_misclassified_and_target_class
     accuracy = CategoricalAccuracy()
     l2_distance = np.array([])
-    time_per_batch = np.array([])
+    mean_time_per_sample = np.array([])
     dataset = classifier.get_dataset(Split.TEST, shuffle=1, batch_size=batch_size, filter=filter_fnc)
     print("MODEL: {} ATTACK: {}".format(classifier.MODEL_NAME, attack.__name__))
     for data_sample in dataset.take(nmb_elements):
@@ -106,21 +102,28 @@ def run_test(classifier, attack, batch_size, target_class, nmb_elements=None, sh
         cur_l2_average = np.mean(l2_distance)
 
         if show_plots:
-            show_plot(classifier(tf.expand_dims(image[0], 0)), image[0], classifier.get_label_names(), plot_title=attack.__name__)
-            show_plot(logits[0], ret_image[0], classifier.get_label_names(), plot_title=attack.__name__ + " " + classifier.MODEL_NAME)
+            show_plot_comparison(adv_image=ret_image[0],
+                                 adv_logits=logits[0],
+                                 orig_image=image[0],
+                                 orig_logits=classifier(tf.expand_dims(image[0], 0)),
+                                 labels_names=classifier.get_label_names(),
+                                 plot_title=attack.__name__ + " " + classifier.MODEL_NAME,
+                                 target_class = target_class,
+                                 true_class=labels[0])
 
         cur_time_per_batch = time.time() - start
-        time_per_batch = np.append(time_per_batch, cur_time_per_batch)
+        cur_time_per_sample = cur_time_per_batch / batch_size
+        mean_time_per_sample = np.append(mean_time_per_sample, cur_time_per_sample)
 
-        print("TIME: {:2f} ATACK_ACC: {:2f} MEDIAN_L2 {:2f} MEAN_L2 {:2f}"
-              .format(cur_time_per_batch, accuracy_result, float(cur_l2_median), float(cur_l2_average)))
+        print("TIME_BATCH: {:2f} TIME_PER_SAMPLE {:2f} ATACK_ACC: {:2f} MEDIAN_L2 {:2f} MEAN_L2 {:2f}"
+              .format(cur_time_per_batch, cur_time_per_sample, accuracy_result, float(cur_l2_median), float(cur_l2_average)))
 
     results = {
         "accuracy_result": float(accuracy_result),
         "L2_median": float(cur_l2_median),
         "L2_average": float(cur_l2_average),
         "parameters": parameters,
-        "average_time_per_batch": float(np.mean(time_per_batch)),
+        "average_time_per_batch": float(np.mean(mean_time_per_sample)),
         "model_name": classifier.MODEL_NAME,
         "attack_name": attack.__name__
     }

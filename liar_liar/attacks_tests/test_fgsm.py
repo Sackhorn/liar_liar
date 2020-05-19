@@ -15,22 +15,22 @@ attack_params = {
     },
     CIFAR_100_CONV_NAME:
     {
-        PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}],
+        PARAMETERS_KEY : [{ITER_MAX: 1000, EPS: 0.0001}],
         DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
     },
     MNIST_CONV_NAME:
     {
-        PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}],
+        PARAMETERS_KEY : [{ITER_MAX: 1000, EPS: 0.0005}],
         DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
     },
     MNIST_DENSE_NAME:
     {
-        PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}],
+        PARAMETERS_KEY : [{ITER_MAX: 1000, EPS: 0.0005}],
         DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
     },
     LE_NET_NAME:
     {
-        PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}],
+        PARAMETERS_KEY : [{ITER_MAX: 1000, EPS: 0.0001}],
         DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
     },
     INCEPTION_V3_NAME:
@@ -46,5 +46,6 @@ attack_params = {
 }
 
 if __name__ == "__main__":
+    fgsm_untargeted_wrapper.__name__ += "_untargeted"
     attack_with_params_dict(attack_params, fgsm_targeted_wrapper, show_plot=True, targeted=True)
     attack_with_params_dict(attack_params, fgsm_untargeted_wrapper, show_plot=True, targeted=False)

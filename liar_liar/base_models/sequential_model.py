@@ -65,8 +65,8 @@ def get_all_models():
     from liar_liar.image_net_models.image_net_model_base import get_imagenet_models
     from liar_liar.cifar_10_models.cifar_10_model_base import get_cifar10_models
     models = []
-    models.extend(get_imagenet_models())
     models.extend(get_mnist_models())
     models.extend(get_cifar10_models())
     models.extend(get_cifar100_models())
+    models.extend(get_imagenet_models())
     return models

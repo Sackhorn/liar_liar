@@ -9,7 +9,7 @@ ITER_MAX = "iter_max"
 EPS = "eps"
 
 attack_params = {
-    CIFAR_10_CONV_NAME : 
+    CIFAR_10_CONV_NAME :
     {
         PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.1}, {ITER_MAX: 10, EPS: 0.1}, ],
         DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
@@ -48,7 +48,7 @@ attack_params = {
 
 class FGSMSanityCheck(TestCase):
     def test_sanitycheck(self):
-        fgsm_targeted_wrapper.__name__ = fgsm_targeted_wrapper.__name__ + "_sanity_check"
-        fgsm_untargeted_wrapper.__name__ = fgsm_untargeted_wrapper.__name__ + "_sanity_check"
-        attack_with_params_dict(attack_params, fgsm_targeted_wrapper, show_plot=False, targeted=True)
-        attack_with_params_dict(attack_params, fgsm_untargeted_wrapper, show_plot=False, targeted=False)
+        fgsm_targeted_wrapper.__name__ += "_sanity_check"
+        fgsm_untargeted_wrapper.__name__ += "_sanity_check"
+        attack_with_params_dict(attack_params, fgsm_targeted_wrapper, show_plot=True, targeted=True)
+        attack_with_params_dict(attack_params, fgsm_untargeted_wrapper, show_plot=True, targeted=False)

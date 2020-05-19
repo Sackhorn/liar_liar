@@ -1,9 +1,9 @@
 \documentclass{article}
 \usepackage[polish]{babel}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
+%\usepackage[utf8]{inputenc}
+%\usepackage[T1]{fontenc}
 \usepackage[a4paper, total={6in, 10in}]{geometry}
-\usepackage[T1]{fontenc}
+%\usepackage[T1]{fontenc}
 \usepackage{cite}
 \usepackage{graphicx}
 \usepackage{caption}
@@ -13,15 +13,10 @@
 \usepackage{algorithm}% http://ctan.org/pkg/algorithms
 \usepackage{algcompatible}% http://ctan.org/pkg/algorithmicx
 \usepackage{algpseudocode}
+\usepackage{luacode}
 \usepackage[colorinlistoftodos]{todonotes}
-
-
-
 \graphicspath{ {images/} }
-
 \immediate\write18{bibtex \jobname}
-
-%\newcommand\todo[1]{\textcolor{red}{#1}}
 
 
 \title{
@@ -35,6 +30,19 @@ modeli klasyfikacyjnych na ataki z użyciem złośliwych danych
 \author{Jan Ambroziak \\ Opiekun Pracy: dr.inż Paweł Zawistowski}
 
 \begin{document}
+
+\begin{luacode}
+require("lualibs.lua")
+function read(file)
+    local handler = io.open(file, "rb")
+    local content = handler:read("*all")
+    handler:close()
+    return content
+end
+fgsm_results = utilities.json.tolua(read("../json_results/sample.json"))
+tex.print(fgsm_results[1]['L2_median'])
+\end{luacode}
+
 \maketitle
 
 \
