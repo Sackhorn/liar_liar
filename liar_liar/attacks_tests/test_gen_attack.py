@@ -49,5 +49,4 @@ attack_params = {
 }
 
 if __name__ == "__main__":
-    gen_attack_wrapper.__name__ = gen_attack_wrapper.__name__ + "_sanity_check"
     attack_with_params_dict(attack_params, gen_attack_wrapper, show_plot=False, targeted=True)

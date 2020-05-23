@@ -1,9 +1,8 @@
 \documentclass{article}
 \usepackage[polish]{babel}
-%\usepackage[utf8]{inputenc}
-%\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
 \usepackage[a4paper, total={6in, 10in}]{geometry}
-%\usepackage[T1]{fontenc}
 \usepackage{cite}
 \usepackage{graphicx}
 \usepackage{caption}
@@ -13,16 +12,17 @@
 \usepackage{algorithm}% http://ctan.org/pkg/algorithms
 \usepackage{algcompatible}% http://ctan.org/pkg/algorithmicx
 \usepackage{algpseudocode}
-\usepackage{luacode}
+\usepackage{pythontex}
 \usepackage[colorinlistoftodos]{todonotes}
+\usepackage{adjustbox}
 \graphicspath{ {images/} }
-\immediate\write18{bibtex \jobname}
+%\immediate\write18{bibtex \jobname}
 
 
 \title{
-Praca Inżynierska
-\begin{large}
-\\Temat: Aplikacja do testowania odporności
+    Praca Inżynierska
+    \begin{large}
+    \\Temat: Aplikacja do testowania odporności
 modeli klasyfikacyjnych na ataki z użyciem złośliwych danych
 \end{large}}
 
@@ -31,23 +31,19 @@ modeli klasyfikacyjnych na ataki z użyciem złośliwych danych
 
 \begin{document}
 
-\begin{luacode}
-require("lualibs.lua")
-function read(file)
-    local handler = io.open(file, "rb")
-    local content = handler:read("*all")
-    handler:close()
-    return content
-end
-fgsm_results = utilities.json.tolua(read("../json_results/sample.json"))
-tex.print(fgsm_results[1]['L2_median'])
-\end{luacode}
 
-\maketitle
+
+    \maketitle
 
 \
 
 \section{Wstep}
+
+
+
+
+
+
 Wraz z rozwojem i upowszechnianiem się modeli klasyfikujących obrazy graficzne,
 pojawiają się nowe zagrożenia związane z bezpieczeństwem tej klasy rozwiązań.
 Jednym z nich są złośliwe dane, które powodować mogą,
@@ -57,6 +53,7 @@ np. w przypadku gdy taki atak dotyczy systemu automatycznie sterującego pojazde
 
 \section{Cel}
 \label{sec:target}
+
 Celem pracy inżynierskiej jest stworzenie aplikacji która ma wspierać testowanie
 odporności modeli klasyfikacyjnych na ataki z użyciem złośliwych danych
 Dla dostarczonego w narzuconej postaci modelu klasyfikatora możliwe będzie
@@ -162,14 +159,14 @@ zastosowanych do oceny ataków. Szersza dyskusja dotycząca użyteczności oraz 
     wejściowych oznaczonego jako
 
     \begin{equation}
-    \(\nabla_{x} J(x, y)\).
-    \qquad\text{gdzie}
-    \begin{tabular}[t]{ll}
-    $x$   & -- dane wejściowe \\
-    $y_{prawdziwe}$   & -- klasa do której należą dane wejściowe\\
-    $J(x, y_{prawdziwe})$  & -- funkcja kosztu \\
-    $\nabla_{x}$  & -- gradient względem danych wejściowych \\
-    \end{tabular}
+        \nabla_{x} J(x, y).
+        \qquad\text{gdzie}
+        \begin{tabular}[t]{ll}
+        $x$   & -- dane wejściowe \\
+        $y_{prawdziwe}$   & -- klasa do której należą dane wejściowe\\
+        $J(x, y_{prawdziwe})$  & -- funkcja kosztu \\
+        $\nabla_{x}$  & -- gradient względem danych wejściowych \\
+        \end{tabular}
     \end{equation}
 
     Idea metody polega na dodaniu bądź odjęciu małej, arbitralnie ustalonej, wartości (oznaczanej przez \(\epsilon\)) do
@@ -199,7 +196,7 @@ zastosowanych do oceny ataków. Szersza dyskusja dotycząca użyteczności oraz 
     I-FGSM czyli Iteracyjna Metoda Szybkiego Znaku Gradientu (z ang. Iterative Fast Gradient Sign Method) to metoda
     które rozwiązuje problem konieczności doboru wysokiej wartości $\epsilon$ poprzez zastosowanie metody FGSM kilkakrotnie
     ,jednocześnie zapewniając pod koniec każdego kroku że przyogotowany każdy piksel obrazu nie różni się od oryginału o więcej
-    niż \epsilon, z niższą wartością parametru $\epsilon$ niż wymagane oryginalnie w metodzie jednokrokowej.
+    niż $\epsilon$, z niższą wartością parametru $\epsilon$ niż wymagane oryginalnie w metodzie jednokrokowej.
     Pozwala to  potencjalnie ogarniczyć różnicę między preparowanymi przez nas danymi a oryginalnymi danymi wejściowymi
     oraz przerwanie działania metody kiedy model przestania poprawnie klasyfikować dane wejściowe.
 
@@ -283,8 +280,8 @@ która powoduje niepoprawną klasyfikacje danych przez model:
     \min{\| r\|_{2}}
     \qquad\text{przy warunkach:}
     \begin{tabular}[t]{ll}
-    f(x + r) = y_{celu} \\
-    x+r \in [0,1]^{m} \\
+    f(x + r) = $y_{celu}$ \\
+    $x+r \in [0,1]^{m}$ \\
     \end{tabular}
     \qquad\text{gdzie:}
     \begin{tabular}[t]{ll}
@@ -298,7 +295,7 @@ zostaje warunek $f(x+r) = y_{celu}$ gdzie $r$ uzyskujemy z zastosowania algorytm
     \min{c| r| + J(x+r, y_{celu})}
     \qquad\text{przy warunkach:}
     \begin{tabular}[t]{ll}
-    x+r \in [0,1]^{m} \\
+    $x+r \in [0,1]^{m}$ \\
     \end{tabular}
     \end{equation}
 
@@ -333,9 +330,9 @@ innych niż narzucona przez nas klasa $y$. Autorzy metody proponują też analog
 zamiast określać wpływ zwiększenia intensywności pikseli na przynależność przykładu do danej klasy określa wpływ zmniejszania
 intensywności piksela na przynależność do danej klasy.
 
-\begin{equation}\label{jsma-}
-S^{-} ( \mathbf { x } , y ) [ i ] = \left\{ \begin{array} { c } { 0 \text { jeśli } \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } > 0 \text { lub } \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } < 0 } \\ { \left|( \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } )\right  \left| \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } \right \text { w.p.p } } \end{array} \right.
-\end{equation}
+%\begin{equation}\label{jsma-}
+%S^{-} ( \mathbf { x } , y ) [ i ] = \left\{ \begin{array} { c } { 0 \text { jeśli } \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } > 0 \text { lub } \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } < 0 } \\ { \left|( \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } )\right  \left| \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } \right \text { w.p.p } } \end{array} \right.
+%\end{equation}
 
 W praktyce jednak większość pikseli nie spełnia warunków określonych w pierwszej linii podanych równań,
 dlatego autorzy zastosowali metodę wyboru par pikseli $p_1$ i $p_2$ zamiast pojedynczego piksela.
@@ -390,7 +387,7 @@ jednej zadanej klasy tylko dla wszystkich.
 \subsubsection{M-JSMA}
 M-JSMA\cite{DBLP:journals/corr/abs-1808-07945} to wariant metody JSMA który łączy w sobie metodę
 
-\subsection{Carlini & Wagner}
+\subsection{Carlini \& Wagner}
 Carlini oraz Wagner\cite{DBLP:journals/corr/CarliniW16a} w odpowiedzi na pojawiające się publikacje dotyczące
 ataków adwersaryjnych zaproponowali swoją metodę której celem jest, podobnie jak w innych metodach,
 tworzenie złośliwych danych
@@ -434,13 +431,27 @@ w przeciwieństwie do wszystkich klas jak w przypadku MAP-Elites.
 \subsection{AdvGAN}
 \subsection{GenAttack}
 \subsection{MAP-Elites}
-\subsection{Carlini & Wagner}
+\subsection{Carlini \& Wagner}
 \subsection{JSMA}
 \subsection{L-BFGS}
 \subsection{DeepFool}
+
+
 \subsection{FGSM}
+    \subsubsection{}
 
+\begin{adjustbox}{max width=\textwidth}
+\begin{pycode}
+from latex_utils import *
+create_heat_map_fgsm_targeted('fgsm_targeted_wrapper.json')
+\end{pycode}
+\end{adjustbox}
 
+\begin{adjustbox}{max width=\textwidth}
+\begin{pycode}
+import_and_print('fgsm_targeted_wrapper.json')
+\end{pycode}
+\end{adjustbox}
 
 %\section{Praca w ciągu semestru}
 %\label{sec:work}

@@ -42,13 +42,13 @@ def gen_attack(classifier,
                                                 mutation_probability,
                                                 delta), images)
     parameters = {
-        "target_class": int(tf.argmax(target_class).numpy()),
+        "target_class": True,
         "generation_nmb": generation_nmb,
         "population_nmb": population_nmb,
         "mutation_probability": mutation_probability,
         "delta": delta,
-        "min": min,
-        "max": max
+        # "min": min,
+        # "max": max
     }
     return (ret_image, classifier(ret_image), parameters)
 

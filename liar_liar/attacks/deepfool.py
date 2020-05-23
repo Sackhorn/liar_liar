@@ -20,8 +20,8 @@ def deepfool(classifier, data_sample, iter_max=10000, min=0.0, max=1.0):
     ret_image = _deepfool(data_sample, classifier, iter_max=iter_max, min=min, max=max)
     parameters = {
         "iter_max":iter_max,
-        "min":min,
-        "max":max
+        # "min":min,
+        # "max":max
     }
     return (ret_image, classifier(ret_image), parameters)
 

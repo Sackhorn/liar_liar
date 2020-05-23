@@ -1,6 +1,8 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.figure import Figure
+from mpl_toolkits.axes_grid1 import ImageGrid
 from tensorflow import Tensor
 
 
@@ -32,6 +34,21 @@ def show_plot(logits, image, labels_names=None, plot_title=None):
     plt.xticks(np.arange(len(probs)), labels_names, rotation=90)
     if plot_title is not None:
         plt.title(plot_title)
+    plt.show()
+
+def show_plot_target_class_grid(images_dict):
+    """
+    Args:
+        images_dict (dict):
+    """
+    figure: Figure = plt.figure(figsize=(20 ,20))
+    grid = ImageGrid(figure, 111, nrows_ncols=(10, 10), axes_pad=0.1)
+    image_arr = []
+    for true_class in  range(10):
+        for target_class in range(10):
+            image_arr.append(tf.squeeze(images_dict[true_class][target_class]))
+    for ax, im in zip(grid, image_arr):
+        ax.imshow(im)
     plt.show()
 
 #Compare original image and adversary version

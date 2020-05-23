@@ -21,11 +21,11 @@ def fgsm(classifier, data_sample, target_class=None, iter_max=1, eps=0.01, min=0
     """
     return_images = _fgsm(data_sample, classifier, target_class, iter_max, eps, min, max)
     parameters = {
-        "target_class" : int(tf.argmax(target_class).numpy()) if target_class is not None else "None",
+        "target_class" : target_class is not None,
         "iter_max" : iter_max,
         "eps" : eps,
-        "min" : min,
-        "max" : max
+        # "min" : min,
+        # "max" : max
     }
     return (return_images, classifier(return_images), parameters)
 

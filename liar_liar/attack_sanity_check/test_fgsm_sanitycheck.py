@@ -3,7 +3,7 @@ from unittest import TestCase
 from liar_liar.attacks.fgsm import fgsm_targeted_wrapper, fgsm_untargeted_wrapper
 from liar_liar.base_models.model_names import *
 from liar_liar.utils.general_names import *
-from liar_liar.utils.test_run_attacks import attack_with_params_dict
+from liar_liar.utils.test_run_attacks import attack_with_params_dict, interclass_run_with_params_dict
 
 ITER_MAX = "iter_max"
 EPS = "eps"
@@ -50,5 +50,6 @@ class FGSMSanityCheck(TestCase):
     def test_sanitycheck(self):
         fgsm_targeted_wrapper.__name__ += "_sanity_check"
         fgsm_untargeted_wrapper.__name__ += "_sanity_check"
+        interclass_run_with_params_dict(attack_params, fgsm_targeted_wrapper)
         attack_with_params_dict(attack_params, fgsm_targeted_wrapper, show_plot=True, targeted=True)
         attack_with_params_dict(attack_params, fgsm_untargeted_wrapper, show_plot=True, targeted=False)

@@ -19,8 +19,8 @@ def bfgs(classifier, data_sample, target_class, iter_max, min=0.0, max=1.0):
     parameteres = {
         "target_class":int(tf.argmax(target_class.numpy())),
         "iter_max":iter_max,
-        "min":min,
-        "max":max
+        # "min":min,
+        # "max":max
     }
     return (arr_image, classifier(arr_image), parameteres)
 

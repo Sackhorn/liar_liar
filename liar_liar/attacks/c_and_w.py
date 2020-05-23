@@ -43,7 +43,8 @@ def carlini_wagner(classifier,
         "binary_iter":binary_iter,
         "C_high":c_high,
         "c_low":c_low,
-        "kappa":kappa}
+        "kappa":kappa
+    }
     return (return_image, classifier(return_image), parameters)
 
 def carlini_wagner_wrapper(optimizer=GradientDescentOptimizer(1e-2),

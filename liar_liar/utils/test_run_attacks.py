@@ -12,13 +12,13 @@ from tensorflow.python.keras.metrics import CategoricalAccuracy
 from tensorflow_datasets import Split
 from liar_liar.base_models.sequential_model import SequentialModel, get_all_models
 from liar_liar.utils.general_names import *
-from liar_liar.utils.images import show_plot, show_plot_comparison
+from liar_liar.utils.images import show_plot, show_plot_comparison, show_plot_target_class_grid
 from liar_liar.utils.utils import batch_image_norm, disable_logging
 
 
 def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=False):
     disable_logging()
-    results_arr = []
+    results_dict = {}
     all_models = get_all_models()
     for model in all_models:
         try:
@@ -29,7 +29,9 @@ def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=F
         parameters = model_dict[PARAMETERS_KEY]
         for parameter_set in parameters:
             nmb_classes = model.get_number_of_classes()
-            target_class = tf.one_hot(randrange(0, nmb_classes), nmb_classes) #TODO: Find a way to choose target class
+            # TODO: Find a way to choose target class this way each parameter set has the same target
+            # TODO: also each batch shouldn't have the same class but i don't know if this is acheivable without imapring performance
+            target_class = tf.one_hot(randrange(0, nmb_classes), nmb_classes)
             target_class = target_class if targeted else None
             results = run_test(model,
                      attack_wrapper(**parameter_set),
@@ -37,9 +39,12 @@ def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=F
                      batch_size=batches[BATCHES_KEY],
                      nmb_elements=batches[NMB_ELEMENTS_KEY],
                      show_plots=show_plot)
-            results_arr.append(results)
-        #We do this after every completed test to store information in case of fufure error
-        create_results_json(attack_wrapper.__name__, results_arr)
+            try:
+                results_dict[results["model_name"]].append(results)
+            except KeyError:
+                results_dict[results["model_name"]] = [results]
+            #We do this after every completed test to store information in case of fufure error
+            create_results_json(attack_wrapper.__name__, results_dict)
 
 def create_results_json(attack_wrapper_name, results_arr):
     json_file_path = path.dirname(path.realpath(__file__))
@@ -53,6 +58,57 @@ def create_results_json(attack_wrapper_name, results_arr):
     with open(json_file_path, 'w', encoding='utf-8') as f:
         json.dump(results_arr, f, ensure_ascii=False, indent=4)
 
+def interclass_run_with_params_dict(attack_params, attack_wrapper):
+    disable_logging()
+    all_models = get_all_models()
+    classifier: SequentialModel
+    for classifier in all_models:
+        try:
+            model_dict = attack_params[classifier.MODEL_NAME]
+        except KeyError:
+            continue
+        parameters = model_dict[PARAMETERS_KEY]
+
+        for parameter_set in parameters:
+            attack = attack_wrapper(**parameter_set)
+            nmb_classes = classifier.get_number_of_classes()
+            nmb_classes = 10 if nmb_classes >= 10 else nmb_classes
+            true_class_dict = {}
+
+            for true_class in range(nmb_classes):
+                true_class_dict[true_class] = {}
+                true_class_one_hot = tf.one_hot(true_class, classifier.get_number_of_classes())
+                def get_baseclass_not_misclassfied(image, label):
+                    image = tf.expand_dims(image, 0)
+                    classification = tf.one_hot(tf.argmax(classifier(image), 1), classifier.get_number_of_classes())
+                    classified_fine = tf.math.reduce_all(tf.math.equal(classification, label))
+                    in_true_class = tf.math.reduce_all(tf.math.equal(true_class_one_hot, label))
+                    ret_val = tf.math.logical_and(classified_fine, in_true_class)
+                    return ret_val
+
+                dataset = classifier.get_dataset(Split.TEST,
+                                                 batch_size=1,
+                                                 shuffle=1,
+                                                 filter=get_baseclass_not_misclassfied)
+
+                range_nmb_target_classes = list(range(nmb_classes))
+                range_nmb_target_classes.remove(true_class)
+                for target_class in range_nmb_target_classes:
+                    target_class_one_hot = tf.one_hot(target_class, classifier.get_number_of_classes())
+                    found_sample = False
+                    for retry in range(10):
+                        for data_sample in dataset.take(1):
+                            true_class_dict[true_class][true_class] = data_sample[0]
+                            ret_image, logits, _ = attack(classifier, data_sample, target_class_one_hot)
+                            if tf.math.reduce_all(tf.math.equal(tf.argmax(logits, 1), tf.argmax(target_class_one_hot))):
+                                found_sample = True
+                                true_class_dict[true_class][target_class] = ret_image
+                        if found_sample:
+                            break
+                        print("run out of retries returning function without results")
+                        return
+
+        show_plot_target_class_grid(true_class_dict)
 
 def run_test(classifier, attack, batch_size, target_class, nmb_elements=None, show_plots=True):
     """
@@ -83,6 +139,7 @@ def run_test(classifier, attack, batch_size, target_class, nmb_elements=None, sh
     accuracy = CategoricalAccuracy()
     l2_distance = np.array([])
     mean_time_per_sample = np.array([])
+    total_time = time.time()
     dataset = classifier.get_dataset(Split.TEST, shuffle=1, batch_size=batch_size, filter=filter_fnc)
     print("MODEL: {} ATTACK: {}".format(classifier.MODEL_NAME, attack.__name__))
     for data_sample in dataset.take(nmb_elements):
@@ -117,14 +174,15 @@ def run_test(classifier, attack, batch_size, target_class, nmb_elements=None, sh
 
         print("TIME_BATCH: {:2f} TIME_PER_SAMPLE {:2f} ATACK_ACC: {:2f} MEDIAN_L2 {:2f} MEAN_L2 {:2f}"
               .format(cur_time_per_batch, cur_time_per_sample, accuracy_result, float(cur_l2_median), float(cur_l2_average)))
-
+    total_time = time.time() - total_time
     results = {
         "accuracy_result": float(accuracy_result),
         "L2_median": float(cur_l2_median),
         "L2_average": float(cur_l2_average),
         "parameters": parameters,
-        "average_time_per_batch": float(np.mean(mean_time_per_sample)),
+        "average_time_per_sample": float(np.mean(mean_time_per_sample)),
         "model_name": classifier.MODEL_NAME,
-        "attack_name": attack.__name__
+        "attack_name": attack.__name__,
+        "total_time": total_time
     }
     return results

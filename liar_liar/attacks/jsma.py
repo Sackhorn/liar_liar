@@ -32,13 +32,14 @@ def jsma(classifier,
         arr_image.append(ret_image)
     arr_image = tf.concat(arr_image, 0)
     parameters = {
-        "target_class":int(tf.argmax(target_class).numpy()) if target_class is not None else "None",
+        "target_class": target_class is not None,
         "max_perturbation":max_perturbation,
         "theta":theta,
         "is_increasing":is_increasing,
         "use_logits":use_logits,
-        "min":min,
-        "max":max}
+        # "min":min,
+        # "max":max
+    }
     return (arr_image, classifier(arr_image), parameters)
 
 def jsma_untargeted_wrapper(max_perturbation=0.1,
