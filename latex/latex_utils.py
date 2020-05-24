@@ -50,7 +50,7 @@ def filter_for_params(dict, acceptable_params_in_table):
                         new_dict[model].append(results_set)
     return new_dict
 
-def import_and_print(file_name):
+def import_and_print(file_name, params_sets_in_table):
     results = None
     with open('../json_results/' + file_name, 'r') as file:
         results = json.load(file)
@@ -145,9 +145,10 @@ def create_heat_map_fgsm_targeted(file_name):
     fig.tight_layout()
     plt.savefig("fgsm_heat_map.pdf")
 
-    print(r"\begin{center}")
-    print(r"\includegraphics[width=0.85\textwidth]{fgsm_heat_map.pdf}")
-    print(r"\end{center}")
+    print(r"\begin{left}")
+    print(r"\includegraphics[width=0.5\textwidth]{fgsm_heat_map.pdf}")
+    # print(r"\includegraphics[width=0.85\textwidth]{fgsm_heat_map.pdf}")
+    print(r"\end{left}")
 
 
 

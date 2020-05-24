@@ -15,6 +15,34 @@ for i_max in possible_iters:
     for eps in possible_eps:
         params_list.append({ITER_MAX:i_max, EPS:eps})
 
+# params_list = [
+#     {EPS: 0.1, ITER_MAX: 1},
+#     {EPS: 0.1, ITER_MAX: 10},
+#     {EPS: 0.5, ITER_MAX: 1},
+#     {EPS: 0.5, ITER_MAX: 10},
+#     {EPS: 0.01, ITER_MAX: 1},
+#     {EPS: 0.01, ITER_MAX: 10},
+#     {EPS: 0.01, ITER_MAX: 100},
+#     {EPS: 0.05, ITER_MAX: 10},
+#     {EPS: 0.05, ITER_MAX: 100},
+#     {EPS: 0.001, ITER_MAX: 1},
+#     {EPS: 0.001, ITER_MAX: 10},
+#     {EPS: 0.001, ITER_MAX: 100},
+#     {EPS: 0.001, ITER_MAX: 1000},
+#     {EPS: 0.005, ITER_MAX: 1},
+#     {EPS: 0.005, ITER_MAX: 10},
+#     {EPS: 0.005, ITER_MAX: 100},
+#     {EPS: 0.005, ITER_MAX: 1000},
+#     {EPS: 0.0001, ITER_MAX: 1},
+#     {EPS: 0.0001, ITER_MAX: 10},
+#     {EPS: 0.0001, ITER_MAX: 100},
+#     {EPS: 0.0001, ITER_MAX: 1000},
+#     {EPS: 0.0005, ITER_MAX: 1},
+#     {EPS: 0.0005, ITER_MAX: 10},
+#     {EPS: 0.0005, ITER_MAX: 100},
+#     {EPS: 0.0005, ITER_MAX: 1000},
+# ]
+
 attack_params = {
     CIFAR_10_CONV_NAME :
     {

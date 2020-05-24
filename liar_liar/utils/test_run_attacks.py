@@ -18,7 +18,7 @@ from liar_liar.utils.utils import batch_image_norm, disable_logging
 
 def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=False):
     disable_logging()
-    results_dict = {}
+    results_dict = try_get_results_dict(attack_wrapper.__name__)
     all_models = get_all_models()
     for model in all_models:
         try:
@@ -27,24 +27,53 @@ def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=F
             continue
         batches = model_dict[DATASET_KEY]
         parameters = model_dict[PARAMETERS_KEY]
-        for parameter_set in parameters:
+        for parameter_dict in parameters:
+            if result_exist(results_dict, parameter_dict, model.MODEL_NAME):
+
+                continue
             nmb_classes = model.get_number_of_classes()
             # TODO: Find a way to choose target class this way each parameter set has the same target
             # TODO: also each batch shouldn't have the same class but i don't know if this is acheivable without imapring performance
             target_class = tf.one_hot(randrange(0, nmb_classes), nmb_classes)
             target_class = target_class if targeted else None
             results = run_test(model,
-                     attack_wrapper(**parameter_set),
+                     attack_wrapper(**parameter_dict),
                      target_class=target_class,
                      batch_size=batches[BATCHES_KEY],
                      nmb_elements=batches[NMB_ELEMENTS_KEY],
                      show_plots=show_plot)
             try:
-                results_dict[results["model_name"]].append(results)
+                results_dict[results[MODEL_NAME_KEY]].append(results)
             except KeyError:
-                results_dict[results["model_name"]] = [results]
+                results_dict[results[MODEL_NAME_KEY]] = [results]
             #We do this after every completed test to store information in case of fufure error
             create_results_json(attack_wrapper.__name__, results_dict)
+
+def result_exist(result_dict, parameter_dict, model_name):
+    exists = True
+    try:
+        results_for_model = result_dict[model_name]
+    except KeyError:
+        return False
+
+    for per_params_results in results_for_model:
+        per_params_results = per_params_results[PARAMETERS_KEY]
+        for parameter, val in parameter_dict.items():
+            exists &= per_params_results[parameter] == val
+        if exists:
+            print("Found results for Model: {} with parameters {} skipping".format(model_name, json.dumps(parameter_dict)))
+            return True
+        exists = True
+    return False
+
+def try_get_results_dict(attack_wrapper_name):
+    json_file_path = path.dirname(path.realpath(__file__))
+    json_file_path = path.join(json_file_path, path.pardir, path.pardir, "json_results", attack_wrapper_name + ".json")
+    try:
+        with open(json_file_path, 'r', encoding='utf-8') as file:
+            return json.load(file)
+    except IOError:
+        return {}
 
 def create_results_json(attack_wrapper_name, results_arr):
     json_file_path = path.dirname(path.realpath(__file__))
@@ -176,13 +205,13 @@ def run_test(classifier, attack, batch_size, target_class, nmb_elements=None, sh
               .format(cur_time_per_batch, cur_time_per_sample, accuracy_result, float(cur_l2_median), float(cur_l2_average)))
     total_time = time.time() - total_time
     results = {
-        "accuracy_result": float(accuracy_result),
-        "L2_median": float(cur_l2_median),
-        "L2_average": float(cur_l2_average),
-        "parameters": parameters,
-        "average_time_per_sample": float(np.mean(mean_time_per_sample)),
-        "model_name": classifier.MODEL_NAME,
-        "attack_name": attack.__name__,
-        "total_time": total_time
+        ACCURACY_KEY: float(accuracy_result),
+        L2_MEDIAN_KEY : float(cur_l2_median),
+        L2_AVERAGE_KEY: float(cur_l2_average),
+        PARAMETERS_KEY: parameters,
+        AVG_TIME_SAMPLE_KEY: float(np.mean(mean_time_per_sample)),
+        MODEL_NAME_KEY: classifier.MODEL_NAME,
+        ATTACK_NAME_KEY: attack.__name__,
+        TOTAL_TIME_KEY: total_time
     }
     return results

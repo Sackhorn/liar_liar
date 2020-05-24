@@ -11,39 +11,39 @@ EPS = "eps"
 attack_params = {
     CIFAR_10_CONV_NAME :
     {
-        PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.1}, {ITER_MAX: 10, EPS: 0.1}, ],
+        PARAMETERS_KEY : [{ITER_MAX: 1000, EPS: 0.0001}, {ITER_MAX: 10, EPS: 0.1}, ],
         DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
     },
-    CIFAR_100_CONV_NAME:
-    {
-        PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}, {ITER_MAX: 10, EPS: 0.1}],
-        DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
-    },
-    MNIST_CONV_NAME:
-    {
-        PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}, {ITER_MAX: 10, EPS: 0.1}],
-        DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
-    },
-    MNIST_DENSE_NAME:
-    {
-        PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}, {ITER_MAX: 10, EPS: 0.1}],
-        DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
-    },
-    LE_NET_NAME:
-    {
-        PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}, {ITER_MAX: 10, EPS: 0.1}],
-        DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
-    },
-    INCEPTION_V3_NAME:
-    {
-        PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}, {ITER_MAX: 10, EPS: 0.1}],
-        DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
-    },
-    RESNET_NAME:
-    {
-        PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}, {ITER_MAX: 10, EPS: 0.1}],
-        DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
-    },
+    # CIFAR_100_CONV_NAME:
+    # {
+    #     PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}, {ITER_MAX: 10, EPS: 0.1}],
+    #     DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
+    # },
+    # MNIST_CONV_NAME:
+    # {
+    #     PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}, {ITER_MAX: 10, EPS: 0.1}],
+    #     DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
+    # },
+    # MNIST_DENSE_NAME:
+    # {
+    #     PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}, {ITER_MAX: 10, EPS: 0.1}],
+    #     DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
+    # },
+    # LE_NET_NAME:
+    # {
+    #     PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}, {ITER_MAX: 10, EPS: 0.1}],
+    #     DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
+    # },
+    # INCEPTION_V3_NAME:
+    # {
+    #     PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}, {ITER_MAX: 10, EPS: 0.1}],
+    #     DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
+    # },
+    # RESNET_NAME:
+    # {
+    #     PARAMETERS_KEY : [{ITER_MAX: 10, EPS: 0.01}, {ITER_MAX: 10, EPS: 0.1}],
+    #     DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:1}
+    # },
 }
 
 class FGSMSanityCheck(TestCase):
