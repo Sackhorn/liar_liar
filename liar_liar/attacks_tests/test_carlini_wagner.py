@@ -1,16 +1,7 @@
 from liar_liar.attacks.c_and_w import carlini_wagner_wrapper
-from liar_liar.attacks.deepfool import deepfool_wrapper
-from liar_liar.attacks.fgsm import fgsm_targeted_wrapper
-from liar_liar.utils.test_run_attacks import run_test, attack_with_params_dict
-from liar_liar.utils.general_names import *
 from liar_liar.base_models.model_names import *
-
-
-OPTIMIZATION_ITER = "optimization_iter"
-BINARY_ITER = "binary_iter"
-C_HIGH = "c_high"
-C_LOW = "c_low"
-KAPPA = "kappa"
+from liar_liar.utils.general_names import *
+from liar_liar.utils.test_run_attacks import attack_with_params_dict
 
 attack_params = {
     CIFAR_10_CONV_NAME :

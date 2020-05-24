@@ -1,12 +1,9 @@
 from unittest import TestCase
 
 from liar_liar.attacks.deepfool import deepfool_wrapper
-from liar_liar.utils.test_run_attacks import attack_with_params_dict
-from liar_liar.utils.general_names import *
 from liar_liar.base_models.model_names import *
-
-
-ITER_MAX = "iter_max"
+from liar_liar.utils.general_names import *
+from liar_liar.utils.test_run_attacks import attack_with_params_dict
 
 attack_params = {
     CIFAR_10_CONV_NAME :

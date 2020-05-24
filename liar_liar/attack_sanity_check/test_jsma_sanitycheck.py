@@ -5,11 +5,6 @@ from liar_liar.base_models.model_names import *
 from liar_liar.utils.general_names import *
 from liar_liar.utils.test_run_attacks import attack_with_params_dict
 
-MAX_PERTURBATION = "max_perturbation" #=0.1,
-THETA = "theta" #=1,
-IS_INCREASING = "is_increasing" #=True,
-USE_LOGITS = "use_logits" #=False
-
 attack_params = {
     CIFAR_10_CONV_NAME :
     {

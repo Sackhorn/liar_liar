@@ -29,7 +29,6 @@ def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=F
         parameters = model_dict[PARAMETERS_KEY]
         for parameter_dict in parameters:
             if result_exist(results_dict, parameter_dict, model.MODEL_NAME):
-
                 continue
             nmb_classes = model.get_number_of_classes()
             # TODO: Find a way to choose target class this way each parameter set has the same target

@@ -1,47 +1,43 @@
 from liar_liar.attacks.fgsm import fgsm_targeted_wrapper, fgsm_untargeted_wrapper
-from liar_liar.utils.test_run_attacks import run_test, attack_with_params_dict
-from liar_liar.utils.general_names import *
 from liar_liar.base_models.model_names import *
+from liar_liar.utils.general_names import *
+from liar_liar.utils.test_run_attacks import attack_with_params_dict
 
+# possible_iters = [1000, 100, 10, 1]
+# possible_eps = [0.1, 0.01, 0.001, 0.0001]
+#
+# params_list = []
+# for i_max in possible_iters:
+#     for eps in possible_eps:
+#         params_list.append({ITER_MAX:i_max, EPS:eps})
 
-ITER_MAX = "iter_max"
-EPS = "eps"
-
-possible_iters = [1000, 100, 10, 1]
-possible_eps = [0.1, 0.01, 0.001, 0.0001]
-
-params_list = []
-for i_max in possible_iters:
-    for eps in possible_eps:
-        params_list.append({ITER_MAX:i_max, EPS:eps})
-
-# params_list = [
-#     {EPS: 0.1, ITER_MAX: 1},
-#     {EPS: 0.1, ITER_MAX: 10},
-#     {EPS: 0.5, ITER_MAX: 1},
-#     {EPS: 0.5, ITER_MAX: 10},
-#     {EPS: 0.01, ITER_MAX: 1},
-#     {EPS: 0.01, ITER_MAX: 10},
-#     {EPS: 0.01, ITER_MAX: 100},
-#     {EPS: 0.05, ITER_MAX: 10},
-#     {EPS: 0.05, ITER_MAX: 100},
-#     {EPS: 0.001, ITER_MAX: 1},
-#     {EPS: 0.001, ITER_MAX: 10},
-#     {EPS: 0.001, ITER_MAX: 100},
-#     {EPS: 0.001, ITER_MAX: 1000},
-#     {EPS: 0.005, ITER_MAX: 1},
-#     {EPS: 0.005, ITER_MAX: 10},
-#     {EPS: 0.005, ITER_MAX: 100},
-#     {EPS: 0.005, ITER_MAX: 1000},
-#     {EPS: 0.0001, ITER_MAX: 1},
-#     {EPS: 0.0001, ITER_MAX: 10},
-#     {EPS: 0.0001, ITER_MAX: 100},
-#     {EPS: 0.0001, ITER_MAX: 1000},
-#     {EPS: 0.0005, ITER_MAX: 1},
-#     {EPS: 0.0005, ITER_MAX: 10},
-#     {EPS: 0.0005, ITER_MAX: 100},
-#     {EPS: 0.0005, ITER_MAX: 1000},
-# ]
+params_list = [
+    {EPS: 0.1, ITER_MAX: 1},
+    {EPS: 0.1, ITER_MAX: 10},
+    {EPS: 0.5, ITER_MAX: 1},
+    {EPS: 0.5, ITER_MAX: 10},
+    {EPS: 0.01, ITER_MAX: 1},
+    {EPS: 0.01, ITER_MAX: 10},
+    {EPS: 0.01, ITER_MAX: 100},
+    {EPS: 0.05, ITER_MAX: 10},
+    {EPS: 0.05, ITER_MAX: 100},
+    {EPS: 0.001, ITER_MAX: 1},
+    {EPS: 0.001, ITER_MAX: 10},
+    {EPS: 0.001, ITER_MAX: 100},
+    {EPS: 0.001, ITER_MAX: 1000},
+    {EPS: 0.005, ITER_MAX: 1},
+    {EPS: 0.005, ITER_MAX: 10},
+    {EPS: 0.005, ITER_MAX: 100},
+    {EPS: 0.005, ITER_MAX: 1000},
+    {EPS: 0.0001, ITER_MAX: 1},
+    {EPS: 0.0001, ITER_MAX: 10},
+    {EPS: 0.0001, ITER_MAX: 100},
+    {EPS: 0.0001, ITER_MAX: 1000},
+    {EPS: 0.0005, ITER_MAX: 1},
+    {EPS: 0.0005, ITER_MAX: 10},
+    {EPS: 0.0005, ITER_MAX: 100},
+    {EPS: 0.0005, ITER_MAX: 1000},
+]
 
 attack_params = {
     CIFAR_10_CONV_NAME :

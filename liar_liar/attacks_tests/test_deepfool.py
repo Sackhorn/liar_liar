@@ -1,11 +1,8 @@
 from liar_liar.attacks.deepfool import deepfool_wrapper
-from liar_liar.attacks.fgsm import fgsm_targeted_wrapper
-from liar_liar.utils.test_run_attacks import run_test, attack_with_params_dict
-from liar_liar.utils.general_names import *
 from liar_liar.base_models.model_names import *
+from liar_liar.utils.general_names import *
+from liar_liar.utils.test_run_attacks import attack_with_params_dict
 
-
-ITER_MAX = "iter_max"
 
 attack_params = {
     CIFAR_10_CONV_NAME :

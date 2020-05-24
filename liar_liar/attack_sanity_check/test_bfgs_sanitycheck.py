@@ -3,9 +3,7 @@ from unittest import TestCase
 from liar_liar.attacks.bfgs import bfgs_wrapper
 from liar_liar.base_models.model_names import *
 from liar_liar.utils.general_names import *
-from liar_liar.utils.test_run_attacks import attack_with_params_dict, interclass_run_with_params_dict
-
-ITER_MAX = "iter_max"
+from liar_liar.utils.test_run_attacks import interclass_run_with_params_dict
 
 attack_params = {
     CIFAR_10_CONV_NAME :

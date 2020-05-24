@@ -5,11 +5,6 @@ from liar_liar.base_models.model_names import *
 from liar_liar.utils.general_names import *
 from liar_liar.utils.test_run_attacks import attack_with_params_dict
 
-GENERATION_NUMBER = "generation_nmb"
-POPULATION_NMB = "population_nmb"
-MUTATION_PROBABILITY = "mutation_probability"
-DELTA = "delta"
-
 
 attack_params = {
     CIFAR_10_CONV_NAME :
