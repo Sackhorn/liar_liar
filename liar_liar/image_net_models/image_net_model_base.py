@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 from os import path
 
 from liar_liar.base_models.sequential_model import SequentialModel
@@ -13,7 +14,7 @@ from liar_liar.image_net_models.image_net_dict import IMAGE_NET_DICT
 class ImageNetModel(SequentialModel):
 
     def __init__(self, optimizer, loss, metrics, MODEL_NAME):
-        dataset_dir = 'D:\\' if os.path.exists('D:\\') else "gs://liar-bucket"
+        dataset_dir = sys.argv[1] if sys.argv[1] is not None else 'D:\\'
         super().__init__(optimizer=optimizer,
                          loss=loss,
                          metrics=metrics,

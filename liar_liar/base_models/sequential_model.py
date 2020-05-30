@@ -1,4 +1,5 @@
 import os
+import sys
 from typing import List
 import tensorflow as tf
 from tensorflow.python import keras
@@ -14,7 +15,7 @@ class SequentialModel(Model, DataProvider):
     sequential_layers: List[keras.layers.Layer]
 
     def __init__(self, optimizer, loss, metrics, MODEL_NAME="", dataset_name='', dataset_dir=''):
-        dataset_dir = 'gs://liar-bucket' if os.path.exists('gs://liar-bucket') else ''
+        dataset_dir = sys.argv[1] if sys.argv[1] is not None else ''
         super(SequentialModel, self).__init__()
         self.register_data_provider(MODEL_NAME, dataset_name, dataset_dir)
         self.compile(optimizer=optimizer, loss=loss, metrics=metrics)

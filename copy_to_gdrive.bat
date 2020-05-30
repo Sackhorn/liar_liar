@@ -1,0 +1,1 @@
+rclone sync ./liar_liar gdrive:/liar_liar
