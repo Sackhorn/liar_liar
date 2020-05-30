@@ -24,6 +24,5 @@ class LeNet5(MNISTModel):
 
 
 if __name__ == "__main__":
-    enable_eager_execution()
     model = LeNet5()
     model.train(epochs=15, augment_data=False)

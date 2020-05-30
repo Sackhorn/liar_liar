@@ -29,6 +29,5 @@ class MNISTConvModel(MNISTModel):
             Dense(10, activation='softmax')]
 
 if __name__ == "__main__":
-    enable_eager_execution()
     model = MNISTConvModel()
-    # model.train(epochs=5)
+    model.train(epochs=5)

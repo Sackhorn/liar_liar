@@ -54,7 +54,7 @@ class DataProvider():
                 x = tf.cond(tf.random.uniform([], minval=0.0, maxval=1.0) > 0.75, lambda: f(x), lambda: x)
             tf.clip_by_value(x, 0, 1)
             return x, y
-        if self.data_dir != '':
+        if "gs" in self.data_dir or self.dataset_name=='imagenet2012':
             dataset, info = tfds.load(self.dataset_name, split=tfds.Split.VALIDATION, with_info=True, as_supervised=True, data_dir=self.data_dir)  # type: tf.data.Dataset
         else:
             dataset, info = tfds.load(self.dataset_name, split=split, with_info=True, as_supervised=True)  # type: tf.data.Dataset

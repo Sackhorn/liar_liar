@@ -21,6 +21,5 @@ class MNISTDenseModel(MNISTModel):
 
 
 if __name__ == "__main__":
-    enable_eager_execution()
     model = MNISTDenseModel()
     model.train(epochs=5)

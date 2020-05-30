@@ -39,7 +39,5 @@ class CIFAR10ConvModel(CIFAR10Model):
         ]
 
 if __name__ == "__main__":
-    enable_eager_execution()
     model = CIFAR10ConvModel()
-    # model.train(epochs=150)
-    model.train(epochs=5)
+    model.train(epochs=150)
