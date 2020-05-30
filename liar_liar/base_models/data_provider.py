@@ -58,11 +58,12 @@ class DataProvider():
                 x = tf.cond(tf.random.uniform([], minval=0.0, maxval=1.0) > 0.75, lambda: f(x), lambda: x)
             tf.clip_by_value(x, 0, 1)
             return x, y
+        if self.dataset_name in ['mnist', 'cifar10', 'cifar100']:
+            self.data_dir = None
         dataset, info = tfds.load(self.dataset_name, split=split, with_info=True, as_supervised=True, data_dir=self.data_dir)  # type: tf.data.Dataset
         dataset = dataset.map(cast_labels)
         if filter is not None:
             dataset = dataset.filter(filter)
-        # dataset = dataset.shuffle(shuffle).batch(batch_size, drop_remainder=True).prefetch(tf.data.experimental.AUTOTUNE)
         dataset = dataset.shuffle(shuffle).batch(batch_size, drop_remainder=False).prefetch(tf.data.experimental.AUTOTUNE)
         if split == tfds.Split.TRAIN and augment_data:
             dataset = dataset.map(augment_data, num_parallel_calls=tf.data.experimental.AUTOTUNE)
