@@ -7,10 +7,12 @@ import tensorflow_datasets as tfds
 from datetime import datetime
 from os.path import *
 
+from liar_liar.utils.utils import get_gcs_path
 
 
 class DataProvider():
-    ROOT_DIR = sys.argv[1] if sys.argv[1] is not None else join(dirname(__file__), os.pardir, os.pardir)
+
+    ROOT_DIR = get_gcs_path() if get_gcs_path() is not None else join(dirname(__file__), os.pardir, os.pardir)
     MODEL_DIR_NAME = "saved_models"
     TENSORBOARD_NAME = "tboardlog"
 
@@ -56,12 +58,7 @@ class DataProvider():
                 x = tf.cond(tf.random.uniform([], minval=0.0, maxval=1.0) > 0.75, lambda: f(x), lambda: x)
             tf.clip_by_value(x, 0, 1)
             return x, y
-        if self.dataset_name == 'imagenet2012':
-            split = tfds.Split.VALIDATION
-        if "gs" in self.data_dir or self.dataset_name=='imagenet2012':
-            dataset, info = tfds.load(self.dataset_name, split=split, with_info=True, as_supervised=True, data_dir=self.data_dir)  # type: tf.data.Dataset
-        else:
-            dataset, info = tfds.load(self.dataset_name, split=split, with_info=True, as_supervised=True)  # type: tf.data.Dataset
+        dataset, info = tfds.load(self.dataset_name, split=split, with_info=True, as_supervised=True, data_dir=self.data_dir)  # type: tf.data.Dataset
         dataset = dataset.map(cast_labels)
         if filter is not None:
             dataset = dataset.filter(filter)

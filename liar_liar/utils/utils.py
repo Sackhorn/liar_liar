@@ -2,6 +2,7 @@ import io
 import json
 import logging
 import os
+import sys
 
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -38,23 +39,11 @@ def disable_tensorflow_logging():
     from tensorflow.python.util import deprecation
     deprecation._PRINT_DEPRECATION_WARNINGS = False
 
-
-# def result_exist(result_dict, parameter_dict, model_name):
-#     exists = True
-#     try:
-#         results_for_model = result_dict[model_name]
-#     except KeyError:
-#         return False
-#
-#     for per_params_results in results_for_model:
-#         per_params_results = per_params_results[PARAMETERS_KEY]
-#         for parameter, val in parameter_dict.items():
-#             exists &= per_params_results[parameter] == val
-#         if exists:
-#             print("Found results for Model: {} with parameters {} skipping".format(model_name, json.dumps(parameter_dict)))
-#             return True
-#         exists = True
-#     return False
+def get_gcs_path():
+    try:
+        return sys.argv[1] if "gs" in sys.argv[1] or os.path.exists(sys.argv[1]) else None
+    except IndexError:
+        return None
 
 def get_results_for_model_and_parameter(result_dict, parameter_dict, model_name):
     try:

@@ -7,15 +7,15 @@ from tensorflow.python.keras import Model
 from tensorflow.python.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow_datasets import Split
 from liar_liar.base_models.data_provider import DataProvider
-
+from liar_liar.utils.utils import get_gcs_path
 
 
 class SequentialModel(Model, DataProvider):
 
     sequential_layers: List[keras.layers.Layer]
 
-    def __init__(self, optimizer, loss, metrics, MODEL_NAME="", dataset_name='', dataset_dir=''):
-        dataset_dir = sys.argv[1] if sys.argv[1] is not None else ''
+    def __init__(self, optimizer, loss, metrics, MODEL_NAME="", dataset_name='', dataset_dir=None):
+        dataset_dir = get_gcs_path() if get_gcs_path() is not None else dataset_dir
         super(SequentialModel, self).__init__()
         self.register_data_provider(MODEL_NAME, dataset_name, dataset_dir)
         self.compile(optimizer=optimizer, loss=loss, metrics=metrics)

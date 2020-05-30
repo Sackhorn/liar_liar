@@ -3,7 +3,7 @@ from unittest import TestCase
 from liar_liar.attacks.bfgs import bfgs_wrapper
 from liar_liar.base_models.model_names import *
 from liar_liar.utils.general_names import *
-from liar_liar.utils.test_run_attacks import interclass_run_with_params_dict
+from liar_liar.utils.test_run_attacks import attack_with_params_dict
 
 attack_params = {
     CIFAR_10_CONV_NAME :
@@ -46,5 +46,4 @@ attack_params = {
 class BFGSSanityCheck(TestCase):
     def test_sanitycheck(self):
         bfgs_wrapper.__name__ += "_sanity_check"
-        interclass_run_with_params_dict(attack_params, bfgs_wrapper)
-        # attack_with_params_dict(attack_params, bfgs_wrapper, show_plot=True, targeted=True)
+        attack_with_params_dict(attack_params, bfgs_wrapper, show_plot=True, targeted=True)
