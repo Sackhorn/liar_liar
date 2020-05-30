@@ -5,7 +5,7 @@
       <compiler-path />
       <compiler-arguments />
       <main-file>$PROJECT_DIR$/latex/pdi.tex</main-file>
-      <aux-dir>$PROJECT_DIR$/latex</aux-dir>
+      <aux-dir />
     </texify-bibtex>
     <method v="2" />
   </configuration>

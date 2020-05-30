@@ -18,12 +18,30 @@ def deepfool(classifier, data_sample, iter_max=10000, min=0.0, max=1.0):
 
     """
     ret_image = _deepfool(data_sample, classifier, iter_max=iter_max, min=min, max=max)
-    parameters = {
-        "iter_max":iter_max,
-        # "min":min,
-        # "max":max
-    }
+    parameters = {"iter_max":iter_max}
     return (ret_image, classifier(ret_image), parameters)
+
+def deepfool_map(classifier, data_sample, iter_max=10000, min=0.0, max=1.0):
+    image, label = data_sample
+    image = tf.expand_dims(image, 1)
+    label = tf.expand_dims(label, 1)
+    data_sample = (image, label)
+    ret_image = tf.map_fn(lambda data_sample: _deepfool(data_sample,classifier,iter_max=iter_max,min=min,max=max),
+                          data_sample,
+                          dtype=tf.float32)
+    ret_image = tf.squeeze(ret_image, axis=1)
+    parameters = {"iter_max": iter_max}
+    return (ret_image, classifier(ret_image), parameters)
+
+def deepfool_wrapper_map(iter_max=10000, min=0.0, max=1.0):
+    """
+        This wraps deepfool call in a handy way that allows us using this as unspecified untargeted attack method
+        Returns: Wrapped deepfool for untargeted attack format
+    """
+    def wrapper_deepfool(classifier, data_sample):
+        return deepfool_map(classifier, data_sample, iter_max=iter_max, min=min, max=max)
+    return wrapper_deepfool
+
 
 def deepfool_wrapper(iter_max=10000, min=0.0, max=1.0):
     """
@@ -34,6 +52,7 @@ def deepfool_wrapper(iter_max=10000, min=0.0, max=1.0):
         return deepfool(classifier, data_sample, iter_max=iter_max, min=min, max=max)
     return wrapper_deepfool
 
+#TODO: Rewrite this to run one calculation at the time - otherwise it's messing with results
 @tf.function
 def _deepfool(data_sample, classifier, iter_max=10000, min=0.0, max=1.0):
     """
@@ -43,6 +62,9 @@ def _deepfool(data_sample, classifier, iter_max=10000, min=0.0, max=1.0):
 
     nmb_classes = classifier.get_number_of_classes()
     image, label = data_sample
+    # if tf.rank(image) < 4:
+    #     image = tf.expand_dims(image, 0)
+    #     label = tf.expand_dims(label, 0)
     batch_size = image.shape[0]
     width = image[0].shape[0]
     height = image[0].shape[1]
@@ -50,6 +72,7 @@ def _deepfool(data_sample, classifier, iter_max=10000, min=0.0, max=1.0):
     iter = 0
     output = classifier(image)
     output = tf.one_hot(tf.argmax(output, axis=1), nmb_classes)
+    #We run the batch until all elements are classified improperly by the classifier
     is_properly_classified = tf.math.reduce_all(tf.math.equal(output, label), axis=1)
 
 

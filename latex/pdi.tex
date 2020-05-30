@@ -425,9 +425,16 @@ w przeciwieństwie do wszystkich klas jak w przypadku MAP-Elites.
 \todo{Tutaj dodać opis algo}
 
 \subsection{AdvGAN}
-
+\begin{adjustbox}{max width=\textwidth}
+\begin{pycode}
+from latex_utils import *
+import_and_print('../json_results/fgsm_targeted_wrapper.json', 3)
+\end{pycode}
+\end{adjustbox}
 
 \section{Wyniki Ataków}\label{comparison}
+    Aby móc skutecznie ocenić ataki należałoby określić metryki na których podstawie będziemy w stanie dokonać porównania.
+    Oprócz oczywistych kwestii takich jak to że
 \subsection{AdvGAN}
 \subsection{GenAttack}
 \subsection{MAP-Elites}
@@ -438,20 +445,19 @@ w przeciwieństwie do wszystkich klas jak w przypadku MAP-Elites.
 
 
 \subsection{FGSM}
-    \subsubsection{}
+    Jedynym parametrem w klasycznym wariancie metody FGSM jest \(\epsilon\) który określa rozmiar zmiany wprowadzanej dla
+    każdego atrybutu. W przypadku obarazów zmiana wartości natężenia każdego kanału dla każdego piksela. Poniżej znajduje
+    się tabela w której
+
 
 %\begin{adjustbox}{max width=\textwidth}
-\begin{pycode}
-from latex_utils import *
-create_heat_map_fgsm_targeted('fgsm_targeted_wrapper.json')
-\end{pycode}
+%\begin{pycode}
+%from latex_utils import *
+%create_heat_map_fgsm_targeted('fgsm_targeted_wrapper.json')
+%\end{pycode}
 %\end{adjustbox}
 
-\begin{adjustbox}{max width=\pagewidth}
-\begin{pycode}
-import_and_print('fgsm_targeted_wrapper.json')
-\end{pycode}
-\end{adjustbox}
+
 
 %\section{Praca w ciągu semestru}
 %\label{sec:work}

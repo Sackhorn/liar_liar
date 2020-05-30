@@ -2,22 +2,22 @@ import errno
 import json
 import os
 import time
-from random import randrange
 from os import path
+from random import randrange
 
 import numpy as np
 import tensorflow as tf
-
 from tensorflow.python.keras.metrics import CategoricalAccuracy
 from tensorflow_datasets import Split
+
 from liar_liar.base_models.sequential_model import SequentialModel, get_all_models
 from liar_liar.utils.general_names import *
-from liar_liar.utils.images import show_plot, show_plot_comparison, show_plot_target_class_grid
-from liar_liar.utils.utils import batch_image_norm, disable_logging
+from liar_liar.utils.images import show_plot_comparison, show_plot_target_class_grid
+from liar_liar.utils.utils import batch_image_norm, disable_tensorflow_logging, get_results_for_model_and_parameter
 
 
 def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=False):
-    disable_logging()
+    disable_tensorflow_logging()
     results_dict = try_get_results_dict(attack_wrapper.__name__)
     all_models = get_all_models()
     for model in all_models:
@@ -28,7 +28,8 @@ def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=F
         batches = model_dict[DATASET_KEY]
         parameters = model_dict[PARAMETERS_KEY]
         for parameter_dict in parameters:
-            if result_exist(results_dict, parameter_dict, model.MODEL_NAME):
+            if get_results_for_model_and_parameter(results_dict, parameter_dict, model.MODEL_NAME) is not None:
+                print(("Found results for Model: {} with parameters {} skipping".format(model.MODEL_NAME, json.dumps(parameter_dict))))
                 continue
             nmb_classes = model.get_number_of_classes()
             # TODO: Find a way to choose target class this way each parameter set has the same target
@@ -47,23 +48,6 @@ def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=F
                 results_dict[results[MODEL_NAME_KEY]] = [results]
             #We do this after every completed test to store information in case of fufure error
             create_results_json(attack_wrapper.__name__, results_dict)
-
-def result_exist(result_dict, parameter_dict, model_name):
-    exists = True
-    try:
-        results_for_model = result_dict[model_name]
-    except KeyError:
-        return False
-
-    for per_params_results in results_for_model:
-        per_params_results = per_params_results[PARAMETERS_KEY]
-        for parameter, val in parameter_dict.items():
-            exists &= per_params_results[parameter] == val
-        if exists:
-            print("Found results for Model: {} with parameters {} skipping".format(model_name, json.dumps(parameter_dict)))
-            return True
-        exists = True
-    return False
 
 def try_get_results_dict(attack_wrapper_name):
     json_file_path = path.dirname(path.realpath(__file__))
@@ -87,7 +71,7 @@ def create_results_json(attack_wrapper_name, results_arr):
         json.dump(results_arr, f, ensure_ascii=False, indent=4)
 
 def interclass_run_with_params_dict(attack_params, attack_wrapper):
-    disable_logging()
+    disable_tensorflow_logging()
     all_models = get_all_models()
     classifier: SequentialModel
     for classifier in all_models:

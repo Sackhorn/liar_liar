@@ -4,7 +4,10 @@
     <option name="INTERPRETER_OPTIONS" value="" />
     <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/latex" />
     <option name="PARENT_ENVS" value="true" />
-    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/latex/render_latex.bat" />
+    <envs>
+      <env name="PYTHONPATH" value="C:\Users\kgb\Documents\python_projects\liar_liar\liar_liar\utils\;C:\Users\kgb\Documents\python_projects\liar_liar\" />
+    </envs>
+    <option name="SCRIPT_NAME" value="$PROJECT_DIR$/render_latex.bat" />
     <option name="PARAMETERS" value="" />
     <method v="2" />
   </configuration>
