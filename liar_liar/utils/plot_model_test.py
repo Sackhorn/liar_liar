@@ -1,11 +1,12 @@
-import tensorflow
+import tensorflow as tf
 from tensorflow.python import keras
 
-from liar_liar.mnist_models.mnist_conv_model import MNISTConvModel
-from liar_liar.mnist_models.mnist_dense_model import MNISTDenseModel
 import os
-os.environ["PATH"] += os.pathsep + 'C:/Program Files (x86)/Graphviz2.38/bin/'
 
+from liar_liar.cifar_10_models.cifar_10_conv_model import CIFAR10ConvModel
+
+# os.environ["PATH"] += os.pathsep + 'C:\\Program Files\\Graphviz 2.43.20200408.0903'
+from liar_liar.mnist_models.mnist_dense_model import MNISTDenseModel
 
 model = MNISTDenseModel()
 # TODO: implement model.get_shape() method
@@ -19,5 +20,5 @@ for layer in model.sequential_layers[1:]:
 new_model = keras.Model(inputs=input, outputs=output)
 new_model.summary()
 
-keras.utils.plot_model(new_model, to_file='model.png', show_shapes=True, rankdir='TB')
+tf.keras.utils.plot_model(new_model, to_file='model.jpg', show_shapes=True, rankdir='TB')
 

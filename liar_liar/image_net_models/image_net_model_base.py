@@ -26,7 +26,7 @@ class ImageNetModel(SequentialModel):
     def get_input_shape(self):
         return (299,299,3)
 
-    def get_dataset(self, split, batch_size=32, shuffle=10000, augment_data=True, **kwargs) -> tf.data.Dataset:
+    def get_dataset(self, split, batch_size=32, shuffle=10000, filter=None, **kwargs) -> tf.data.Dataset:
         def cast_labels(x, y):
             x = tf.cast(x, tf.float32)/255.0
             y = tf.one_hot(y, self.get_number_of_classes())
@@ -34,7 +34,10 @@ class ImageNetModel(SequentialModel):
             x = tf.reshape(x, (299, 299, 3))
             return x, y
         dataset, info = tfds.load(self.dataset_name, split=tfds.Split.VALIDATION, with_info=True, as_supervised=True, data_dir=self.data_dir)  # type: tf.data.Dataset
-        dataset = dataset.map(cast_labels).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
+        dataset = dataset.map(cast_labels)
+        dataset = dataset.filter(filter) if filter is not None else dataset
+        dataset = dataset.shuffle(shuffle).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
+
         self.info = info
         self.test_steps = info.splits[tfds.Split.VALIDATION].num_examples // batch_size
         return dataset

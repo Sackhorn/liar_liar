@@ -1,11 +1,14 @@
 import json
+import os
 from math import ceil
 
 import numpy as np
 import matplotlib.pyplot as plt
 
+from liar_liar.attacks.fgsm import fgsm_targeted_wrapper
 from liar_liar.attacks_tests.test_fgsm import params_list as fgsm_params
 from liar_liar.attacks_tests.test_deepfool import params_list as deepfool_params
+from liar_liar.attacks_tests.test_gen_attack import gen_attack_params
 from liar_liar.base_models.model_names import *
 from liar_liar.utils.general_names import *
 from liar_liar.utils.utils import get_results_for_model_and_parameter
@@ -25,9 +28,9 @@ PARAMETERS_NAME_MAP = {
     C_HIGH : "c_high",
     C_LOW : "c_low",
     KAPPA : "kappa",
-    GENERATION_NUMBER : "generation_nmb",
-    POPULATION_NMB : "population_nmb",
-    MUTATION_PROBABILITY : "mutation_probability",
+    GENERATION_NUMBER : "grtn nmbr",
+    POPULATION_NMB : "pop nmbr",
+    MUTATION_PROBABILITY : "mutn prob",
     DELTA : "delta",
     MAX_PERTURBATION : "max_perturbation",
     THETA : "theta",
@@ -50,31 +53,17 @@ def ltx_frmt(float):
 def ltx_prcnt(float):
     return r"{:04.5f}".format(float * 100) + r"\%"
 
-PARAMS_SETS_IN_TABLE = fgsm_params
 PRINTABLE_METRICS = ["accuracy_result", "L2_median", "L2_average", "average_time_per_sample"]
 
-def filter_for_params(dict, acceptable_params_in_table):
-    new_dict = {}
-    for acceptable_params in  acceptable_params_in_table:
-        for model, results_list in dict.items():
-            for results_set in results_list:
-                if results_set["parameters"]["iter_max"] == acceptable_params["iter_max"] and results_set["parameters"]["eps"] == acceptable_params["eps"]:
-                    try:
-                        new_dict[model].append(results_set)
-                    except KeyError:
-                        new_dict[model] = []
-                        new_dict[model].append(results_set)
-    return new_dict
-
-def import_and_print(file_name, nmb_columns_for_params):
+def import_and_print(file_name, nmb_columns_for_params, renderable_params):
     results = None
-    with open('' + file_name, 'r') as file:
+    with open(file_name, 'r') as file:
         results = json.load(file)
     # results = filter_for_params(results, PARAMS_SETS_IN_TABLE)
 
     #we cell for each metric in each param set
     nmb_metrics = len(PRINTABLE_METRICS)
-    nmb_params_sets = len(PARAMS_SETS_IN_TABLE)
+    nmb_params_sets = len(renderable_params)
     nmb_columns = nmb_columns_for_params * nmb_metrics
     row_columns = r'\begin{tabular}{|c||' + (r'c|' * nmb_columns) + r'}'
     print(row_columns)
@@ -85,10 +74,10 @@ def import_and_print(file_name, nmb_columns_for_params):
         header_row = ""
         starting_param_index = fold*nmb_columns_for_params
         ending_param_index = (fold+1)*nmb_columns_for_params
-        number_of_params_in_fold = len(PARAMS_SETS_IN_TABLE[starting_param_index : ending_param_index])
+        number_of_params_in_fold = len(renderable_params[starting_param_index: ending_param_index])
         for i in range(starting_param_index, starting_param_index + number_of_params_in_fold):
             params_string = ""
-            for key, val in PARAMS_SETS_IN_TABLE[i].items():
+            for key, val in renderable_params[i].items():
                 params_string += r" {}={} ".format(PARAMETERS_NAME_MAP[key], str(val))
             header_row += r"& \multicolumn{" + str(nmb_metrics) + r"}{c|}{" + r"{}}}".format(params_string)
         header_row += r" \\ \hline"
@@ -106,18 +95,22 @@ def import_and_print(file_name, nmb_columns_for_params):
         #Fill rows with data
 
         for model_name, results_list in results.items():
-            ending_param_index_overflow = len(PARAMS_SETS_IN_TABLE) if ending_param_index >( len(PARAMS_SETS_IN_TABLE)-1) else ending_param_index
+            ending_param_index_overflow = len(renderable_params) if ending_param_index > (len(renderable_params) - 1) else ending_param_index
             row = str(MODEL_NAME_MAP[model_name]) + " & "
             for params_idx in range(starting_param_index, ending_param_index_overflow):
 
 
-                cur_param_set = PARAMS_SETS_IN_TABLE[params_idx]
+                cur_param_set = renderable_params[params_idx]
                 results_for_model_and_param = get_results_for_model_and_parameter(results, cur_param_set, model_name)
                 for metric in PRINTABLE_METRICS:
+                    try:
+                        metric_result = results_for_model_and_param[metric]
+                    except TypeError:
+                        metric_result = -1.0
                     if metric!="accuracy_result":
-                        row += ltx_frmt(results_for_model_and_param[metric]) + " & "
+                        row += ltx_frmt(metric_result) + " & "
                     else:
-                        row += ltx_prcnt(results_for_model_and_param[metric]) + " & "
+                        row += ltx_prcnt(metric_result) + " & "
             row = row[:-3] #remove last ampersand
             row += r"\\ \hline"
             print(row)
@@ -174,14 +167,25 @@ def create_heat_map_fgsm_targeted(file_name):
             text = ax2.text(j, i, "{:04.2f}".format(float(l2_heat_map[i, j])),
                             ha="center", va="center", color="red")
     fig.tight_layout()
-    plt.savefig("fgsm_heat_map.pdf")
+    plt.savefig("img/fgsm_heat_map.png")
 
     print(r"\begin{left}")
-    print(r"\includegraphics[width=0.5\textwidth]{fgsm_heat_map.pdf}")
+    print(r"\includegraphics[width=0.5\textwidth]{img/fgsm_heat_map.png}")
     print(r"\end{left}")
 
-if __name__ == "__main__":
-    PARAMS_SETS_IN_TABLE = deepfool_params
-    import_and_print('../../json_results/deepfool_wrapper.json', 2)
+def generate_fgsm_table(path='../json_results/fgsm_untargeted_wrapper.json', nmb_columns=2):
+    renderable_params = filter(lambda dict : dict[ITER_MAX] == 1, fgsm_params)
+    renderable_params = sorted(renderable_params, key=lambda dict : dict[EPS])
+    import_and_print(path, nmb_columns, renderable_params)
 
+def generate_ifgsm_table(path='../json_results/fgsm_untargeted_wrapper.json', nmb_columns=3):
+    renderable_params = sorted(fgsm_params, key=lambda dict: dict[ITER_MAX])
+    import_and_print(path, nmb_columns, renderable_params)
 
+def generate_llfgsm_table(path='../json_results/fgsm_targeted_wrapper.json', nmb_columns=3):
+    renderable_params = sorted(fgsm_params, key=lambda dict: dict[ITER_MAX])
+    import_and_print(path, nmb_columns, renderable_params)
+
+def generate_getattack_table(path='../json_results/gen_attack_wrapper.json', nmb_columns=2):
+    renderable_params = sorted(gen_attack_params, key=lambda dict: dict[GENERATION_NUMBER])
+    import_and_print(path, nmb_columns, renderable_params)

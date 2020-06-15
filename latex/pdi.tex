@@ -1,570 +1,1 @@
-\documentclass{article}
-\usepackage[polish]{babel}
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
-\usepackage[a4paper, total={6in, 10in}]{geometry}
-\usepackage{cite}
-\usepackage{graphicx}
-\usepackage{caption}
-\usepackage{listing}
-\usepackage{subcaption}
-\usepackage{amsmath}
-\usepackage{algorithm}% http://ctan.org/pkg/algorithms
-\usepackage{algcompatible}% http://ctan.org/pkg/algorithmicx
-\usepackage{algpseudocode}
-\usepackage{pythontex}
-\usepackage[colorinlistoftodos]{todonotes}
-\usepackage{adjustbox}
-\graphicspath{ {images/} }
-%\immediate\write18{bibtex \jobname}
-
-
-\title{
-    Praca Inżynierska
-    \begin{large}
-    \\Temat: Aplikacja do testowania odporności
-modeli klasyfikacyjnych na ataki z użyciem złośliwych danych
-\end{large}}
-
-\date{3 Stycznia 2020}
-\author{Jan Ambroziak \\ Opiekun Pracy: dr.inż Paweł Zawistowski}
-
-\begin{document}
-
-
-
-    \maketitle
-
-\
-
-\section{Wstep}
-
-
-
-
-
-
-Wraz z rozwojem i upowszechnianiem się modeli klasyfikujących obrazy graficzne,
-pojawiają się nowe zagrożenia związane z bezpieczeństwem tej klasy rozwiązań.
-Jednym z nich są złośliwe dane, które powodować mogą,
-że pozornie dobrze działający klasyfikator zaczyna udzielać błędnych odpowiedzi.
-Może to stanowić realne zagrożenie nawet dla życia i zdrowia ludzkiego
-np. w przypadku gdy taki atak dotyczy systemu automatycznie sterującego pojazdem.
-
-\section{Cel}
-\label{sec:target}
-
-Celem pracy inżynierskiej jest stworzenie aplikacji która ma wspierać testowanie
-odporności modeli klasyfikacyjnych na ataki z użyciem złośliwych danych
-Dla dostarczonego w narzuconej postaci modelu klasyfikatora możliwe będzie
-przeprowadzenie ataku przy pomocy jednej z dostępnych metod.
-
-\section{Użyte narzędzia}
-Od czasu opublikowania przez firmę Google biblioteka Tensorflow \todo{citation needed}
-stała się jednym z wiodących narzędzi wykorzystywanych w branży. Prostota API i intuicyjność
-języka Python, akceleracja obliczeń z wykorzystaniem procesorów graficznych oraz dobra integracja z
-popularnymi bibliotekami dostępnymi dla języka Python czyni Tensorflow idealnym kandydatem.
-W trakcie pracy wykorzystywałem głównie wysokopoziomowy interfejs Keras, który pozwala na szybkie
-prototypowanie oraz na małą złożoność kodu źródłowego.
-Platforma testowa jakiej użyto to:
-\begin{itemize}
-    \item CPU: Intel i5-2500K
-    \item GPU: Nvidia GeForce 1060 GTX 6GB
-    \item RAM: 8GB DDR3
-    \item System Operacyjny: Windows 10
-    \item Tensorflow wersja 2.0.0
-    \item Interpreter Python 3.6.8 wersja 64bit
-\end{itemize}
-Wszystkie pozostałe biblioteki Python, wraz z wersjami, wykorzystane w projekcie, znajdują się w pliku
-requirements.txt w folderze projektu.
-
-\section{Modele i dane testowe}
-Aby sprawdzić poprawność implementacji oraz skuteczność ataków stworzono
-kilka modeli klasyfikacyjnych o różnej złożoności, opartych o popularne zbiory danych
-wykorzystywanych jako platforma testowa w publikacjach pokrewnych tematyką.
-\todo {Dodać struktury modeli graficzne oraz ich metryki, optimizery etc.}
-
-    \subsection{MNIST}
-    Zbiór danych MNIST \todo{citation needed} to najprawdopodobniej najpopularniejszy zbiór związany z
-    tematyką nauczania maszynowego.
-    Zawiera on 60,000 obrazów o rozmiarach 28 na 28 pikseli, w skali szarości, przedstawiających
-    odręcznie narysowane cyfry. Zbiór dzieli się na 50,000 przykładów używanych do
-    trenowania modelu oraz 10.000 służących do testowania.
-
-        \subsubsection{Model Splotowy}
-        Stworzony model splotowy to prosty przykład zastosowania splotowych sieci neuronowych oraz warstw Dropout
-        który w praktyce pozwala osiągnąć bardzo dobre wyniki dla zbioru MNIST
-        \todo{rozszerzyć te opisy}
-
-        \subsubsection{Model Fully Connect}
-        Model FC to bardzo prosty model wykorzystujący tylko 4 warstwy perceptronów z sigmoidalną funkcja aktywacji
-
-        \subsubsection{LeNet5}
-        LeNet5 to historycznie istotny model stworzony przez Yana LeCuna stworzony w latach 90tych
-        jest jednym z najbardziej znanych zastosowań splotowych sieci neuronowych
-
-    \subsection{CIFAR10}
-    Zbiór CIFAR10 \todo{citation needed} zawiera kolorowe obrazy o rozdzielczości 32 na 32 piksele,
-    podzielone na 10 klas takich jak np. koń, samolot czy żaba. Podobnie jak zbiór MNIST, CIFAR10 zawiera
-    60,000 obrazów podzielonych na 50,000 przykładów używanych do treningu jak i 10,000 do testowania.
-    Aby usunąć problem nadmiernego dopasowania modeli obrazy z zbioru CIFAR10 używane
-    do trenowania są losowo modyfikowane. Każdy obraz ma szanse 0.25 \todo{tutaj uzupełnić} na
-    modyfikacje natężenia, nasycenia, kontrastu oraz odcienia. Dodatkowo każdy obraz może zostać obrócony bądź odbity.
-
-        \subsubsection{Model Splotowy}
-        Tutaj w porównaniu do modelu dla zbioru MNIST wykorzystujemy także technikę normalizującą wartości wyjściowe
-        funkcji aktywacji (BatchNorm) w celu zwiększenia stabilności sieci (funkcja aktywacji ReLU nie posiada górnej granicy w
-        przeciwieństwie do funkcji sigmoidalnej)
-
-    \subsection{CIFAR100}
-        \subsection{Model Splotowy}
-
-
-    \subsection{ImageNet}
-        \subsubsection{InceptionV3}
-        \subsubsection{ResNetV2}
-
-
-
-
-\section{Rodzaje Ataków}
-Ideą ataków adwersaryjnych \todo{tu dodać definicje} jest osiągnięcie jednego z wymienionych celów:
-\begin{enumerate}
-    \item Zmniejszenie prawdopodobieństwa z jakim model klasyfikuje przykład
-    \item Zła klasyfikacja przykładu wejściowego (niezaleznie od końcowej klasy)
-    \item Przyporządkowanie przykładu wejściowego do złej, zadanej z góry klasy
-    \todo{Sprawdzić i dodać cytowanie}
-\end{enumerate}
-
-Możemy też rozróżnić ataki z uwagi na to jakie dane są dostępne dla algorytmu atakującego:
-\begin{enumerate}
-    \item Dostępny jest gradient, funkcja kosztu i funkcja trenująca
-    \item Dostępna jest tylko funkcja kosztu
-    \item Dostępny jest przykład
-    \item Dostępne są tylko dane wejściowe i klasa do jakiej model przyporządkowuje dany przykład
-    \item \todo{poprawić powyższe i dodać cytowanie}
-\end{enumerate}
-
-
-\section{Wykorzystane Ataki}
-W projekcie zaimplementowanych zostało kilka ataków które zostały opisane w anglojęzycznych publikacjach.
-Poniżej znajdują się ich opisy, uwagi dotyczące implementacji, przykłady zastosowania oraz wyniki testów
-zastosowanych do oceny ataków. Szersza dyskusja dotycząca użyteczności oraz porównanie znajdują się w sekcji \ref{comparison}
-
-\subsection{FGSM}
-    FGSM czyli Metoda szybkiego znaku gradientu (z ang. Fast Gradient Sign Method) opsiana w artykule
-    pod tytułem \textit{Explaining and Harnessing Adversarial Examples}\cite{harnessing} to jedna z pierwszych
-    opisanych metod ataku na modele klasyfikacyjne wykorzystujący złośliwe dane.
-    Aby wygenerować złośliwy przykład metoda ta wymaga znajomości gradientu funkcji kosztu obliczanego względem danych
-    wejściowych oznaczonego jako
-
-    \begin{equation}
-        \nabla_{x} J(x, y).
-        \qquad\text{gdzie}
-        \begin{tabular}[t]{ll}
-        $x$   & -- dane wejściowe \\
-        $y_{prawdziwe}$   & -- klasa do której należą dane wejściowe\\
-        $J(x, y_{prawdziwe})$  & -- funkcja kosztu \\
-        $\nabla_{x}$  & -- gradient względem danych wejściowych \\
-        \end{tabular}
-    \end{equation}
-
-    Idea metody polega na dodaniu bądź odjęciu małej, arbitralnie ustalonej, wartości (oznaczanej przez \(\epsilon\)) do
-    danych wejściowych w zależności od znaku gradientu tak aby zwiększyć wartość funkcji kosztu,
-    doprowadzając do niepoprawnej klasyfikacji danych wejściowych zmodyfikowanych w niewielkim stopniu.
-    Możemy zapisać to działanie w następujący sposób.
-
-    \begin{equation}
-    x' = x + \epsilon\operatorname{sign}(\nabla_{x} J(x, y_{prawdziwe}))
-    \qquad\text{gdzie}
-    \begin{tabular}[t]{ll}
-    $x'$  & -- spreparowany przykład ze złośliwymi danymi \\
-    \end{tabular}
-    \end{equation}
-
-    Analogiczny przykład do tego znajdującego się w oryginalnej publikacji\cite{harnessing} znajduje się poniżej.
-    \todo{tutaj wstawić przykład z dodawaniem obrazków}
-
-    Podstawową wadą opisywanej metody jest fakt że nie mamy wpływu na to jaka będzie klasa wyjściowa
-    spreparowanych przez nas danych wejściowych. Kolejną jest to że niektóre dane i modele wymagają od nas
-    doboru wysokiej wartości parametru $\epsilon$ aby być w stanie spreparować pożądane dane, co z kolei powoduje dużą
-    różnicę między danymi wejściowymi a tymi utworzonymi w toku stosowania metody.
-    W publikacji pod tytułem \textit{Adversarial examples in the physical world}\cite{DBLP:journals/corr/KurakinGB16}
-    autorzy opisują kilka metod pochodnych do FGSM.
-
-    \subsubsection{I-FGSM}
-    I-FGSM czyli Iteracyjna Metoda Szybkiego Znaku Gradientu (z ang. Iterative Fast Gradient Sign Method) to metoda
-    które rozwiązuje problem konieczności doboru wysokiej wartości $\epsilon$ poprzez zastosowanie metody FGSM kilkakrotnie
-    ,jednocześnie zapewniając pod koniec każdego kroku że przyogotowany każdy piksel obrazu nie różni się od oryginału o więcej
-    niż $\epsilon$, z niższą wartością parametru $\epsilon$ niż wymagane oryginalnie w metodzie jednokrokowej.
-    Pozwala to  potencjalnie ogarniczyć różnicę między preparowanymi przez nas danymi a oryginalnymi danymi wejściowymi
-    oraz przerwanie działania metody kiedy model przestania poprawnie klasyfikować dane wejściowe.
-
-    \begin{algorithm}
-    \caption{I-FGSM}\label{IFGSM}
-    \begin{algorithmic}[1]
-    \State $i \gets 0$
-    \While{$i <  i_{max}$}
-        \State $x' = x + \alpha\operatorname{sign}(\nabla_{x} J(x, y_{prawdziwe}))$
-        \State $i \gets i+1$
-        \State $Przytnij(x', \epsilon)$
-    \EndWhile
-    \end{algorithmic}
-    \end{algorithm}
-
-    \subsubsection{LL-FGSM}
-    LL-FGSM (z ang. Least Likely FGSM) to metoda pozwalająca nam na spreparowanie danych które będę przydzielane do
-    konkretnej klasy (ozn. $y_{celu}$), a nie tylko na niepoprawną klasyfikacje. W tym wypadku zamiast starać się
-    zmieniać wartości pikseli obrazu zgodnie z kierunkiem gradientu funkcji kosztu dla prawidłowej klasy
-    staramy się zmieniać wartości pikseli przeciwnie do kierunku gradientu funkcji kosztu dla klasy $y_{celu}$.
-    Intuicyjnie można to opisać jako nie oddalanie się od prawdziwej klasy obrazu, a jako przybliżanie się do zadanej
-    przez nas klasy.
-    Autorzy metody zwracają uwagę na przydatność tej metody
-    w przypadku gdy korzystamy z modeli operujących wieloma klasami i gdzie różnice między obiektami z różnych klas mogą
-    być bardzo niewielkie (np. między rasami psów). Metoda ta jest także iteracyjna i zapewnie różnice między
-    odpowiednimi pikselami obrazów nie większą niż $\epsilon$ więc można uznać ją za rozszerzenie metody I-FGSM.
-
-    \begin{algorithm}
-    \caption{LL-FGSM}\label{LLFGSM}
-    \begin{algorithmic}[1]
-    \State $i \gets 0$
-    \While{$i <  i_{max}$}
-        \State $x' = x - \alpha\operatorname{sign}(\nabla_{x} J(x, y_{celu}))$
-        \State $i \gets i+1$
-        \State $Przytnij(x', \epsilon)$
-    \EndWhile
-    \end{algorithmic}
-    \end{algorithm}
-
-\subsubsection{Implementacja}
-
-\subsection{DeepFool}
-W publikacji \textit{DeepFool: a simple and accurate method to fool deep neural networks}\cite{DBLP:journals/corr/Moosavi-Dezfooli15}
-autorzy proponują metodę alternatywną do FGSM mającą minimalizować wprowadzaną do danych wejściowych perturbacje jednocześnie
-osiągając zmianę klasy do której model przyporządkowuje dane wejściowe.
-%Punktem wyjściowym rozważań autorów było założenie
-%że model z którego korzystamy jest przekształceniem afinicznym, opracowanie metody pozwalającej na
-%uzyskanie zminimalizowanej perturbacji, a następnie zgeneralizowanie metody dla modeli nie będących przekształceniami afinicznymi.
-Wadą DeepFool jest brak możliwości narzucenia klasy do której chcielibyśmy aby przyporządkowywane były nasze zmodyfikowane dane.
-Metoda ta jest nieco bardziej złożona obliczeniowo jako że pojedynczy krok algorytmu wymaga od nas obliczenia gradientu dla
-prawdopodobieństwa każdej klasy względem danych wejściowych, co przy zbiorach danych z wieloma klasami
-takich jak np. ImageNet może być problematyczne. Poniżej znajduje się pseudokod opisujący metodę DeepFool dla modelu
-wieloklasowego.
-\begin{algorithm}
-\caption{DeepFool}\label{DeepFool}
-\begin{algorithmic}[1]
-\State $x_0 \gets x$
-\While{$f(x_{i}) =  y_{prawdziwe}$}
-\For{$k \neq \hat{k}(x_{0})$}
-    \State $w'_k\gets \nabla f_k(x_i) - \nabla f_{\hat{k}(x_0)}(x_i)$
-    \State $f'_k\gets f_{k}(x_i) - f_{\hat{k}(x_0)}(x_i)$
-\EndFor
-\State $\hat{l}\gets \arg \min_{k\neq\hat{k}(x_0)} \dfrac{|f'_k|}{||w'_k||_2}$
-\State $r_i\gets \dfrac{|f'_{\hat{l}}|}{||w'_{\hat{l}}||^2_2}w'_{\hat{l}}$
-\State $x_{i+1}\gets x_i + r_i$
-\State $i\gets i + 1$
-\EndWhile
-\State \textbf{return} $\hat{r} = \sum_{i} r_i$
-\end{algorithmic}
-\end{algorithm}
-
-
-\subsubsection{Implementacja}
-
-
-\subsection{L-BFGS}
-Metoda opisana w \textit{Intriguing properties of neural networks}\cite{DBLP:journals/corr/SzegedyZSBEGF13}
-to próba rozwiązania poniższego problemu optymalizacyjnego w celu uzyskania minimalnej perturbacji danych wejściowych
-która powoduje niepoprawną klasyfikacje danych przez model:
-    \begin{equation}
-    \min{\| r\|_{2}}
-    \qquad\text{przy warunkach:}
-    \begin{tabular}[t]{ll}
-    f(x + r) = $y_{celu}$ \\
-    $x+r \in [0,1]^{m}$ \\
-    \end{tabular}
-    \qquad\text{gdzie:}
-    \begin{tabular}[t]{ll}
-    r - perturbacja \\
-    \end{tabular}
-    \end{equation}
-Znalezienie dokładnego rozwiązania powyższego problemu jest skomplikowane, dlatego autorzy postanowili szukać aproksymacji
-rozwiązania poprzez liniowe przeszukiwanie w celu znalezienia najmniejszej wartości parametru $c > 0$ dla którego spełniony
-zostaje warunek $f(x+r) = y_{celu}$ gdzie $r$ uzyskujemy z zastosowania algorytmu L-BFGS dla poniższego problemu:
-    \begin{equation}
-    \min{c| r| + J(x+r, y_{celu})}
-    \qquad\text{przy warunkach:}
-    \begin{tabular}[t]{ll}
-    $x+r \in [0,1]^{m}$ \\
-    \end{tabular}
-    \end{equation}
-
-\subsubsection{Implementacja}
-
-
-\subsection{JSMA}
-Idea ataku JSMA (Jacobian Saliency Map Attack) opisanego w
-\textit{The Limitations of Deep Learning in Adversarial Settings}\cite{DBLP:journals/corr/PapernotMJFCS15}
-polega na utworzeniu mapy istotności (z ang. Saliency Map) pikseli obrazu dla każdej z klas.
-Dzięki temu jesteśmy w stanie określić jak dane piksele w obrazie wpływają na określanie prawdopodobieństwa należenia
-do danej klasy przez model. Sposób tworzenia mapy istotności jest zamieszczony poniżej:
-\begin{equation}\label{jsma+}
-S^{+} ( \mathbf { x } , y ) [ i ] = \left\{ \begin{array} { c } { 0 \text { jeśli } \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } < 0 \text { lub } \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } > 0 } \\ { \left( \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } \right) \left| \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } \right| \text { w.p.p } } \end{array} \right.
-\qquad\text{gdzie:}
-\begin{tabular}[t]{ll}
-x - dane wejściowe \\
-${f} _ { y } ({x})$ - prawd. przynależności x do klasy y \\
-$x_{i}$ - i-ty piksel obrazu wejściowego x \\
-S({x},y)[i] - wartość i-tego piksel dla klasy y
-\end{tabular}
-\end{equation}
-
-W powyżej zdefiniowanej mapie nieujemne wartości oznaczają poziom wpływu zwiększenia intensywności danego piksela $i$
-na przynależność dla danej klasy $y$.
-Warunek $\frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } < 0$
-zapewnia że nie będziemy rozpatrywać pikseli które mają negatywny wpływ na wartość prawdopodobieństwa należenia przykładu
-do klasy $y$.
-Natomiast warunek $\sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } > 0 $
-zapewnia że nie będziemy rozpatrywać pikseli które mają pozytywny wpływ na wartość prawdopodobieństwa należenia przykłady do klas
-innych niż narzucona przez nas klasa $y$. Autorzy metody proponują też analogiczną mapę istotności w która
-zamiast określać wpływ zwiększenia intensywności pikseli na przynależność przykładu do danej klasy określa wpływ zmniejszania
-intensywności piksela na przynależność do danej klasy.
-
-%\begin{equation}\label{jsma-}
-%S^{-} ( \mathbf { x } , y ) [ i ] = \left\{ \begin{array} { c } { 0 \text { jeśli } \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } > 0 \text { lub } \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } < 0 } \\ { \left|( \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } )\right  \left| \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } \right \text { w.p.p } } \end{array} \right.
-%\end{equation}
-
-W praktyce jednak większość pikseli nie spełnia warunków określonych w pierwszej linii podanych równań,
-dlatego autorzy zastosowali metodę wyboru par pikseli $p_1$ i $p_2$ zamiast pojedynczego piksela.
-W tym celu stosowana jest opisana poniżej metoda.
-
-\begin{equation} \label{saliency_map}
-\arg \max _ { \left( p _ { 1 } , p _ { 2 } \right) } \left( \sum _ { i = p _ { 1 } , p _ { 2 } } \frac { \partial \mathbf { f } _ { y } ( \mathbf { x } ) } { \partial \mathbf { x } _ { i } } \right) \times \left| \sum _ { i = p _ { 1 } , p _ { 2 } } \sum _ { j \neq y } \frac { \partial \mathbf { f } _ { j } ( \mathbf { x } ) } { \partial \mathbf { x } _ { i } } \right|
-\end{equation}
-
-O ile rozwiązuje to problem znalezienia pikseli które spełniają warunki o tyle metoda ta ma większą złożoność obliczeniową
-z uwagi na to że musimy rozpatrzyć wszystkie możliwe pary pikseli zamiast tylko pojedynczych pikseli.
-Opisany poniżej algorytm oddaje istotę opisanej przez autorów metody.
-
-\begin{algorithm}
-\caption{JSMA}\label{JSMA}
-\begin{algorithmic}[1]
-\State $x' \gets x$
-\While{$f(x') \neq  y_{celu}\ \& \ i < i_{max}$}
-    \State $p_1, p_2$ = S$(x',y_{celu})$ \Comment przez S rozumiemy (\ref{saliency_map})
-    \State zmodyfikuj $p_1$ i $p_2$ o $\theta$
-    \State jeśli $p_1$ lub $p_2$ wynosi 0 albo 1 usuń je z listy pikseli
-    \State $i \gets i+1$
-\EndWhile
-\State \textbf{return} $x'$
-\end{algorithmic}
-\end{algorithm}
-
-Istnieje wiele różnych wariantów metody JSMA, których zasadnicze działanie nie różni się bardzo od tego opisanego powyżej.
-\textit{Maximal Jacobian-based Saliency Map Attack}\cite{DBLP:journals/corr/abs-1808-07945} przeprowadza bardzo
-zwięzłe podsumowanie różnych wariantów metody JSMA. Warto tutaj przytoczyć kilka różnic między opisanymi w tej publikacji
-wariantami JSMA.
-
-\subsubsection{JSMA+ i JSMA-}
-Autorzy \textit{Maximal Jacobian-based Saliency Map Attack}\cite{DBLP:journals/corr/abs-1808-07945} wprowadzają rozróżnienie
-pomiędzy JSMA+ a JSMA- w zależności od tego czy intensywność pikseli jest zmniejszana i wykorzystywane są warunki~(\ref{jsma-})
-czy też intensywność pikseli jest zwiększana i wykorzystywane są warunki~(\ref{jsma+})
-
-\subsubsection{JSMA-F i JSMA-Z}
-W publikacji \textit{Towards Evaluating the Robustness of Neural Networks}\cite{DBLP:journals/corr/CarliniW16a}
-autorzy proponują rozróżnienie pomiędzy JSMA-F, które w metodzie~(\ref{saliency_map}) wykorzystuje do obliczania pochodnej cząstkowej
-wyjście funkcji softmax stosowanej zazwyczaj jako ostatnia warstwa modelu, a JSMA-Z które zamiast tego wykorzystuje wektor
-wyjściowy przedostatniej warstwy określany często jako zazwyczaj jako logits.
-
-\subsubsection{NT-JSMA}
-NT-JSMA czyli wersja JSMA bez zadanej klasy którą chcemy osiągnąć (z ang. Non Targeted JSMA). To postulowany przez autorów
-\textit{Maximal Jacobian-based Saliency Map Attack}\cite{DBLP:journals/corr/abs-1808-07945} wariant metody JSMA
-który poprzez zdjęcie ograniczenia polegającego na tym że spreparowana dane mają być klasyfikowane jako należące do zadanej
-klasy ma umożliwić zmniejszenie perturbacji wymaganej do zmiany klasyfikacji danych przez model. To usprawnienie niesie
-ze sobą jednak dodatkowy koszt obliczeniowy jako że w każdej iteracji rozpatrujemy $S^{-}()$ bądź $S^{+}()$ nie dla
-jednej zadanej klasy tylko dla wszystkich.
-
-\subsubsection{M-JSMA}
-M-JSMA\cite{DBLP:journals/corr/abs-1808-07945} to wariant metody JSMA który łączy w sobie metodę
-
-\subsection{Carlini \& Wagner}
-Carlini oraz Wagner\cite{DBLP:journals/corr/CarliniW16a} w odpowiedzi na pojawiające się publikacje dotyczące
-ataków adwersaryjnych zaproponowali swoją metodę której celem jest, podobnie jak w innych metodach,
-tworzenie złośliwych danych
-odstających możliwie jak najmniej od danych wejściowych a zarazem klasyfikowanych przez zadany model jako
-zadana klasa. Zaproponowna przez autorów metoda opiera się na zastosowania metod optymalizacyjnych  w nauczaniu
-maszynowym do problemu optymalizacyjnego zadanego w poniższy sposób
-\begin{equation}\label{eq:c_and_w}
-    \text { minimalizuj } \| \frac { 1 } { 2 } ( \tanh ( w ) + 1 ) - x \| _ { 2 } ^ { 2 } + c \cdot f ( \frac { 1 } { 2 } ( \tanh ( w ) + 1 ) )
-\end{equation}
-gdzie $f$ definiujemy jako
-\begin{equation}
-    f ( x ^ { \prime } ) = \max ( \max \{ Z ( x' ) _ { i } : i \neq t \} - Z ( x ^ { \prime } ) _ { t } , - \kappa)
-\end{equation}
-Pierwszy składowa sumy \eqref{eq:c_and_w} odpowiada za minimalizację odstępstwa spreparowanego obrazu
-od oryginału. Druga składowa odpowiada za zwiększanie prawdopodobieństwa z jakim model klasyfikuje nasz przykład
-jako należący do zadanej klasy. Parametr \(\kappa\) odpowiada za pewność z jaką chcemy żeby model klasyfikował nasz
-przykład jako należący do zadanej klasy.
-
-
-\subsection{MAP-Elites}
-Innym podejściem od pozostałych jest jedna z metod opisanych w
-\textit{Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images} \cite{DBLP:journals/corr/NguyenYC14}.
-Autorzy zaproponowali zastosowanie algorytmów ewolucyjnych w celu wygenerowania złośliwych przykładów.
-Zastosowaną strategią ewolucyjną jest MAP-Elites która pozwala na jednoczesne generowanie przykładów adwersaryjnych dla
-wszystkich klas modeli klasyfikującego. Poniżej znajduje się opis strategi ewolucyjnej zastosowanej przez autorów
-\todo{tutaj dodać algo MAP-Elites}
-%https://arxiv.org/pdf/1504.04909.pdf
-
-\subsection{GenAttack}
-Metoda GenAttack opisana w
-\textit{GenAttack: Practical Black-box Attacks with Gradient-Free Optimization}\cite{DBLP:journals/corr/abs-1805-11090}
-to podobnie jak MAP-Elites metoda opierająca się na algorytmach ewolucyjnych, jednak strategia ewolucyjna
-przyjęta tutaj przez autorów jest zgoła inna. W tym przypadku generujemy przykładu adwersaryjne tylko dla jednej klasy naraz
-w przeciwieństwie do wszystkich klas jak w przypadku MAP-Elites.
-\todo{Tutaj dodać opis algo}
-
-\subsection{AdvGAN}
-\begin{adjustbox}{max width=\textwidth}
-\begin{pycode}
-from latex_utils import *
-import_and_print('../json_results/fgsm_targeted_wrapper.json', 3)
-\end{pycode}
-\end{adjustbox}
-
-\section{Wyniki Ataków}\label{comparison}
-    Aby móc skutecznie ocenić ataki należałoby określić metryki na których podstawie będziemy w stanie dokonać porównania.
-    Oprócz oczywistych kwestii takich jak to że
-\subsection{AdvGAN}
-\subsection{GenAttack}
-\subsection{MAP-Elites}
-\subsection{Carlini \& Wagner}
-\subsection{JSMA}
-\subsection{L-BFGS}
-\subsection{DeepFool}
-
-
-\subsection{FGSM}
-    Jedynym parametrem w klasycznym wariancie metody FGSM jest \(\epsilon\) który określa rozmiar zmiany wprowadzanej dla
-    każdego atrybutu. W przypadku obarazów zmiana wartości natężenia każdego kanału dla każdego piksela. Poniżej znajduje
-    się tabela w której
-
-
-%\begin{adjustbox}{max width=\textwidth}
-%\begin{pycode}
-%from latex_utils import *
-%create_heat_map_fgsm_targeted('fgsm_targeted_wrapper.json')
-%\end{pycode}
-%\end{adjustbox}
-
-
-
-%\section{Praca w ciągu semestru}
-%\label{sec:work}
-%
-%Główną technologią na której opiera się moja praca jest biblioteka tensorflow\cite{tensorflow}.
-%Główną zaletą jest możliwość akceleracji obliczeń z wykorzystaniem biblioteki CUDA i cuDNN, które
-%umożliwiają zrównoleglenie obliczeń na karcie graficznej.
-%Ponieważ jednym z założeń pracy inżynierskiej jest znajomość modelu, to rodzaj
-%ataków jakimi będę się zajmuję to tak zwane ataki "white-box".
-%Jedna z najbardziej znanych metod tworzenia złośliwych danych w to
-%Fast Gradient Sign Method (w skrócie FGSM) opisana w \cite{harnessing}.
-%Jest to też metoda którą udało mi się zaimplementować na wytrenowanych przeze mnie
-%modelach klasyfikacyjnych (patrz punkt ~\ref{sec:fgsm}).
-%
-%Innymi metody nad których implementacją pracuje są
-%Jacobian-based Saliency Map Attack (JSMA)\cite{DBLP:journals/corr/PapernotMJFCS15}
-%oraz DeepFool\cite{DBLP:journals/corr/Moosavi-Dezfooli15}.
-%Po zakończeniu implementacji i wykazaniu ich skutecznośći chciałbym
-%przetestować ich działanie dla bardziej skomplikowanych modeli klasyfikacyjnych
-%niż te z których korzystałem dotychczas(patrz punkt ~\ref{sec:fgsm}).
-%Końcowym zadaniem będzie utworzenie prostego interfejsu do obsługi aplikacji
-%(linia komend, bądź interfejs graficzny) oraz przetestowanie ataków na już
-%wytrenowanych modelach dostępnych publicznie
-
-
-%\section{Ataki z użyciem Fast Gradient Sign Method}
-%\label{sec:fgsm}
-%W celu sprawdzenia poprawności działania mojej implementacji metody FGSM utworzyłem
-%i wytrenowałem dwa proste modele klasyfikacyjne będące
-%splotowymi sieciami neuronowymi dla zbiorów CIFAR-10\cite{cifar_10} oraz MNIST\cite{mnist}
-%mające praktycznie taką samą strukturę oprócz wymiarów.
-%Struktura operacji ewaluacji uzyskana za pomocą narzędzia tensorboard zarówno dla
-%zbioru MNIST i CIFAR-10 znajduje się poniżej
-%
-%\newpage
-%\vfill
-%
-%\begin{figure}[ht]
-%  \begin{subfigure}{.55\textwidth}
-%    \includegraphics[width=\textwidth]{mnist_structure}
-%    \caption{MNIST}
-%    \centering
-%  \end{subfigure}
-%  \begin{subfigure}{.55\textwidth}
-%    \includegraphics[width=\textwidth]{cifar_structure}
-%    \caption{CIFAR}
-%    \centering
-%  \end{subfigure}
-%\end{figure}
-%
-%\vfill
-%\clearpage
-%
-%Poniżej można zobaczyc porównanie prawdopodobieństw przydziału do klasy dla
-%orignalnych danych wejściowych oraz dla spreparownych złośliwych danych.
-%Dla zbioru MNIST znacznie większy wpływ na skuteczność metody ma poziom
-%perturbacji niż liczba dokonanych iteracji. Zadowlajace wyniki pojawiają
-%się dopiero dla perturbacji na poziomie ~40 procent.
-%W przypadku zbioru CIFAR-10 można aby uzyskać przypisanie spreparowanych danych
-%do zadanej przez nas klasy z wysokim prawdopodobieństwem wystarczy 200 iteracji
-%przy poziomie perturbacji ~10 procent.
-%
-%% \newpage
-%% \vfill
-%\begin{figure}[ht]
-%  \begin{subfigure}{.55\textwidth}
-%    \includegraphics[width=\textwidth]{mnist_orig}
-%    \caption{MNIST Klasyfikacja oryginalnego obrazu}
-%    \centering
-%  \end{subfigure}
-%  \begin{subfigure}{.55\textwidth}
-%    \includegraphics[width=\textwidth]{mnist_adver}
-%    \caption{MNIST Klasyfikacja spreparowanego obrazu dla zadanej klasy 1, 200 iteracji}
-%    \centering
-%  \end{subfigure}
-%  \begin{subfigure}{.55\textwidth}
-%    \includegraphics[width=\textwidth]{mnist_pert}
-%    \caption{MNIST wprowadzona perturbacja}
-%    \centering
-%  \end{subfigure}
-%\end{figure}
-%\begin{figure}[ht]
-%  \begin{subfigure}{.55\textwidth}
-%    \includegraphics[width=\textwidth]{cifar_orig.png}
-%    \caption{CIFAR Klasyfikacja oryginalnego obrazu}
-%    \centering
-%  \end{subfigure}
-%  \begin{subfigure}{.55\textwidth}
-%    \includegraphics[width=\textwidth]{cifar_adver}
-%    \caption{CIFAR Klasyfikacja spreparowanego obrazu dla zadanej klasy 1, 200 iteracji}
-%    \centering
-%  \end{subfigure}
-%  \begin{subfigure}{.55\textwidth}
-%    \includegraphics[width=\textwidth]{cifar_pert}
-%    \caption{CIFAR wprowadzona perturbacja}
-%    \centering
-%  \end{subfigure}
-%\end{figure}
-%
-%% \vfill
-%\clearpage
-
-
-
-
-
-\bibliography{pdi}
-\bibliographystyle{ieeetr}
-
-\end{document}
+\documentclass{article}\usepackage[polish]{babel}\usepackage[utf8]{inputenc}\usepackage[T1]{fontenc}\usepackage[a4paper, total={6in, 10in}]{geometry}\usepackage{cite}\usepackage{graphicx}\usepackage{caption}\usepackage{listing}\usepackage{subcaption}%\usepackage{subfig}\usepackage{amsmath}\usepackage{algorithm}% http://ctan.org/pkg/algorithms\usepackage{algcompatible}% http://ctan.org/pkg/algorithmicx\usepackage{algpseudocode}\usepackage{pythontex}\usepackage[colorinlistoftodos]{todonotes}\usepackage{adjustbox}\usepackage{ulem}\graphicspath{ {img/} }%\immediate\write18{bibtex \jobname}\title{    Praca Inżynierska    \begin{large}    \\Temat: Aplikacja do testowania odpornościmodeli klasyfikacyjnych na ataki z użyciem złośliwych danych\end{large}}\date{3 Stycznia 2020}\author{Jan Ambroziak \\ Opiekun Pracy: dr.inż Paweł Zawistowski}\begin{document}    \maketitle\\section{Wstep}Wraz z rozwojem i upowszechnianiem się modeli klasyfikujących obrazy graficzne,pojawiają się nowe zagrożenia związane z bezpieczeństwem tej klasy rozwiązań.Jednym z nich są złośliwe dane, które powodować mogą,że pozornie dobrze działający klasyfikator zaczyna udzielać błędnych odpowiedzi.Może to stanowić realne zagrożenie nawet dla życia i zdrowia ludzkiegonp. w przypadku gdy taki atak dotyczy systemu automatycznie sterującego pojazdem.\section{Cel}\label{sec:target}Celem pracy inżynierskiej jest stworzenie aplikacji która ma wspierać testowanieodporności modeli klasyfikacyjnych na ataki z użyciem złośliwych danychDla dostarczonego w narzuconej postaci modelu klasyfikatora możliwe będzieprzeprowadzenie ataku przy pomocy jednej z dostępnych metod.\section{Istniejące rozwiązania}Aktualnie na rynku znajduje się kilka rozwiązań implementujących podobne funkcjonalnoścido tej która jest tu opisana. Warto zapoznać się z nimi oraz ich implementacjami.Jednym z najbardziej populranych narzędzi tego typu jest \textit{CleverHans}\cite{DBLP:journals/corr/GoodfellowPM16}wykorzystujący jako swoją bazę framework tensorflow oraz \textit{Adversarial Robustness Toolbox}\cite{DBLP:journals/corr/abs-1807-01069} opracowany przez IBM.O ile \textit{CleverHans} z tytułu korzystania z tensorflow jest w stanie korzystać z akceleracji sprzętowej jaką zapewnia procesor graficzny, o tyle\textit{Adversarial Robustness Toolbox} korzysta tylko i wyłącznie z moczy obliczeniowej głównego procesora.\section{Użyte narzędzia}Od czasu opublikowania przez firmę Google biblioteka Tensorflow \todo{citation needed}stała się jednym z wiodących narzędzi wykorzystywanych w branży. Prostota API i intuicyjnośćjęzyka Python, akceleracja obliczeń z wykorzystaniem procesorów graficznych oraz dobra integracja zpopularnymi bibliotekami dostępnymi dla języka Python czyni Tensorflow idealnym kandydatem.W trakcie pracy wykorzystywałem głównie wysokopoziomowy interfejs Keras, który pozwala na szybkieprototypowanie oraz na małą złożoność kodu źródłowego.Platforma testowa jakiej użyto to:\begin{itemize}    \item CPU: Intel i5-2500K    \item GPU: Nvidia GeForce 1060 GTX 6GB    \item RAM: 8GB DDR3    \item System Operacyjny: Windows 10    \item Tensorflow wersja 2.0.0    \item Interpreter Python 3.6.8 wersja 64bit\end{itemize}Wszystkie pozostałe biblioteki Python, wraz z wersjami, wykorzystane w projekcie, znajdują się w plikurequirements.txt w folderze projektu.\section{Modele i dane testowe}Aby sprawdzić poprawność implementacji oraz skuteczność ataków stworzonokilka modeli klasyfikacyjnych o różnej złożoności, opartych o popularne zbiory danychwykorzystywanych jako platforma testowa w publikacjach pokrewnych tematyką.\todo {Dodać struktury modeli graficzne oraz ich metryki, optimizery etc.}    \subsection{MNIST}    Zbiór danych MNIST \cite{mnist} to najprawdopodobniej najpopularniejszy zbiór związany z    tematyką nauczania maszynowego.    Zawiera on 60,000 obrazów o rozmiarach 28 na 28 pikseli, w skali szarości, przedstawiających    odręcznie narysowane cyfry. Zbiór dzieli się na 50,000 przykładów używanych do    trenowania modelu oraz 10.000 służących do testowania.        \subsubsection{Model Splotowy}        Stworzony model splotowy to prosty przykład zastosowania splotowych sieci neuronowych oraz warstw Dropout        który w praktyce pozwala osiągnąć bardzo dobre wyniki dla zbioru MNIST        \todo{rozszerzyć te opisy}        \subsubsection{Model Fully Connect}        Model FC to bardzo prosty model wykorzystujący tylko 4 warstwy perceptronów z sigmoidalną funkcja aktywacji \todo{dodać obrazek}        \subsubsection{LeNet5}        LeNet5 to historycznie istotny model stworzony przez Yana LeCuna stworzony w latach 90tych        jest jednym z najbardziej znanych zastosowań splotowych sieci neuronowych. \todo{dodać obrazek}    \subsection{CIFAR10}    Zbiór CIFAR10 opisany w \textit{Learning Multiple Layers of Features from Tiny Images} \cite{Krizhevsky2009LearningML} zawiera kolorowe obrazy o rozdzielczości 32 na 32 piksele,    podzielone na 10 klas takich jak np. koń, samolot czy żaba. Podobnie jak zbiór MNIST, CIFAR10 zawiera    60,000 obrazów podzielonych na 50,000 przykładów używanych do treningu jak i 10,000 do testowania.    Aby usunąć problem nadmiernego dopasowania modeli obrazy z zbioru CIFAR10 używane    do trenowania są losowo modyfikowane. Każdy obraz ma szanse 0.25 \todo{tutaj uzupełnić} na    modyfikacje natężenia, nasycenia, kontrastu oraz odcienia. Dodatkowo każdy obraz może zostać obrócony bądź odbity.        \subsubsection{Model Splotowy}        Tutaj w porównaniu do modelu dla zbioru MNIST wykorzystujemy także technikę normalizującą wartości wyjściowe        funkcji aktywacji (BatchNorm) w celu zwiększenia stabilności sieci (funkcja aktywacji ReLU nie posiada górnej granicy w        przeciwieństwie do funkcji sigmoidalnej). Poniżej znajduje się schemat zastosowanego modelu \todo{dodać obrazek}.    \subsection{CIFAR100}    Zbiór CIFAR100 opisany, podobnie jak CIFAR-10 w  \textit{Learning Multiple Layers of Features from Tiny Images} \cite{Krizhevsky2009LearningML}    jest zbiorem obrazów, o rozdzielczości 32x32 pikseli z trzema kanałami kolorów, podzielonym na 100 klas.    Każda klasa posiada w tym zbiorze 600 przykładów, z czego 500 jest przykładami treningowymi, a 100 przykładami testowymi.        \subsection{Model Splotowy}        Model którego używamy do klasyfikacji obrazów jest analogiczny do modelu użytego w przypadku zbioru CIFAR-10 z jedyną różnicą polegającą na        tym że filtry splotowe posiadają większe wymiary. Poniżej znajduje się schemat zastosowanego modelu \todo{dodać obrazek}.    \subsection{ILSVRC2012}        Zbiór ILSVRC 2012 popularnie nazywany zbiorem ImageNet to, bazowany na bazie danych obrazów ImageNet, zbiór        przygotowany specjalnie pod konkurs\textit{ImageNet Large Scale Visual Recognition Challenge} \cite{ILSVRC15}.        Baza danych ImageNet bazuje na bazie WordNet i tworzy hierarchie obrazów uporządkowaną względem synsetów        czyli zbiorów synonimów (syn od synonim i set z ang. zbiór). Zbiór ILSVRC 2012 posiada 1000 klas i około 1000        obrazów dla każdej klasy. Obrazy mają rozdzielczośc 299x299 pikseli oraz 3 kanały kolorów. Łącznie zbiór posiada        1281167 przykładów treningowych oraz 50000 przykładów testowych.        \subsubsection{InceptionV3}        \subsubsection{ResNetV2}\section{Rodzaje Ataków}Ideą ataków adwersaryjnych \todo{tu dodać definicje} jest osiągnięcie jednego z wymienionych celów:\begin{enumerate}    \item Zmniejszenie prawdopodobieństwa z jakim model klasyfikuje przykład    \item Zła klasyfikacja przykładu wejściowego (niezaleznie od końcowej klasy)    \item Przyporządkowanie przykładu wejściowego do złej, zadanej z góry klasy    \todo{Sprawdzić i dodać cytowanie}\end{enumerate}Możemy też rozróżnić ataki z uwagi na to jakie dane są dostępne dla algorytmu atakującego:\begin{enumerate}    \item Dostępny jest gradient, funkcja kosztu i funkcja trenująca    \item Dostępna jest tylko funkcja kosztu    \item Dostępny jest przykład    \item Dostępne są tylko dane wejściowe i klasa do jakiej model przyporządkowuje dany przykład    \item \todo{poprawić powyższe i dodać cytowanie}\end{enumerate}\section{Wykorzystane Ataki}W projekcie zaimplementowanych zostało kilka ataków które zostały opisane w anglojęzycznych publikacjach.Poniżej znajdują się ich opisy, uwagi dotyczące implementacji, przykłady zastosowania oraz wyniki testówzastosowanych do oceny ataków. Szersza dyskusja dotycząca użyteczności oraz porównanie znajdują się w sekcji \ref{comparison}\subsection{FGSM}    FGSM czyli Metoda szybkiego znaku gradientu (z ang. Fast Gradient Sign Method) opsiana w artykule    pod tytułem \textit{Explaining and Harnessing Adversarial Examples}\cite{harnessing} to jedna z pierwszych    opisanych metod ataku na modele klasyfikacyjne wykorzystujący złośliwe dane.    Aby wygenerować złośliwy przykład metoda ta wymaga znajomości gradientu funkcji kosztu obliczanego względem danych    wejściowych oznaczonego jako    \begin{equation}        \nabla_{x} J(x, y).        \qquad\text{gdzie}        \begin{tabular}[t]{ll}        $x$   & -- dane wejściowe \\        $y_{prawdziwe}$   & -- klasa do której należą dane wejściowe\\        $J(x, y_{prawdziwe})$  & -- funkcja kosztu \\        $\nabla_{x}$  & -- gradient względem danych wejściowych \\        \end{tabular}    \end{equation}    Idea metody polega na dodaniu bądź odjęciu małej, arbitralnie ustalonej, wartości (oznaczanej przez \(\epsilon\)) do    danych wejściowych w zależności od znaku gradientu tak aby zwiększyć wartość funkcji kosztu,    doprowadzając do niepoprawnej klasyfikacji danych wejściowych zmodyfikowanych w niewielkim stopniu.    Możemy zapisać to działanie w następujący sposób.    \begin{equation}    x' = x + \epsilon\operatorname{sign}(\nabla_{x} J(x, y_{prawdziwe}))    \qquad\text{gdzie}    \begin{tabular}[t]{ll}    $x'$  & -- spreparowany przykład ze złośliwymi danymi \\    \end{tabular}    \end{equation}    Analogiczny przykład do tego znajdującego się w oryginalnej publikacji\cite{harnessing} znajduje się poniżej.    \todo{tutaj wstawić przykład z dodawaniem obrazków}    Podstawową wadą opisywanej metody jest fakt że nie mamy wpływu na to jaka będzie klasa wyjściowa    spreparowanych przez nas danych wejściowych. Kolejną jest to że niektóre dane i modele wymagają od nas    doboru wysokiej wartości parametru $\epsilon$ aby być w stanie spreparować pożądane dane, co z kolei powoduje dużą    różnicę między danymi wejściowymi a tymi utworzonymi w toku stosowania metody.    W publikacji pod tytułem \textit{Adversarial examples in the physical world}\cite{DBLP:journals/corr/KurakinGB16}    autorzy opisują kilka metod pochodnych do FGSM.    \subsubsection{I-FGSM}    I-FGSM czyli Iteracyjna Metoda Szybkiego Znaku Gradientu (z ang. Iterative Fast Gradient Sign Method) to metoda    które rozwiązuje problem konieczności doboru wysokiej wartości $\epsilon$ poprzez zastosowanie metody FGSM kilkakrotnie    ,jednocześnie zapewniając pod koniec każdego kroku że przyogotowany każdy piksel obrazu nie różni się od oryginału o więcej    niż $\epsilon$, z niższą wartością parametru $\epsilon$ niż wymagane oryginalnie w metodzie jednokrokowej.    Pozwala to  potencjalnie ogarniczyć różnicę między preparowanymi przez nas danymi a oryginalnymi danymi wejściowymi    oraz przerwanie działania metody kiedy model przestania poprawnie klasyfikować dane wejściowe.    \begin{algorithm}    \caption{I-FGSM}\label{IFGSM}    \begin{algorithmic}[1]    \State $i \gets 0$    \While{$i <  i_{max}$}        \State $x' = x + \alpha\operatorname{sign}(\nabla_{x} J(x, y_{prawdziwe}))$        \State $i \gets i+1$        \State $Przytnij(x', \epsilon)$    \EndWhile    \end{algorithmic}    \end{algorithm}    \subsubsection{LL-FGSM}    LL-FGSM (z ang. Least Likely FGSM) to metoda pozwalająca nam na spreparowanie danych które będę przydzielane do    konkretnej klasy (ozn. $y_{celu}$), a nie tylko na niepoprawną klasyfikacje. W tym wypadku zamiast starać się    zmieniać wartości pikseli obrazu zgodnie z kierunkiem gradientu funkcji kosztu dla prawidłowej klasy    staramy się zmieniać wartości pikseli przeciwnie do kierunku gradientu funkcji kosztu dla klasy $y_{celu}$.    Intuicyjnie można to opisać jako nie oddalanie się od prawdziwej klasy obrazu, a jako przybliżanie się do zadanej    przez nas klasy.    Autorzy metody zwracają uwagę na przydatność tej metody    w przypadku gdy korzystamy z modeli operujących wieloma klasami i gdzie różnice między obiektami z różnych klas mogą    być bardzo niewielkie (np. między rasami psów). Metoda ta jest także iteracyjna i zapewnie różnice między    odpowiednimi pikselami obrazów nie większą niż $\epsilon$ więc można uznać ją za rozszerzenie metody I-FGSM.    \begin{algorithm}    \caption{LL-FGSM}\label{LLFGSM}    \begin{algorithmic}[1]    \State $i \gets 0$    \While{$i <  i_{max}$}        \State $x' = x - \alpha\operatorname{sign}(\nabla_{x} J(x, y_{celu}))$        \State $i \gets i+1$        \State $Przytnij(x', \epsilon)$    \EndWhile    \end{algorithmic}    \end{algorithm}\subsection{DeepFool}W publikacji \textit{DeepFool: a simple and accurate method to fool deep neural networks}\cite{DBLP:journals/corr/Moosavi-Dezfooli15}autorzy proponują metodę alternatywną do FGSM mającą minimalizować wprowadzaną do danych wejściowych perturbacje jednocześnieosiągając zmianę klasy do której model przyporządkowuje dane wejściowe.%Punktem wyjściowym rozważań autorów było założenie%że model z którego korzystamy jest przekształceniem afinicznym, opracowanie metody pozwalającej na%uzyskanie zminimalizowanej perturbacji, a następnie zgeneralizowanie metody dla modeli nie będących przekształceniami afinicznymi.Wadą DeepFool jest brak możliwości narzucenia klasy do której chcielibyśmy aby przyporządkowywane były nasze zmodyfikowane dane.Metoda ta jest nieco bardziej złożona obliczeniowo jako że pojedynczy krok algorytmu wymaga od nas obliczenia gradientu dlaprawdopodobieństwa każdej klasy względem danych wejściowych, co przy zbiorach danych z wieloma klasamitakich jak np. ImageNet może być problematyczne. Poniżej znajduje się pseudokod opisujący metodę DeepFool dla modeluwieloklasowego.\begin{algorithm}\caption{DeepFool}\label{DeepFool}\begin{algorithmic}[1]\State $x_0 \gets x$\While{$f(x_{i}) =  y_{prawdziwe}$}\For{$k \neq \hat{k}(x_{0})$}    \State $w'_k\gets \nabla f_k(x_i) - \nabla f_{\hat{k}(x_0)}(x_i)$    \State $f'_k\gets f_{k}(x_i) - f_{\hat{k}(x_0)}(x_i)$\EndFor\State $\hat{l}\gets \arg \min_{k\neq\hat{k}(x_0)} \dfrac{|f'_k|}{||w'_k||_2}$\State $r_i\gets \dfrac{|f'_{\hat{l}}|}{||w'_{\hat{l}}||^2_2}w'_{\hat{l}}$\State $x_{i+1}\gets x_i + r_i$\State $i\gets i + 1$\EndWhile\State \textbf{return} $\hat{r} = \sum_{i} r_i$\end{algorithmic}\end{algorithm}\subsection{L-BFGS}Metoda opisana w \textit{Intriguing properties of neural networks}\cite{DBLP:journals/corr/SzegedyZSBEGF13}to próba rozwiązania poniższego problemu optymalizacyjnego w celu uzyskania minimalnej perturbacji danych wejściowychktóra powoduje niepoprawną klasyfikacje danych przez model:    \begin{equation}    \min{\| r\|_{2}}    \qquad\text{przy warunkach:}    \begin{tabular}[t]{ll}    f(x + r) = $y_{celu}$ \\    $x+r \in [0,1]^{m}$ \\    \end{tabular}    \qquad\text{gdzie:}    \begin{tabular}[t]{ll}    r - perturbacja \\    \end{tabular}    \end{equation}Znalezienie dokładnego rozwiązania powyższego problemu jest skomplikowane, dlatego autorzy postanowili szukać aproksymacjirozwiązania poprzez liniowe przeszukiwanie w celu znalezienia najmniejszej wartości parametru $c > 0$ dla którego spełnionyzostaje warunek $f(x+r) = y_{celu}$ gdzie $r$ uzyskujemy z zastosowania algorytmu L-BFGS dla poniższego problemu:    \begin{equation}    \min{c| r| + J(x+r, y_{celu})}    \qquad\text{przy warunkach:}    \begin{tabular}[t]{ll}    $x+r \in [0,1]^{m}$ \\    \end{tabular}    \end{equation}\subsection{JSMA}Idea ataku JSMA (Jacobian Saliency Map Attack) opisanego w\textit{The Limitations of Deep Learning in Adversarial Settings}\cite{DBLP:journals/corr/PapernotMJFCS15}polega na utworzeniu mapy istotności (z ang. Saliency Map) pikseli obrazu dla każdej z klas.Dzięki temu jesteśmy w stanie określić jak dane piksele w obrazie wpływają na określanie prawdopodobieństwa należeniado danej klasy przez model. Sposób tworzenia mapy istotności jest zamieszczony poniżej:\begin{equation}\label{jsma+}S^{+} ( \mathbf { x } , y ) [ i ] = \left\{ \begin{array} { c } { 0 \text { jeśli } \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } < 0 \text { lub } \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } > 0 } \\ { \left( \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } \right) \left| \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } \right| \text { w.p.p } } \end{array} \right.\qquad\text{gdzie:}\begin{tabular}[t]{ll}x - dane wejściowe \\${f} _ { y } ({x})$ - prawd. przynależności x do klasy y \\$x_{i}$ - i-ty piksel obrazu wejściowego x \\S({x},y)[i] - wartość i-tego piksel dla klasy y\end{tabular}\end{equation}W powyżej zdefiniowanej mapie nieujemne wartości oznaczają poziom wpływu zwiększenia intensywności danego piksela $i$na przynależność dla danej klasy $y$.Warunek $\frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } < 0$zapewnia że nie będziemy rozpatrywać pikseli które mają negatywny wpływ na wartość prawdopodobieństwa należenia przykładudo klasy $y$.Natomiast warunek $\sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } > 0 $zapewnia że nie będziemy rozpatrywać pikseli które mają pozytywny wpływ na wartość prawdopodobieństwa należenia przykłady do klasinnych niż narzucona przez nas klasa $y$. Autorzy metody proponują też analogiczną mapę istotności w którazamiast określać wpływ zwiększenia intensywności pikseli na przynależność przykładu do danej klasy określa wpływ zmniejszaniaintensywności piksela na przynależność do danej klasy.%\begin{equation}\label{jsma-}%S^{-} ( \mathbf { x } , y ) [ i ] = \left\{ \begin{array} { c } { 0 \text { jeśli } \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } > 0 \text { lub } \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } < 0 } \\ { \left|( \frac { \partial \mathbf {f} _ { y } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } )\right  \left| \sum _ { j \neq y } \frac { \partial \mathbf {f} _ { j } ( \mathbf {x} ) } { \partial \mathbf {x} _ { i } } \right \text { w.p.p } } \end{array} \right.%\end{equation}W praktyce jednak większość pikseli nie spełnia warunków określonych w pierwszej linii podanych równań,dlatego autorzy zastosowali metodę wyboru par pikseli $p_1$ i $p_2$ zamiast pojedynczego piksela.W tym celu stosowana jest opisana poniżej metoda.\begin{equation} \label{saliency_map}\arg \max _ { \left( p _ { 1 } , p _ { 2 } \right) } \left( \sum _ { i = p _ { 1 } , p _ { 2 } } \frac { \partial \mathbf { f } _ { y } ( \mathbf { x } ) } { \partial \mathbf { x } _ { i } } \right) \times \left| \sum _ { i = p _ { 1 } , p _ { 2 } } \sum _ { j \neq y } \frac { \partial \mathbf { f } _ { j } ( \mathbf { x } ) } { \partial \mathbf { x } _ { i } } \right|\end{equation}O ile rozwiązuje to problem znalezienia pikseli które spełniają warunki o tyle metoda ta ma większą złożoność obliczeniowąz uwagi na to że musimy rozpatrzyć wszystkie możliwe pary pikseli zamiast tylko pojedynczych pikseli.Opisany poniżej algorytm oddaje istotę opisanej przez autorów metody.\begin{algorithm}\caption{JSMA}\label{JSMA}\begin{algorithmic}[1]\State $x' \gets x$\While{$f(x') \neq  y_{celu}\ \& \ i < i_{max}$}    \State $p_1, p_2$ = S$(x',y_{celu})$ \Comment przez S rozumiemy (\ref{saliency_map})    \State zmodyfikuj $p_1$ i $p_2$ o $\theta$    \State jeśli $p_1$ lub $p_2$ wynosi 0 albo 1 usuń je z listy pikseli    \State $i \gets i+1$\EndWhile\State \textbf{return} $x'$\end{algorithmic}\end{algorithm}Istnieje wiele różnych wariantów metody JSMA, których zasadnicze działanie nie różni się bardzo od tego opisanego powyżej.\textit{Maximal Jacobian-based Saliency Map Attack}\cite{DBLP:journals/corr/abs-1808-07945} przeprowadza bardzozwięzłe podsumowanie różnych wariantów metody JSMA. Warto tutaj przytoczyć kilka różnic między opisanymi w tej publikacjiwariantami JSMA.\subsubsection{JSMA+ i JSMA-}Autorzy \textit{Maximal Jacobian-based Saliency Map Attack}\cite{DBLP:journals/corr/abs-1808-07945} wprowadzają rozróżnieniepomiędzy JSMA+ a JSMA- w zależności od tego czy intensywność pikseli jest zmniejszana i wykorzystywane są warunki~(\ref{jsma-})czy też intensywność pikseli jest zwiększana i wykorzystywane są warunki~(\ref{jsma+})\subsubsection{JSMA-F i JSMA-Z}W publikacji \textit{Towards Evaluating the Robustness of Neural Networks}\cite{DBLP:journals/corr/CarliniW16a}autorzy proponują rozróżnienie pomiędzy JSMA-F, które w metodzie~(\ref{saliency_map}) wykorzystuje do obliczania pochodnej cząstkowejwyjście funkcji softmax stosowanej zazwyczaj jako ostatnia warstwa modelu, a JSMA-Z które zamiast tego wykorzystuje wektorwyjściowy przedostatniej warstwy określany często jako zazwyczaj jako logits.\subsubsection{NT-JSMA}NT-JSMA czyli wersja JSMA bez zadanej klasy którą chcemy osiągnąć (z ang. Non Targeted JSMA). To postulowany przez autorów\textit{Maximal Jacobian-based Saliency Map Attack}\cite{DBLP:journals/corr/abs-1808-07945} wariant metody JSMAktóry poprzez zdjęcie ograniczenia polegającego na tym że spreparowana dane mają być klasyfikowane jako należące do zadanejklasy ma umożliwić zmniejszenie perturbacji wymaganej do zmiany klasyfikacji danych przez model. To usprawnienie niesieze sobą jednak dodatkowy koszt obliczeniowy jako że w każdej iteracji rozpatrujemy $S^{-}()$ bądź $S^{+}()$ nie dlajednej zadanej klasy tylko dla wszystkich.\subsubsection{M-JSMA}M-JSMA\cite{DBLP:journals/corr/abs-1808-07945} to wariant metody JSMA który łączy w sobie metodę\subsection{Carlini \& Wagner}Carlini oraz Wagner\cite{DBLP:journals/corr/CarliniW16a} w odpowiedzi na pojawiające się publikacje dotycząceataków adwersaryjnych zaproponowali swoją metodę której celem jest, podobnie jak w innych metodach,tworzenie złośliwych danychodstających możliwie jak najmniej od danych wejściowych a zarazem klasyfikowanych przez zadany model jakozadana klasa. Zaproponowna przez autorów metoda opiera się na zastosowania metod optymalizacyjnych  w nauczaniumaszynowym do problemu optymalizacyjnego zadanego w poniższy sposób\begin{equation}\label{eq:c_and_w}    \text { minimalizuj } \| \frac { 1 } { 2 } ( \tanh ( w ) + 1 ) - x \| _ { 2 } ^ { 2 } + c \cdot f ( \frac { 1 } { 2 } ( \tanh ( w ) + 1 ) )\end{equation}gdzie $f$ definiujemy jako\begin{equation}    f ( x ^ { \prime } ) = \max ( \max \{ Z ( x' ) _ { i } : i \neq t \} - Z ( x ^ { \prime } ) _ { t } , - \kappa)\end{equation}Pierwsza składowa sumy \eqref{eq:c_and_w} odpowiada za minimalizację odstępstwa spreparowanego obrazuod oryginału. Druga składowa odpowiada za zwiększanie prawdopodobieństwa z jakim model klasyfikuje nasz przykładjako należący do zadanej klasy. Parametr \(\kappa\) odpowiada za pewność z jaką chcemy żeby model klasyfikował naszprzykład jako należący do zadanej klasy.\subsection{MAP-Elites}Innym podejściem od pozostałych jest jedna z metod opisanych w\textit{Deep Neural Networks are Easily Fooled: High Confidence Predictions for Unrecognizable Images} \cite{DBLP:journals/corr/NguyenYC14}.Autorzy zaproponowali zastosowanie algorytmów ewolucyjnych w celu wygenerowania złośliwych przykładów.Zastosowaną strategią ewolucyjną jest MAP-Elites która pozwala na jednoczesne generowanie przykładów adwersaryjnych dlawszystkich klas modeli klasyfikującego. Poniżej znajduje się opis strategi ewolucyjnej zastosowanej przez autorów\todo{tutaj dodać algo MAP-Elites}%https://arxiv.org/pdf/1504.04909.pdf\subsection{GenAttack}Metoda GenAttack opisana w\textit{GenAttack: Practical Black-box Attacks with Gradient-Free Optimization}\cite{DBLP:journals/corr/abs-1805-11090}to podobnie jak MAP-Elites metoda opierająca się na algorytmach ewolucyjnych, jednak strategia ewolucyjnaprzyjęta tutaj przez autorów jest zgoła inna. W tym przypadku generujemy przykładu adwersaryjne tylko dla jednej klasy narazw przeciwieństwie do wszystkich klas jak w przypadku MAP-Elites.\todo{Tutaj dodać opis algo}\subsection{AdvGAN}%\begin{adjustbox}{max width=\textwidth}%\begin{pycode}%from latex_utils import *%import_and_print('../json_results/fgsm_targeted_wrapper.json', 3)%\end{pycode}%\end{adjustbox}\section{Wyniki Ataków}    W celu oceny skuteczności ataków oraz ich porównania zastosujemy szereg charakterystyk które nam to umożliwią.    W ramach konferencji    \textit{Conference on Neural Information Processing Systems} zorganizowany został konkurs którego celem było    określenie postępu ataków adwersaryjnych oraz wszechstronności modeli zajmujących się przetwarzaniem obrazów\cite{DBLP:journals/corr/abs-1808-01976}.    W wspomnianym powyżej konkursie zastosowano charakterystykę opisana w następujący sposób:    \begin{equation}\label{nips_median}        \text { OcenaAtaku }=\operatorname{mediana}\left(\left\{\|\text{Atak}{(x, m)}-x\|_2 : x \in X, m \in M\right\}\right)        \qquad\text{gdzie:}        \begin{tabular}[t]{ll}        \(X\) - zbiór danych z obrazami \\        \(M\) - zbiór modeli testowych\\        \end{tabular}    \end{equation}    Ponadto gdy atak nie wygeneruje przykładu adwersaryjnego który jest w stanie oszukać model przypisywana jest górna granica    metryki \(L_2\).    Modele które były stosowane w konkursie używały precyzji top-5 która określa procent przykładów których prawdziwa    kategoria znalazła się wśród pierwszej piątce prawdopodobieństw przypisywanych przez klasyfikator na wyjściu.\\    Autorzy \textit{Towards Evaluating the Robustness of Neural Networks}\cite{DBLP:journals/corr/CarliniW16a} wykorzystują do oceny swojego ataku precyzję z jaką jest on w stanie oszukać    model oraz średnią z metryki \(L_2\) różnicy między obrazem oryginalny a złośliwym. Poniżej znajdują się opisy obu metryk:    \begin{equation}        \text{Średnia\(L_2\)}=\frac{\sum_{x \in X}\|\text{Atak}(x)-x\|_2}{|X|}        \qquad\text{gdzie:}        \begin{tabular}[t]{ll}        \(X\) - zbiór danych z obrazami \\        \end{tabular}    \end{equation}    \begin{equation}        \text{Precyzja}=\left\{        \begin{array}{lc}        \frac{|\{\text{Model}(\text{Atak}(x))!=y:x\in X\}|}{|X|} \text{ gdy \(y_{cel}\) nie istnieje}\\        \frac{|\{\text{Model}(\text{Atak}(x))=y_{cel}:x\in X\}|}{|X|} \text{ w p.p}        \end{array}        \qquad\text{gdzie:}        \begin{tabular}[t]{ll}        \(X\) - zbiór danych z obrazami \\        \(y\) - prawdziwa klasa obrazu \\        \(y_{cel}\) - zadana klasa ataku \\        \end{tabular}    \end{equation}    \\    Autorzy \textit{DeepFool: a simple and accurate method to fool deep neural networks}\cite{DBLP:journals/corr/Moosavi-Dezfooli15}    zastosowali średnią wszechstronność (z ang. \textit{robustnes}) jako charakterystykę ataku. Można ją sformułować w następujący sposób:    \begin{equation}        \rho_{adw}=\frac{1}{|X|}\sum_{x \in X} \frac{\|\text{Atak}(x_{org})\|_2}{\|x_{orig}\|_2}        \qquad\text{gdzie:}        \begin{tabular}[t]{ll}        \(X\) - zbiór danych z obrazami \\        \end{tabular}    \end{equation}    Dodatkowo pomocne może być zastosowanie metody opisanej w przykładzie \eqref{nips_median} dla pojedyńczych modeli    zamiast zestawu wszystkich.    We wszystkich testach odrzucamy przykłady z zbiorów danych które modele klasyfikują niepoprawnie bądź w przypadku    ataków z zadaną klasą takie które które już należą do zadanej klasy.\pagebreak\subsection{FGSM}\subsubsection{FGSM}\label{FGSM-SCORES}    Jedynym parametrem w klasycznym wariancie metody FGSM jest \(\epsilon\) który określa rozmiar zmiany wprowadzanej dla    każdego atrybutu. W przypadku obarazów zmiana wartości natężenia każdego kanału dla każdego piksela. Testy dla wszystkich    wariantów ataku FGSM dla zbioru ImageNet z uwagi na ich czasochłonność są wykonywane na 100 przykładach testowych,    pozostałe zbiory wykorzystują wszystkie istniejące przykłady z testowej części zbioru danych.    Poniżej znajduje się tabela w której można zobaczyć porównanie charakterystyk ataku FGSM względem różnych    wartości parametru \(\epsilon\):\begin{figure}[h!]    \caption{Przykłady złośliwych przykładów wybranych na podstawie obrazów z różnych zbiorów za pomocą metody FGSM}    \begin{subfigure}[t]{\textwidth}        \includegraphics[width=\textwidth]{img/row_fgsm_mnist_conv_modelpng.png}        \caption{MNIST}        \label{fig:fgsm_mnist_row}    \end{subfigure}%    \begin{subfigure}[t]{\textwidth}        \includegraphics[width=\textwidth]{img/row_fgsm_cifar10_conv_modelpng.png}        \caption{CIFAR-10}        \label{fig:fgsm_cifar10_row}    \end{subfigure}%    \begin{subfigure}[t]{\textwidth}        \includegraphics[width=\textwidth]{img/row_fgsm_cifar100_conv_modelpng.png}        \caption{CIFAR-100}        \label{fig:fgsm_cifar100_row}    \end{subfigure}%    \begin{subfigure}[t]{\textwidth}        \includegraphics[width=\textwidth]{img/row_fgsm_imagenet_v3png.png}        \caption{ImageNet}        \label{fig:fgsm_imagenet_row}    \end{subfigure}%\end{figure}\begin{adjustbox}{max width=\textwidth}\begin{pycode}from latex_utils import *generate_fgsm_table()\end{pycode}\end{adjustbox}\pagebreak\subsubsection{I-FGSM}\label{I-FGSM-SCORES}Metoda I-FGSM \ref{IFGSM} oprócz parametru \(\epsilon\) kontrolujemy także liczbą iteracji \(i\) w których modyfikujemyoryginalny obraz. Poniżej znajduje się tabela z charakterystykami ataku I-FGSM dla kilku różnych wartości \(i\) i \(\epsilon\)\begin{adjustbox}{max width=\textwidth}\begin{pycode}from latex_utils import *generate_ifgsm_table()\end{pycode}\end{adjustbox}\begin{figure}[h!]    \caption{Przykłady złośliwych przykładów wybranych na podstawie obrazów z różnych zbiorów za pomocą metody I-FGSM}    \begin{subfigure}[t]{\textwidth}        \includegraphics[width=\textwidth]{img/row_iterative_fgsm_mnist_conv_modelpng.png}        \caption{MNIST}        \label{fig:itertative_fgsm_mnist_row}    \end{subfigure}%    \begin{subfigure}[t]{\textwidth}        \includegraphics[width=\textwidth]{img/row_iterative_fgsm_cifar10_conv_modelpng.png}        \caption{CIFAR-10}        \label{fig:itertative_fgsm_cifar10_row}    \end{subfigure}%    \begin{subfigure}[t]{\textwidth}        \includegraphics[width=\textwidth]{img/row_iterative_fgsm_cifar100_conv_modelpng.png}        \caption{CIFAR-100}        \label{fig:iterative_fgsm_cifar100_row}    \end{subfigure}%    \begin{subfigure}[t]{\textwidth}        \includegraphics[width=\textwidth]{img/row_iterative_fgsm_imagenet_v3png.png}        \caption{ImageNet}        \label{fig:iterative_fgsm_imagenet_row}    \end{subfigure}%\end{figure}\pagebreak\subsubsection{LL-FGSM}\label{LL-FGSM-SCORES}Metoda LL-FGSM oprócz perturbacji \(\epsilon\) oraz liczby iteracji \(i\) pozwala nam na narzucenie klasy z jaką modelma klasyfikować. Klasy do testów wybierane są losowo z rozkładem jednostajnym. Poniżej znajduje się tabela z charkterystykamidla ataku LL-FGSM dla kilku różnych wartości \(i\) i \(\epsilon\)\begin{adjustbox}{max width=\textwidth}\begin{pycode}from latex_utils import *generate_llfgsm_table()\end{pycode}\end{adjustbox}\pagebreak\begin{figure}[h!]    \caption{Przykłady wygenerowanych złośliwych przykładów z zadaną klasą za pomocą metody LL-FGSM}    \begin{subfigure}[t]{0.48\textwidth}        \includegraphics[width=\textwidth]{img/llfgsm_interclasscifar10_conv_model.png}        \caption{Przykładowe złośliwe obrazy z zbioru CIFAR-10 uzyskane za pomocą metody LL-FGSM z użyciem parametrów \(\epsilon=0.0005\) i \(i=1000\)}        \label{fig:cifar10_grid_llfgsm}    \end{subfigure}%    \hfill    \begin{subfigure}[t]{0.48\textwidth}        \includegraphics[width=\textwidth]{img/llfgsm_interclasscifar100_conv_model.png}        \caption{Przykładowe złośliwe obrazy z zbioru CIFAR-100 uzyskane za pomocą metody LL-FGSM z użyciem parametrów \(\epsilon=0.0001\) i \(i=1000\)}        \label{fig:cifar100_grid_llfgsm}    \end{subfigure}%    \begin{subfigure}[t]{0.48\textwidth}        \includegraphics[width=\textwidth]{img/llfgsm_interclassmnist_conv_model.png}        \caption{Przykładowe złośliwe obrazy z zbioru MNIST uzyskane za pomocą metody LL-FGSM z użyciem parametrów \(\epsilon=0.0005\) i \(i=1000\)}        \label{fig:mnist_grid_llfgsm}    \end{subfigure}%\end{figure}Zestawiając wyniki metody I-FGSM(\ref{I-FGSM-SCORES}) i FGSM(\ref{FGSM-SCORES}) można zauważyć że zgodnie z intuicją dotyczącąalgorytmów optymalizacyjnych wykorzystujących gradient większe liczba mniejszych kroków przynosi zwiększoną skuteczność ataku wrazz mniejszą perturbacją oryginalnego obrazu w sensie różnicy normy \(L_2\) obrazu oryginalnego i złośliwego.Mniejszą skuteczność, rozumianą w sensie precyzji, wariantu LL-FGSM(\ref{LL-FGSM-SCORES}) można tłumaczyć tym że pozostałe wariantymetody FGSM korzystają z gradientu w celu modyfikacji obrazu tak aby zmaksymalizować funkcję kosztu która normalnie zostałaby użyta w procesie nauczania modelu,natomiast wariant LL-FGSM stara się tak modyfikować obraz aby zminimalizować funkcję kosztu gdzie zamiast faktycznej klasy jest nasza zadana klasa.Warto też napomnieć że metoda FGSM wykorzystuje metodę propagacji wstecznej w celu obliczenia gradientu dla obrazu w każdej iteracji.Z tego tytułu ilość obliczeń potrzebnych do uzyskania wyniku rośnie wraz z liczbą iteracji i rozmiarami modelu, co można też zauważyć w przestawionych wcześniejtabelach.\todo{odwołać się do publikacji}\subsection{L-BFGS}\subsection{GenAttack}Atak GenAttack posiada 4 parametry które kontrolują jego zachowanie. Jako że atak wykorzstuje technikiznane z algorytmów ewolucyjnych jesteśmy w stanie kontrolować rozmiar populacji, liczbę generacji, szanse na mutacjedanego osobnika oraz parametr \(\delta\) określający siłę mutacji. Atak GenAttack jest stosunkowo czasochłonny zwłaszczaw przypadku zbiorów danych o większej ilości atrybutów dlatego dla zbioru ImageNet\cite{ILSVRC15} testy są przeprowadzanena 1000 obrazach z zestawu testowego zamiast na istniejących 50000, więc nie należy traktować ich jako pełnego wyniku.\begin{adjustbox}{max width=\textwidth}\begin{pycode}from latex_utils import *generate_getattack_table()\end{pycode}\end{adjustbox}Podobnie jak w większości algorytmów ewolucyjnych skuteczność metody GenAttack zależy od rozmiaru populacji oraz liczbyi liczby generacji jaką przejdzie. Niestety wiążę się z tym też zwiększona ilość potrzebnych obliczeń co można powyżej zaobserwować.Również liczba atrybutów danych wejściowych wpływa na liczbę dokonywanych operacji. Dlatego też złośliwe przykłady dla zbiorów pokrojuImageNet wymagają więcej czasu do wygenerowania niż przykłady ze zbioru MNIST.%\subsection{MAP-Elites}    \subsection{Carlini \& Wagner}    Metoda którą zaproponowali Carlini i Wagner w \textit{Towards Evaluating the Robustness of Neural Networks}\cite{DBLP:journals/corr/CarliniW16a}    wykorzystuje znane metody optymalizacji stosowane w dziedzinie nauczania maszynowego. W celu uzyskania poniższych wyników zasotosowana została    metoda gradientu prostego.    \subsection{JSMA}\subsection{DeepFool}\bibliography{pdi}\bibliographystyle{ieeetr}\end{document}

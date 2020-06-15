@@ -15,6 +15,7 @@ params_list = [
     {EPS: 0.1, ITER_MAX: 1},
     {EPS: 0.1, ITER_MAX: 10},
     {EPS: 0.5, ITER_MAX: 1},
+    {EPS: 0.25, ITER_MAX: 1},
     {EPS: 0.5, ITER_MAX: 10},
     {EPS: 0.01, ITER_MAX: 1},
     {EPS: 0.01, ITER_MAX: 10},

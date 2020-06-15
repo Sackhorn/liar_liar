@@ -2,4 +2,5 @@ Set-ExecutionPolicy Bypass -Scope Process -Force; [System.Net.ServicePointManage
 choco install anaconda3
 conda install -c anaconda tensorflow-gpu
 conda install -c anaconda tensorflow-datasets
-
+pip3 install matplotlib
+pip3 install scipy

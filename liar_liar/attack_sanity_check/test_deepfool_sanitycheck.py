@@ -44,5 +44,5 @@ attack_params = {
 }
 class DeepFoolSanityCheck(TestCase):
     def test_sanitycheck(self):
-        deepfool_wrapper.__name__ = deepfool_wrapper.__name__ + "_sanity_check"
+        deepfool_wrapper_map.__name__ += "_sanity_check"
         attack_with_params_dict(attack_params, deepfool_wrapper_map, show_plot=False, targeted=False)

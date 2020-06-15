@@ -17,7 +17,7 @@ def bfgs(classifier, data_sample, target_class, iter_max, min=0.0, max=1.0):
         arr_image.append(ret_image)
     arr_image = tf.concat(arr_image, 0)
     parameteres = {
-        "target_class":int(tf.argmax(target_class.numpy())),
+        # "target_class":int(tf.argmax(target_class.numpy())),
         "iter_max":iter_max,
         # "min":min,
         # "max":max

@@ -50,9 +50,12 @@ def get_results_for_model_and_parameter(result_dict, parameter_dict, model_name)
         results_for_model = result_dict[model_name]
     except KeyError:
         return None
+
     for per_params_results in results_for_model:
         params = per_params_results[PARAMETERS_KEY]
+        found = True
         for parameter, val in parameter_dict.items():
-            if params[parameter] == val:
-                return per_params_results
+            found &= params[parameter] == val
+        if found:
+            return per_params_results
     return None

@@ -36,20 +36,29 @@ def show_plot(logits, image, labels_names=None, plot_title=None):
         plt.title(plot_title)
     plt.show()
 
-def show_plot_target_class_grid(images_dict):
+def show_plot_target_class_grid(images_dict, file_name, label_names):
     """
     Args:
         images_dict (dict):
     """
-    figure: Figure = plt.figure(figsize=(20 ,20))
+    figure: Figure = plt.figure(figsize=(20, 20))
     grid = ImageGrid(figure, 111, nrows_ncols=(10, 10), axes_pad=0.1)
     image_arr = []
     for true_class in  range(10):
         for target_class in range(10):
             image_arr.append(tf.squeeze(images_dict[true_class][target_class]))
-    for ax, im in zip(grid, image_arr):
-        ax.imshow(im)
-    plt.show()
+    for i, (ax, im) in enumerate(zip(grid, image_arr)):
+        ax.imshow(im, cmap=plt.get_cmap("gray"))
+        y_label = label_names[i // 10]
+        x_label = label_names[i % 10]
+        ax.set_ylabel(y_label, fontsize=20)
+        ax.set_xlabel(x_label, fontsize=20)
+        plt.setp(ax.get_xticklabels(), visible=False)
+        plt.setp(ax.get_yticklabels(), visible=False)
+        ax.tick_params(axis='both', which='both', length=0)
+    figure.tight_layout()
+    figure.savefig(file_name)
+    # plt.savefig(file_name)
 
 #Compare original image and adversary version
 def show_plot_comparison(adv_image,

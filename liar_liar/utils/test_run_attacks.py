@@ -70,7 +70,7 @@ def create_results_json(attack_wrapper_name, results_arr):
     with open(json_file_path, 'w', encoding='utf-8') as f:
         json.dump(results_arr, f, ensure_ascii=False, indent=4)
 
-def interclass_run_with_params_dict(attack_params, attack_wrapper):
+def generate_targeted_attack_grid(attack_params, attack_wrapper, file_name, retries=20):
     disable_tensorflow_logging()
     all_models = get_all_models()
     classifier: SequentialModel
@@ -78,6 +78,7 @@ def interclass_run_with_params_dict(attack_params, attack_wrapper):
         try:
             model_dict = attack_params[classifier.MODEL_NAME]
         except KeyError:
+            print("classifier model not found in interclass params dict")
             continue
         parameters = model_dict[PARAMETERS_KEY]
 
@@ -100,7 +101,7 @@ def interclass_run_with_params_dict(attack_params, attack_wrapper):
 
                 dataset = classifier.get_dataset(Split.TEST,
                                                  batch_size=1,
-                                                 shuffle=1,
+                                                 shuffle=10,
                                                  filter=get_baseclass_not_misclassfied)
 
                 range_nmb_target_classes = list(range(nmb_classes))
@@ -108,7 +109,7 @@ def interclass_run_with_params_dict(attack_params, attack_wrapper):
                 for target_class in range_nmb_target_classes:
                     target_class_one_hot = tf.one_hot(target_class, classifier.get_number_of_classes())
                     found_sample = False
-                    for retry in range(10):
+                    for retry in range(retries):
                         for data_sample in dataset.take(1):
                             true_class_dict[true_class][true_class] = data_sample[0]
                             ret_image, logits, _ = attack(classifier, data_sample, target_class_one_hot)
@@ -117,10 +118,13 @@ def interclass_run_with_params_dict(attack_params, attack_wrapper):
                                 true_class_dict[true_class][target_class] = ret_image
                         if found_sample:
                             break
+                    if not found_sample:
                         print("run out of retries returning function without results")
                         return
 
-        show_plot_target_class_grid(true_class_dict)
+            show_plot_target_class_grid(true_class_dict,
+                                        file_name + classifier.MODEL_NAME + ".png",
+                                        classifier.get_label_names())
 
 def run_test(classifier, attack, batch_size, target_class, nmb_elements=None, show_plots=True):
     """

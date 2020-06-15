@@ -21,7 +21,7 @@ def fgsm(classifier, data_sample, target_class=None, iter_max=1, eps=0.01, min=0
     """
     return_images = _fgsm(data_sample, classifier, target_class, iter_max, eps, min, max)
     parameters = {
-        "target_class" : target_class is not None,
+        # "target_class" : target_class is not None,
         "iter_max" : iter_max,
         "eps" : eps,
         # "min" : min,
@@ -50,7 +50,8 @@ def fgsm_targeted_wrapper(iter_max=1, eps=0.01, min=0.0, max=1.0):
         return fgsm(classifier, data_sample, target_class, iter_max, eps, min, max)
     return wrapped_fgsm
 
-
+#TODO: in case of LL-FGSM we should modify the eps taking into account number of steps
+# https://arxiv.org/pdf/1705.07204.pdf
 @tf.function
 def _fgsm(data_sample, classifier, target_class=None, iter_max=1, eps=0.35, min=0.0, max=1.0):
     image, label = data_sample

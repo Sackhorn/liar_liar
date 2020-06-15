@@ -42,7 +42,7 @@ def gen_attack(classifier,
                                                 mutation_probability,
                                                 delta), images)
     parameters = {
-        "target_class": True,
+        # "target_class": True,
         "generation_nmb": generation_nmb,
         "population_nmb": population_nmb,
         "mutation_probability": mutation_probability,

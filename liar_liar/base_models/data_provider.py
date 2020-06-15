@@ -60,6 +60,8 @@ class DataProvider():
             return x, y
         if self.dataset_name in ['mnist', 'cifar10', 'cifar100']:
             self.data_dir = None
+        elif self.dataset_name == "imagenet2012":
+            split = tfds.Split.VALIDATION
         dataset, info = tfds.load(self.dataset_name, split=split, with_info=True, as_supervised=True, data_dir=self.data_dir)  # type: tf.data.Dataset
         dataset = dataset.map(cast_labels)
         if filter is not None:
@@ -80,8 +82,10 @@ class DataProvider():
         return self.info
 
     def load_model_data(self):
-        self.load_weights(self.SAVE_DIR)
-        print("Successfully loaded model from file: " + self.SAVE_DIR)
+        try:
+            self.load_weights(self.SAVE_DIR)
+        except:
+            print("Failed to load model from file: " + self.SAVE_DIR)
         return self
 
     def save_model_data(self):
