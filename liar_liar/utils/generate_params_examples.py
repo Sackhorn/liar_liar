@@ -45,7 +45,7 @@ def get_same_image_with_different_params(attack_wrapper,
             break
         plot_multiple_images_in_row(images_list,
                                     classifier.get_label_names(),
-                                    file_name + classifier.MODEL_NAME + "png",
+                                    file_name + classifier.MODEL_NAME,
                                     x_labels)
 
 def plot_multiple_images_in_row(images_list, labels, file_name, x_labels=None):

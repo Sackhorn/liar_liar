@@ -1,8 +1,6 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.figure import Figure
-from mpl_toolkits.axes_grid1 import ImageGrid
 from tensorflow import Tensor
 
 
@@ -34,90 +32,4 @@ def show_plot(logits, image, labels_names=None, plot_title=None):
     plt.xticks(np.arange(len(probs)), labels_names, rotation=90)
     if plot_title is not None:
         plt.title(plot_title)
-    plt.show()
-
-def show_plot_target_class_grid(images_dict, file_name, label_names):
-    """
-    Args:
-        images_dict (dict):
-    """
-    figure: Figure = plt.figure(figsize=(20, 20))
-    grid = ImageGrid(figure, 111, nrows_ncols=(10, 10), axes_pad=0.1)
-    image_arr = []
-    for true_class in  range(10):
-        for target_class in range(10):
-            image_arr.append(tf.squeeze(images_dict[true_class][target_class]))
-    for i, (ax, im) in enumerate(zip(grid, image_arr)):
-        ax.imshow(im, cmap=plt.get_cmap("gray"))
-        y_label = label_names[i // 10]
-        x_label = label_names[i % 10]
-        ax.set_ylabel(y_label, fontsize=20)
-        ax.set_xlabel(x_label, fontsize=20)
-        plt.setp(ax.get_xticklabels(), visible=False)
-        plt.setp(ax.get_yticklabels(), visible=False)
-        ax.tick_params(axis='both', which='both', length=0)
-    figure.tight_layout()
-    figure.savefig(file_name)
-    # plt.savefig(file_name)
-
-#Compare original image and adversary version
-def show_plot_comparison(adv_image,
-                         adv_logits,
-                         orig_image,
-                         orig_logits,
-                         labels_names,
-                         plot_title=None,
-                         target_class=None,
-                         true_class=None):
-    """
-
-    :type orig_logits: Tensor
-    :type orig_image: Tensor
-    """
-    labels_names = np.arange(orig_logits.numpy().size) if labels_names is None else np.array(labels_names)
-
-    orig_logits = orig_logits.numpy().flatten()
-    orig_colors = ['blue'] * len(orig_logits)
-    adv_logits = adv_logits.numpy().flatten()
-    adv_colors = ['blue']*len(adv_logits)
-
-    true_class = int(tf.argmax(true_class).numpy())
-    orig_colors[true_class], adv_colors[true_class] = 'green', 'green'
-
-    if target_class is not None:
-        target_class = int(tf.argmax(target_class).numpy()) if target_class is not None else None
-        orig_colors[target_class], adv_colors[target_class] = 'red', 'red'
-    orig_zip = list(zip(orig_logits, labels_names, orig_colors))
-    adv_zip = list(zip(adv_logits, labels_names, adv_colors))
-    #case when we have more than 10 classes in dataset
-    if len(orig_logits) > 10:
-        orig_zip = sorted(orig_zip, key=lambda x: x[0], reverse=True)
-        adv_zip = sorted(adv_zip, key=lambda x: x[0], reverse=True)
-        orig_zip = orig_zip[:10]
-        adv_zip = adv_zip[:10]
-    orig_logits, orig_labels, orig_colors = list(zip(*orig_zip))
-    adv_logits, adv_labels, adv_colors = list(zip(*adv_zip))
-
-    figure = plt.figure(figsize=(6,9))
-    if plot_title is not None:
-        figure.suptitle(plot_title)
-
-    plt.subplot(2, 2, 1)
-    plt.imshow(tf.squeeze(orig_image), cmap=plt.get_cmap("gray"))
-    plt.axis('off')
-
-    plt.subplot(2, 2, 2)
-    plt.bar(np.arange(len(orig_logits)), orig_logits, color=orig_colors)
-    plt.xticks(np.arange(len(orig_logits)), orig_labels, rotation=90)
-    plt.axis('tight')
-
-    plt.subplot(2, 2, 3)
-    plt.imshow(tf.squeeze(adv_image), cmap=plt.get_cmap("gray"))
-    plt.axis('off')
-
-    plt.subplot(2, 2, 4)
-    plt.bar(np.arange(len(adv_logits)), adv_logits, color=adv_colors)
-    plt.xticks(np.arange(len(adv_logits)), adv_labels, rotation=90)
-    plt.axis('tight')
-
     plt.show()

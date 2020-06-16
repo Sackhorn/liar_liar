@@ -12,7 +12,7 @@ from tensorflow_datasets import Split
 
 from liar_liar.base_models.sequential_model import SequentialModel, get_all_models
 from liar_liar.utils.general_names import *
-from liar_liar.utils.images import show_plot_comparison, show_plot_target_class_grid
+from liar_liar.utils.generate_side_by_side import show_plot_comparison
 from liar_liar.utils.utils import batch_image_norm, disable_tensorflow_logging, get_results_for_model_and_parameter
 
 
@@ -70,61 +70,6 @@ def create_results_json(attack_wrapper_name, results_arr):
     with open(json_file_path, 'w', encoding='utf-8') as f:
         json.dump(results_arr, f, ensure_ascii=False, indent=4)
 
-def generate_targeted_attack_grid(attack_params, attack_wrapper, file_name, retries=20):
-    disable_tensorflow_logging()
-    all_models = get_all_models()
-    classifier: SequentialModel
-    for classifier in all_models:
-        try:
-            model_dict = attack_params[classifier.MODEL_NAME]
-        except KeyError:
-            print("classifier model not found in interclass params dict")
-            continue
-        parameters = model_dict[PARAMETERS_KEY]
-
-        for parameter_set in parameters:
-            attack = attack_wrapper(**parameter_set)
-            nmb_classes = classifier.get_number_of_classes()
-            nmb_classes = 10 if nmb_classes >= 10 else nmb_classes
-            true_class_dict = {}
-
-            for true_class in range(nmb_classes):
-                true_class_dict[true_class] = {}
-                true_class_one_hot = tf.one_hot(true_class, classifier.get_number_of_classes())
-                def get_baseclass_not_misclassfied(image, label):
-                    image = tf.expand_dims(image, 0)
-                    classification = tf.one_hot(tf.argmax(classifier(image), 1), classifier.get_number_of_classes())
-                    classified_fine = tf.math.reduce_all(tf.math.equal(classification, label))
-                    in_true_class = tf.math.reduce_all(tf.math.equal(true_class_one_hot, label))
-                    ret_val = tf.math.logical_and(classified_fine, in_true_class)
-                    return ret_val
-
-                dataset = classifier.get_dataset(Split.TEST,
-                                                 batch_size=1,
-                                                 shuffle=10,
-                                                 filter=get_baseclass_not_misclassfied)
-
-                range_nmb_target_classes = list(range(nmb_classes))
-                range_nmb_target_classes.remove(true_class)
-                for target_class in range_nmb_target_classes:
-                    target_class_one_hot = tf.one_hot(target_class, classifier.get_number_of_classes())
-                    found_sample = False
-                    for retry in range(retries):
-                        for data_sample in dataset.take(1):
-                            true_class_dict[true_class][true_class] = data_sample[0]
-                            ret_image, logits, _ = attack(classifier, data_sample, target_class_one_hot)
-                            if tf.math.reduce_all(tf.math.equal(tf.argmax(logits, 1), tf.argmax(target_class_one_hot))):
-                                found_sample = True
-                                true_class_dict[true_class][target_class] = ret_image
-                        if found_sample:
-                            break
-                    if not found_sample:
-                        print("run out of retries returning function without results")
-                        return
-
-            show_plot_target_class_grid(true_class_dict,
-                                        file_name + classifier.MODEL_NAME + ".png",
-                                        classifier.get_label_names())
 
 def run_test(classifier, attack, batch_size, target_class, nmb_elements=None, show_plots=True):
     """
