@@ -35,8 +35,9 @@ class ImageNetModel(SequentialModel):
             return x, y
         dataset, info = tfds.load(self.dataset_name, split=tfds.Split.VALIDATION, with_info=True, as_supervised=True, data_dir=self.data_dir)  # type: tf.data.Dataset
         dataset = dataset.map(cast_labels)
+        dataset = dataset.shuffle(shuffle)
         dataset = dataset.filter(filter) if filter is not None else dataset
-        dataset = dataset.shuffle(shuffle).batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
+        dataset = dataset.batch(batch_size).prefetch(tf.data.experimental.AUTOTUNE)
 
         self.info = info
         self.test_steps = info.splits[tfds.Split.VALIDATION].num_examples // batch_size
