@@ -6,9 +6,11 @@ import tensorflow as tf
 from tensorflow_datasets import Split
 
 from liar_liar.attacks.bfgs import bfgs_wrapper
+from liar_liar.attacks.gen_attack import gen_attack_wrapper
 from liar_liar.base_models.model_names import *
 from liar_liar.base_models.sequential_model import get_all_models, SequentialModel
 from liar_liar.utils.general_names import *
+from liar_liar.utils.utils import find_or_create_file_path
 
 
 def generate_side_by_side(attack_wrapper,
@@ -64,6 +66,7 @@ def show_plot_comparison(adv_image,
     :type orig_logits: Tensor
     :type orig_image: Tensor
     """
+    file_name = find_or_create_file_path(file_name)
     labels_names = np.arange(orig_logits.numpy().size) if labels_names is None else np.array(labels_names)
 
     orig_logits = orig_logits.numpy().flatten()
@@ -129,5 +132,18 @@ def bfgs_generate_side_by_side():
     }
     generate_side_by_side(bfgs_wrapper, bfgs_model_params, "../../latex/img/side_by_side_bfgs", targeted=True)
 
+def genattack_generate_side_by_side():
+    genattack_params = [{GENERATION_NUMBER:10000, POPULATION_NMB:6, DELTA:0.05, MUTATION_PROBABILITY:0.05}]
+
+    genattack_model_params = {
+        MNIST_CONV_NAME: {PARAMETERS_KEY: genattack_params},
+        CIFAR_10_CONV_NAME: {PARAMETERS_KEY: genattack_params},
+        CIFAR_100_CONV_NAME: {PARAMETERS_KEY: genattack_params},
+        INCEPTION_V3_NAME: {PARAMETERS_KEY: genattack_params},
+    }
+    generate_side_by_side(gen_attack_wrapper, genattack_model_params, "../../../latex/img/side_by_side_genattack", targeted=True)
+
+
 if __name__ == "__main__":
-    bfgs_generate_side_by_side()
+    # bfgs_generate_side_by_side()
+    genattack_generate_side_by_side()

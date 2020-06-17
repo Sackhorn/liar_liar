@@ -1,5 +1,4 @@
 import io
-import json
 import logging
 import os
 import sys
@@ -59,3 +58,10 @@ def get_results_for_model_and_parameter(result_dict, parameter_dict, model_name)
         if found:
             return per_params_results
     return None
+
+def find_or_create_file_path(file_path):
+    file_path = os.path.join(os.path.abspath(__file__), file_path)
+    dir = os.path.dirname(os.path.abspath(file_path))
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    return file_path
