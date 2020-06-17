@@ -189,3 +189,8 @@ def generate_llfgsm_table(path='../json_results/fgsm_targeted_wrapper.json', nmb
 def generate_getattack_table(path='../json_results/gen_attack_wrapper.json', nmb_columns=2):
     renderable_params = sorted(gen_attack_params, key=lambda dict: dict[GENERATION_NUMBER])
     import_and_print(path, nmb_columns, renderable_params)
+
+def generate_deepfool_table(path='../json_results/deepfool_wrapper_map.json', nmb_columns=2):
+    renderable_params = sorted(deepfool_params, key=lambda dict: dict[ITER_MAX])
+    import_and_print(path, nmb_columns, renderable_params)
+
