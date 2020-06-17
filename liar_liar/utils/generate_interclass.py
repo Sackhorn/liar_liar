@@ -5,6 +5,7 @@ from mpl_toolkits.axes_grid1 import ImageGrid
 from tensorflow_datasets import Split
 
 from liar_liar.attacks.bfgs import bfgs_wrapper
+from liar_liar.attacks.c_and_w import carlini_wagner_wrapper
 from liar_liar.attacks.fgsm import fgsm_targeted_wrapper
 from liar_liar.attacks.gen_attack import gen_attack_wrapper
 from liar_liar.base_models.model_names import *
@@ -121,6 +122,17 @@ def generate_grid_genattack():
 
     generate_targeted_attack_grid(genattack_params_models, gen_attack_wrapper, "../../../latex/img/grid_genattack_", retries=5)
 
+def generate_grid_carlini_wagner():
+    carliniwagner_params = [{OPTIMIZATION_ITER:1000, BINARY_ITER:10, C_HIGH:100.0, C_LOW:0.0, KAPPA:0.0},]
+    carliniwagner_params_models = {
+        CIFAR_10_CONV_NAME :{PARAMETERS_KEY : carliniwagner_params,},
+        CIFAR_100_CONV_NAME:{PARAMETERS_KEY : carliniwagner_params,},
+        MNIST_CONV_NAME:{PARAMETERS_KEY : carliniwagner_params,},
+        INCEPTION_V3_NAME:{PARAMETERS_KEY : carliniwagner_params,}}
+
+    generate_targeted_attack_grid(carliniwagner_params_models, carlini_wagner_wrapper, "../../../latex/img/grid_carlini_", retries=5)
+
 if __name__ == "__main__":
     # generate_grid_llfgsm()
-    generate_grid_bfgs()
+    # generate_grid_bfgs()
+    generate_grid_carlini_wagner()
