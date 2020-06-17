@@ -46,4 +46,4 @@ attack_params = {
 class BFGSSanityCheck(TestCase):
     def test_sanitycheck(self):
         bfgs_wrapper.__name__ += "_sanity_check"
-        attack_with_params_dict(attack_params, bfgs_wrapper, show_plot=True, targeted=True)
+        attack_with_params_dict(attack_params, bfgs_wrapper, show_plot=False, targeted=True)

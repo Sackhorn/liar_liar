@@ -52,6 +52,7 @@ def generate_side_by_side(attack_wrapper,
                 break
             break
 
+# TODO: Fix this breaking for running sanity checks
 def show_plot_comparison(adv_image,
                          adv_logits,
                          orig_image,

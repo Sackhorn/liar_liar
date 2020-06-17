@@ -48,5 +48,5 @@ class FGSMSanityCheck(TestCase):
     def test_sanitycheck(self):
         fgsm_targeted_wrapper.__name__ += "_sanity_check"
         fgsm_untargeted_wrapper.__name__ += "_sanity_check"
-        attack_with_params_dict(attack_params, fgsm_targeted_wrapper, show_plot=True, targeted=True)
-        attack_with_params_dict(attack_params, fgsm_untargeted_wrapper, show_plot=True, targeted=False)
+        attack_with_params_dict(attack_params, fgsm_targeted_wrapper, show_plot=False, targeted=True)
+        attack_with_params_dict(attack_params, fgsm_untargeted_wrapper, show_plot=False, targeted=False)

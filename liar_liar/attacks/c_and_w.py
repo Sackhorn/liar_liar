@@ -4,6 +4,7 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.python.training.gradient_descent import GradientDescentOptimizer
 
+from liar_liar.utils.general_names import *
 from liar_liar.utils.utils import batch_image_norm
 
 
@@ -37,13 +38,13 @@ def carlini_wagner(classifier,
     # cw = _c_and_w
     return_image = cw(image, classifier, target_class, perturbation, optimizer, optimization_iter, binary_iter, c_high, c_low, kappa)
     parameters = {
-        "optimizer":optimizer.__class__.__name__,
-        "learning_rate":optimizer._learning_rate,
-        "optimization_iter":optimization_iter,
-        "binary_iter":binary_iter,
-        "C_high":c_high,
-        "c_low":c_low,
-        "kappa":kappa
+        # OPTIMIZATION_ITER:optimizer.__class__.__name__,
+        # "learning_rate":optimizer._learning_rate,
+        OPTIMIZATION_ITER:optimization_iter,
+        BINARY_ITER:binary_iter,
+        C_HIGH:c_high,
+        C_LOW:c_low,
+        KAPPA:kappa
     }
     return (return_image, classifier(return_image), parameters)
 

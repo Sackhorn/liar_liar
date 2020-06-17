@@ -28,7 +28,7 @@ def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=F
         batches = model_dict[DATASET_KEY]
         parameters = model_dict[PARAMETERS_KEY]
         for parameter_dict in parameters:
-            if get_results_for_model_and_parameter(results_dict, parameter_dict, model.MODEL_NAME) is not None:
+            if len(results_dict) > 0 and get_results_for_model_and_parameter(results_dict, parameter_dict, model.MODEL_NAME) is not None:
                 print(("Found results for Model: {} with parameters {} skipping".format(model.MODEL_NAME, json.dumps(parameter_dict))))
                 continue
             nmb_classes = model.get_number_of_classes()
