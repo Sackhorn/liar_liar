@@ -1,1 +1,1 @@
-tensorboard.exe --logdir tboardlog\ --host 192.168.1.69
+tensorboard.exe --logdir tboardlog\ --host localhost
