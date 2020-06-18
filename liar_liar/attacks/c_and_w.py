@@ -74,8 +74,11 @@ def _optimize_c_and_w(image, classifier, iter_max, target_class, c_val, perturba
             tape.watch(perturbation)
             delta = 0.5 * (tf.tanh(perturbation) + 1)
             logits = tf.squeeze(classifier(delta, get_raw=True))
+            # This is used in case of unbatched logits
+            if tf.rank(logits) <=1 :
+                logits = tf.expand_dims(logits, axis=0)
             # get all elements except of the one with highest probability
-            first = tf.concat([logits[:, :target_label_index], logits[:, target_label_index + 1:]], 1)#TODO: if batch=1 then this doesn't work
+            first = tf.concat([logits[:, :target_label_index], logits[:, target_label_index + 1:]], 1)
             first = tf.reduce_max(first, axis=1)
             second = logits[:, target_label_index]
             g_func = tf.maximum(first - second, -kappa)
