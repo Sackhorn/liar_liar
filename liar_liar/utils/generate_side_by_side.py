@@ -6,6 +6,7 @@ import tensorflow as tf
 from tensorflow_datasets import Split
 
 from liar_liar.attacks.bfgs import bfgs_wrapper
+from liar_liar.attacks.deepfool import deepfool_wrapper
 from liar_liar.attacks.gen_attack import gen_attack_wrapper
 from liar_liar.base_models.model_names import *
 from liar_liar.base_models.sequential_model import get_all_models, SequentialModel
@@ -46,7 +47,7 @@ def generate_side_by_side(attack_wrapper,
                                      image,
                                      classifier(image),
                                      classifier.get_label_names(),
-                                     target_class=tf.expand_dims(one_hot_target_class, axis=0),
+                                     target_class=tf.expand_dims(one_hot_target_class, axis=0) if targeted else None,
                                      true_class=label,
                                      file_name=file_name + classifier.MODEL_NAME)
                 break
@@ -126,9 +127,9 @@ def bfgs_generate_side_by_side():
     bfgs_params = [{ITER_MAX: 1000}]
 
     bfgs_model_params = {
-        MNIST_CONV_NAME:{PARAMETERS_KEY: bfgs_params},
-        CIFAR_10_CONV_NAME:{PARAMETERS_KEY: bfgs_params},
-        CIFAR_100_CONV_NAME:{PARAMETERS_KEY: bfgs_params},
+        MNIST_TF_NAME:{PARAMETERS_KEY: bfgs_params},
+        SIMPLENET_CIFAR10_NAME:{PARAMETERS_KEY: bfgs_params},
+        SIMPLENET_CIFAR100_NAME:{PARAMETERS_KEY: bfgs_params},
         INCEPTION_V3_NAME:{PARAMETERS_KEY: bfgs_params},
     }
     generate_side_by_side(bfgs_wrapper, bfgs_model_params, "../../latex/img/side_by_side_bfgs", targeted=True)
@@ -137,14 +138,25 @@ def genattack_generate_side_by_side():
     genattack_params = [{GENERATION_NUMBER:10000, POPULATION_NMB:6, DELTA:0.05, MUTATION_PROBABILITY:0.05}]
 
     genattack_model_params = {
-        MNIST_CONV_NAME: {PARAMETERS_KEY: genattack_params},
-        CIFAR_10_CONV_NAME: {PARAMETERS_KEY: genattack_params},
-        CIFAR_100_CONV_NAME: {PARAMETERS_KEY: genattack_params},
+        MNIST_TF_NAME: {PARAMETERS_KEY: genattack_params},
+        SIMPLENET_CIFAR10_NAME: {PARAMETERS_KEY: genattack_params},
+        SIMPLENET_CIFAR100_NAME: {PARAMETERS_KEY: genattack_params},
         INCEPTION_V3_NAME: {PARAMETERS_KEY: genattack_params},
     }
     generate_side_by_side(gen_attack_wrapper, genattack_model_params, "../../../latex/img/side_by_side_genattack", targeted=True)
 
+def deepfool_generate_side_by_side():
+    deepfool_params = [{ITER_MAX:1000}]
+
+    deepfool_model_params = {
+        MNIST_TF_NAME: {PARAMETERS_KEY: deepfool_params},
+        SIMPLENET_CIFAR10_NAME: {PARAMETERS_KEY: deepfool_params},
+        SIMPLENET_CIFAR100_NAME: {PARAMETERS_KEY: deepfool_params},
+        INCEPTION_V3_NAME: {PARAMETERS_KEY: deepfool_params},
+    }
+    generate_side_by_side(deepfool_wrapper, deepfool_model_params, "../../../latex/img/side_by_side_deepfool", targeted=False)
 
 if __name__ == "__main__":
     # bfgs_generate_side_by_side()
-    genattack_generate_side_by_side()
+    # genattack_generate_side_by_side()
+    deepfool_generate_side_by_side()
