@@ -40,6 +40,9 @@ class MobileNetV2Wrapper(ImageNetModel):
         print("calling load_model_data on MobileNetV2Wrapper is unnecessary as keras takes care of that for us")
         return self
 
+    def get_input_shape(self):
+        return (224, 224, 3)
+
 
 if __name__ == "__main__":
     model = MobileNetV2Wrapper()

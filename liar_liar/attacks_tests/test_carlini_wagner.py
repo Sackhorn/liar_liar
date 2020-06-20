@@ -22,22 +22,17 @@ params_list = [
 ]
 
 attack_params = {
-    CIFAR_10_CONV_NAME :
+    SIMPLENET_CIFAR10_NAME:
     {
         PARAMETERS_KEY : params_list,
         DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
     },
-    CIFAR_100_CONV_NAME:
+    SIMPLENET_CIFAR100_NAME:
     {
         PARAMETERS_KEY : params_list,
         DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
     },
-    MNIST_CONV_NAME:
-    {
-        PARAMETERS_KEY : params_list,
-        DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
-    },
-    MNIST_DENSE_NAME:
+    MNIST_TF_NAME:
     {
         PARAMETERS_KEY : params_list,
         DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
@@ -52,7 +47,7 @@ attack_params = {
         PARAMETERS_KEY : params_list,
         DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:500}
     },
-    RESNET_NAME:
+    MOBILENETV2_NAME:
     {
         PARAMETERS_KEY : params_list,
         DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:500}

@@ -50,6 +50,8 @@ def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=F
             create_results_json(attack_wrapper.__name__, results_dict)
 
 def try_get_results_dict(attack_wrapper_name):
+    if "sanity_check" in attack_wrapper_name:
+        return {}
     json_file_path = path.dirname(path.realpath(__file__))
     json_file_path = path.join(json_file_path, path.pardir, path.pardir, "json_results", attack_wrapper_name + ".json")
     try:

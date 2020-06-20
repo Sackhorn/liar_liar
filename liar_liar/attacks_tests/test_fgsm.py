@@ -3,13 +3,6 @@ from liar_liar.base_models.model_names import *
 from liar_liar.utils.general_names import *
 from liar_liar.utils.test_run_attacks import attack_with_params_dict
 
-# possible_iters = [1000, 100, 10, 1]
-# possible_eps = [0.1, 0.01, 0.001, 0.0001]
-#
-# params_list = []
-# for i_max in possible_iters:
-#     for eps in possible_eps:
-#         params_list.append({ITER_MAX:i_max, EPS:eps})
 
 params_list = [
     {EPS: 0.1, ITER_MAX: 1},
@@ -41,22 +34,17 @@ params_list = [
 ]
 
 attack_params = {
-    CIFAR_10_CONV_NAME :
+    SIMPLENET_CIFAR10_NAME :
     {
         PARAMETERS_KEY : params_list,
         DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
     },
-    CIFAR_100_CONV_NAME:
+    SIMPLENET_CIFAR100_NAME:
     {
         PARAMETERS_KEY : params_list,
         DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
     },
-    MNIST_CONV_NAME:
-    {
-        PARAMETERS_KEY : params_list,
-        DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
-    },
-    MNIST_DENSE_NAME:
+    MNIST_TF_NAME:
     {
         PARAMETERS_KEY : params_list,
         DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
@@ -71,7 +59,7 @@ attack_params = {
         PARAMETERS_KEY : params_list,
         DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:50}
     },
-    RESNET_NAME:
+    MOBILENETV2_NAME:
     {
         PARAMETERS_KEY : params_list,
         DATASET_KEY: {BATCHES_KEY:2, NMB_ELEMENTS_KEY:50}

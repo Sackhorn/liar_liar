@@ -49,7 +49,7 @@ LE_NET_NAME : "Le Net 5",
 SIMPLENET_CIFAR10_NAME : "SimpleNet CIFAR-10",
 SIMPLENET_CIFAR100_NAME : "SimpleNet CIFAR-100",
 MOBILENETV2_NAME : "MobileNetV2",
-MNIST_TF_MODEL : "MNIST TF Model"
+MNIST_TF_NAME : "MNIST TF Model"
 }
 
 def ltx_frmt(float):
