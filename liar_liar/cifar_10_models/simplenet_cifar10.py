@@ -32,7 +32,7 @@ s = 2
 
 class SimpleNetCIFAR10(CIFAR10Model):
 
-    def __init__(self, optimizer=tf.keras.optimizers.Adadelta(lr=0.9, rho=0.9), loss=tf.compat.v1.nn.softmax_cross_entropy_with_logits_v2, metrics=[categorical_accuracy]):
+    def __init__(self, optimizer=tf.keras.optimizers.Adadelta(lr=0.9, rho=0.9), loss=tf.keras.losses.categorical_crossentropy, metrics=[categorical_accuracy]):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME=SIMPLENET_CIFAR10_NAME)
         self.sequential_layers = [
             # Block 1
@@ -129,5 +129,7 @@ class SimpleNetCIFAR10(CIFAR10Model):
 ]
 
 if __name__ == "__main__":
-    model = SimpleNetCIFAR10()
-    model.train(epochs=200, batch_size=256)
+    # model = SimpleNetCIFAR10()
+    # model.train(epochs=200, batch_size=256)
+    model = SimpleNetCIFAR10().load_model_data()
+    model.test()
