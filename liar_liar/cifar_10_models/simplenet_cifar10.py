@@ -1,7 +1,7 @@
 import tensorflow as tf
+from tensorflow.python.keras.initializers import glorot_normal, RandomNormal
+from tensorflow.python.keras.layers import Conv2D, BatchNormalization, Activation, Dropout, MaxPooling2D, Flatten, Dense
 from tensorflow.python.keras.metrics import categorical_accuracy
-from tensorflow.python.keras.optimizer_v2.adam import Adam
-from tensorflow.python.keras.optimizers import Adadelta
 
 from liar_liar.base_models.model_names import SIMPLENET_CIFAR10_NAME
 from liar_liar.cifar_10_models.cifar_10_model_base import CIFAR10Model
@@ -26,126 +26,108 @@ filterSize1 = 64
 filterSize = 128
 
 bn_decay = 0.95
-
-
+batch_epsilon = 1e-5
+act = tf.keras.activations.relu
+s = 2
 
 class SimpleNetCIFAR10(CIFAR10Model):
 
-    def __init__(self, optimizer=tf.keras.optimizers.Adadelta(lr=0.1, rho=0.9, epsilon=1e-3, decay=0.001), loss=tf.compat.v1.nn.softmax_cross_entropy_with_logits_v2, metrics=[categorical_accuracy]):
+    def __init__(self, optimizer=tf.keras.optimizers.Adadelta(lr=0.9, rho=0.9), loss=tf.compat.v1.nn.softmax_cross_entropy_with_logits_v2, metrics=[categorical_accuracy]):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME=SIMPLENET_CIFAR10_NAME)
         self.sequential_layers = [
-tf.keras.layers.Conv2D( filterSize1, kernel_size=[convKernelSize, convKernelSize],
-                                     strides=(convStrides, convStrides), padding="SAME",
-                                     kernel_initializer=tf.keras.initializers.GlorotUniform(),
-                                     bias_initializer=tf.constant_initializer(0.1),
-                                     kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), name='conv1'),
-tf.keras.layers.BatchNormalization(epsilon=0.001, momentum=bn_decay),
-tf.keras.layers.LeakyReLU(alpha=0.1, name='act1'),
-tf.keras.layers.Dropout(rate=conv_dropout),
-tf.keras.layers.Conv2D(filterSize, kernel_size=[convKernelSize, convKernelSize],
-                                 strides=(convStrides, convStrides), padding="SAME",
-                                 kernel_initializer=tf.keras.initializers.GlorotUniform(),
-                                 bias_initializer=tf.constant_initializer(0.1),
-                                 kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), name='conv2'),
-tf.keras.layers.BatchNormalization(epsilon=0.001, momentum=bn_decay),
-tf.keras.layers.MaxPool2D(strides=(poolStrides, poolStrides), padding="SAME"),
-tf.keras.layers.LeakyReLU(alpha=0.1, name='act2'),
-tf.keras.layers.Dropout(rate=conv_dropout),
-tf.keras.layers.Conv2D(filterSize, kernel_size=[convKernelSize, convKernelSize],
-                                 strides=(convStrides, convStrides), padding="SAME",
-                                 kernel_initializer=tf.keras.initializers.GlorotUniform(),
-                                 bias_initializer=tf.constant_initializer(0.1),
-                                 kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), name='conv3'),
-tf.keras.layers.BatchNormalization(epsilon=0.001, momentum=bn_decay),
-tf.keras.layers.MaxPool2D(strides=(poolStrides, poolStrides), padding="SAME"),
-tf.keras.layers.LeakyReLU(alpha=0.1, name='act3'),
-tf.keras.layers.Dropout(rate=conv_dropout),
-tf.keras.layers.Conv2D(filterSize, kernel_size=[convKernelSize, convKernelSize],
-                                 strides=(convStrides, convStrides), padding="SAME",
-                                 kernel_initializer=tf.keras.initializers.GlorotUniform(),
-                                 bias_initializer=tf.constant_initializer(0.1),
-                                 kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), name='conv4'),
-tf.keras.layers.BatchNormalization(epsilon=0.001, momentum=bn_decay),
-tf.keras.layers.MaxPool2D(strides=(poolStrides, poolStrides), padding="SAME"),
-tf.keras.layers.LeakyReLU(alpha=0.1, name='act4'),
-tf.keras.layers.Dropout(rate=conv_dropout),
-tf.keras.layers.Conv2D(filterSize, kernel_size=[convKernelSize, convKernelSize],
-                                 strides=(convStrides, convStrides), padding="SAME",
-                                 kernel_initializer=tf.keras.initializers.GlorotUniform(),
-                                 bias_initializer=tf.constant_initializer(0.1),
-                                 kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), name='conv5'),
-tf.keras.layers.BatchNormalization(epsilon=0.001, momentum=bn_decay),
-tf.keras.layers.LeakyReLU(alpha=0.1, name='act5'),
-tf.keras.layers.Dropout(rate=conv_dropout),
-tf.keras.layers.Conv2D(filterSize, kernel_size=[convKernelSize, convKernelSize],
-                                 strides=(convStrides, convStrides), padding="SAME",
-                                 kernel_initializer=tf.keras.initializers.GlorotUniform(),
-                                 bias_initializer=tf.constant_initializer(0.1),
-                                 kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), name='conv6'),
-tf.keras.layers.BatchNormalization(epsilon=0.001, momentum=bn_decay),
-tf.keras.layers.LeakyReLU(alpha=0.1, name='act6'),
-tf.keras.layers.Dropout(rate=conv_dropout),
-tf.keras.layers.Conv2D(filterSize, kernel_size=[convKernelSize, convKernelSize],
-                                 strides=(convStrides, convStrides), padding="SAME",
-                                 kernel_initializer=tf.keras.initializers.GlorotUniform(),
-                                 bias_initializer=tf.constant_initializer(0.1),
-                                 kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), name='conv7'),
-tf.keras.layers.BatchNormalization(epsilon=0.001, momentum=bn_decay),
-tf.keras.layers.MaxPool2D(strides=(poolStrides, poolStrides), padding="SAME"),
-tf.keras.layers.LeakyReLU(alpha=0.1, name='act7'),
-tf.keras.layers.Dropout(rate=conv_dropout),
-tf.keras.layers.Conv2D(filterSize, kernel_size=[convKernelSize, convKernelSize],
-                                 strides=(convStrides, convStrides), padding="SAME",
-                                 kernel_initializer=tf.keras.initializers.GlorotUniform(),
-                                 bias_initializer=tf.constant_initializer(0.1),
-                                 kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), name='conv8'),
-tf.keras.layers.BatchNormalization(epsilon=0.001, momentum=bn_decay),
-tf.keras.layers.MaxPool2D(strides=(poolStrides, poolStrides), padding="SAME"),
-tf.keras.layers.LeakyReLU(alpha=0.1, name='act8'),
-tf.keras.layers.Dropout(rate=conv_dropout),
-tf.keras.layers.Conv2D(filterSize, kernel_size=[convKernelSize, convKernelSize],
-                                 strides=(convStrides, convStrides), padding="SAME",
-                                 kernel_initializer=tf.keras.initializers.GlorotUniform(),
-                                 bias_initializer=tf.constant_initializer(0.1),
-                                 kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), name='conv9'),
-tf.keras.layers.BatchNormalization(epsilon=0.001, momentum=bn_decay),
-tf.keras.layers.MaxPool2D(strides=(poolStrides, poolStrides), padding="SAME"),
-tf.keras.layers.LeakyReLU(alpha=0.1, name='act9'),
-tf.keras.layers.Dropout(rate=conv_dropout),
-tf.keras.layers.Conv2D(filterSize, kernel_size=[convKernelSize, convKernelSize],
-                                  strides=(convStrides, convStrides), padding="SAME",
-                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
-                                  bias_initializer=tf.constant_initializer(0.1),
-                                  kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), name='conv10'),
-tf.keras.layers.BatchNormalization(epsilon=0.001, momentum=bn_decay),
-tf.keras.layers.LeakyReLU(alpha=0.1, name='act10'),
-tf.keras.layers.Dropout(rate=conv_dropout),
-tf.keras.layers.Conv2D(filterSize, kernel_size=[convKernelSize1, convKernelSize1],
-                                  strides=(convStrides, convStrides), padding="SAME",
-                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
-                                  bias_initializer=tf.constant_initializer(0.1),
-                                  kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), name='conv11'),
-tf.keras.layers.BatchNormalization(epsilon=0.001, momentum=bn_decay),
-tf.keras.layers.LeakyReLU(alpha=0.1, name='act11'),
-tf.keras.layers.Dropout(rate=conv_dropout),
-tf.keras.layers.Conv2D(filterSize, kernel_size=[convKernelSize1, convKernelSize1],
-                                  strides=(convStrides, convStrides), padding="SAME",
-                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
-                                  bias_initializer=tf.constant_initializer(0.1),
-                                  kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), name='conv12'),
-tf.keras.layers.BatchNormalization(epsilon=0.001, momentum=bn_decay),
-tf.keras.layers.LeakyReLU(alpha=0.1, name='act12'),
-tf.keras.layers.Dropout(rate=conv_dropout),
-tf.keras.layers.Conv2D(self.get_number_of_classes(), kernel_size=[convKernelSize, convKernelSize],
-                                  strides=(convStrides, convStrides), padding="SAME",
-                                  kernel_initializer=tf.keras.initializers.GlorotUniform(),
-                                  bias_initializer=tf.constant_initializer(0.1),
-                                  kernel_regularizer=tf.keras.regularizers.l2(WEIGHT_DECAY), name='conv13'),
-tf.keras.layers.MaxPool2D(strides=(poolStrides, poolStrides), padding="SAME"),
-tf.keras.layers.Dropout(rate=conv_dropout),
-tf.keras.layers.GlobalAveragePooling2D(name='avg13')
+            # Block 1
+            Conv2D(64, (3, 3), padding='same', kernel_initializer=glorot_normal()),
+            BatchNormalization(),
+            Activation(act),
+            Dropout(0.2),
+
+            # Block 2
+            Conv2D(128, (3, 3), padding='same', kernel_initializer=glorot_normal()),
+            BatchNormalization(),
+            Activation(act),
+            Dropout(0.2),
+
+            # Block 3
+            Conv2D(128, (3, 3), padding='same', kernel_initializer=RandomNormal(stddev=0.01)),
+            BatchNormalization(),
+            Activation(act),
+            Dropout(0.2),
+
+            # Block 4
+            Conv2D(128, (3, 3), padding='same', kernel_initializer=RandomNormal(stddev=0.01)),
+            BatchNormalization(),
+            Activation(act),
+            # First Maxpooling
+            MaxPooling2D(pool_size=(2, 2), strides=s),
+            Dropout(0.2),
+
+
+            # Block 5
+            Conv2D(128, (3, 3), padding='same', kernel_initializer=RandomNormal(stddev=0.01)),
+            BatchNormalization(),
+            Activation(act),
+            Dropout(0.2),
+
+            # Block 6
+            Conv2D(128, (3, 3), padding='same', kernel_initializer=glorot_normal()),
+            BatchNormalization(),
+            Activation(act),
+            Dropout(0.2),
+
+            # Block 7
+            Conv2D(256, (3, 3), padding='same', kernel_initializer=glorot_normal()),
+            # Second Maxpooling
+            MaxPooling2D(pool_size=(2, 2), strides=s),
+            BatchNormalization(),
+            Activation(act),
+            Dropout(0.2),
+
+
+            # Block 8
+            Conv2D(256, (3, 3), padding='same', kernel_initializer=glorot_normal()),
+            BatchNormalization(),
+            Activation(act),
+            Dropout(0.2),
+
+            # Block 9
+            Conv2D(256, (3, 3), padding='same', kernel_initializer=glorot_normal()),
+            BatchNormalization(),
+            Activation(act),
+            Dropout(0.2),
+            # Third Maxpooling
+            MaxPooling2D(pool_size=(2, 2), strides=s),
+
+
+            # Block 10
+            Conv2D(512, (3, 3), padding='same', kernel_initializer=glorot_normal()),
+            BatchNormalization(),
+            Activation(act),
+            Dropout(0.2),
+
+            # Block 11  
+            Conv2D(2048, (1, 1), padding='same', kernel_initializer=glorot_normal()),
+            Activation(act),
+            Dropout(0.2),
+
+            # Block 12  
+            Conv2D(256, (1, 1), padding='same', kernel_initializer=glorot_normal()),
+            Activation(act),
+            # Fourth Maxpooling
+            MaxPooling2D(pool_size=(2, 2), strides=s),
+            Dropout(0.2),
+
+
+            # Block 13
+            Conv2D(256, (3, 3), padding='same', kernel_initializer=glorot_normal()),
+            Activation(act),
+            # Fifth Maxpooling
+            MaxPooling2D(pool_size=(2, 2), strides=s),
+
+            # Final Classifier
+            Flatten(),
+            Dense(self.get_number_of_classes(), activation='softmax'),
 ]
 
 if __name__ == "__main__":
     model = SimpleNetCIFAR10()
-    model.train(epochs=1000, batch_size=1024)
+    model.train(epochs=200, batch_size=256)

@@ -1,11 +1,10 @@
-import os
-import sys
 from typing import List
-import tensorflow as tf
+
 from tensorflow.python import keras
 from tensorflow.python.keras import Model
 from tensorflow.python.keras.callbacks import TensorBoard, ReduceLROnPlateau, ModelCheckpoint
 from tensorflow_datasets import Split
+
 from liar_liar.base_models.data_provider import DataProvider
 from liar_liar.utils.utils import get_gcs_path
 
@@ -35,10 +34,17 @@ class SequentialModel(Model, DataProvider):
             result = self.sequential_layers[-1](result)
         return result
 
-    def train(self, epochs=1, train_data=None, callbacks=[], augment_data=True, batch_size=32):
-        tsboard = TensorBoard(log_dir=self.get_tensorboard_path(), histogram_freq=10, write_graph=True)
-        checkpoint = ModelCheckpoint(self.SAVE_DIR, save_best_only=True, save_weights_only=True)
-        lr_callback = ReduceLROnPlateau(factor=0.5, patience=10, verbose=1, min_delta=0.005)
+    def train(self,
+              epochs=1,
+              train_data=None,
+              callbacks=[],
+              augment_data=True,
+              batch_size=32,
+              monitor="val_categorical_accuracy",
+              learning_rate_callback=None):
+        tsboard = TensorBoard(log_dir=self.get_tensorboard_path(), histogram_freq=10, write_graph=True, write_images=True)
+        checkpoint = ModelCheckpoint(self.SAVE_DIR, save_best_only=True, save_weights_only=True, monitor=monitor)
+        lr_callback = ReduceLROnPlateau(factor=0.75, patience=5, verbose=1, min_delta=0.005) if learning_rate_callback is None else learning_rate_callback
         callback = [tsboard, lr_callback, checkpoint] + callbacks
 
         test = self.get_dataset(Split.TEST)
