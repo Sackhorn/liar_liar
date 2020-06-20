@@ -57,7 +57,7 @@ def get_imagenet_models():
     from liar_liar.image_net_models.res_net_wrapper import ResNetWrapper
     from liar_liar.image_net_models.mobilenetv2 import MobileNetV2Wrapper
     return [
-        ResNetWrapper(),
+        # ResNetWrapper(),
         InceptionV3Wrapper(),
         MobileNetV2Wrapper()
     ]

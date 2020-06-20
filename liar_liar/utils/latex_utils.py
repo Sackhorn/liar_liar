@@ -45,15 +45,56 @@ INCEPTION_V3_NAME : "InceptionV3",
 RESNET_NAME : "resnet50v2",
 MNIST_CONV_NAME : "MNIST Convolutional",
 MNIST_DENSE_NAME : "MNIST Dense",
-LE_NET_NAME : "Le Net 5"
+LE_NET_NAME : "Le Net 5",
+SIMPLENET_CIFAR10_NAME : "SimpleNet CIFAR-10",
+SIMPLENET_CIFAR100_NAME : "SimpleNet CIFAR-100",
+MOBILENETV2_NAME : "MobileNetV2",
+MNIST_TF_MODEL : "MNIST TF Model"
 }
 
 def ltx_frmt(float):
     return r"{:04.5f}".format(float)
 def ltx_prcnt(float):
     return r"{:04.5f}".format(float * 100) + r"\%"
+def ltx_acc(float):
+    return r"{:04.2f}".format(float * 100) + r"\%"
 
 PRINTABLE_METRICS = ["accuracy_result", "L2_median", "L2_average", "average_time_per_sample"]
+
+
+ACC_METRICS = ["categorical_accuracy", "top_k_categorical_accuracy"]
+ACC_METRICS_NAMES = {"categorical_accuracy": "Top-1", "top_k_categorical_accuracy":"Top-5"}
+
+def generate_accuracy_table(file_name):
+    with open(file_name, 'r') as file:
+        acc_results = json.load(file)
+
+    row_columns = r'\begin{tabular}{|c||' + (r'c|' * len(ACC_METRICS)) + r'}'
+    print(row_columns)
+    print(r'\hline')
+
+    header_row = r"Model Name & "
+    for i, metric in enumerate(ACC_METRICS):
+        header_row += ACC_METRICS_NAMES[metric]
+        if i < len(ACC_METRICS) - 1:
+            header_row += r" & "
+    header_row += r'\\'
+    print(header_row)
+    print(r'\hline')
+
+    for model, metrics_dict in acc_results.items():
+        row = MODEL_NAME_MAP[model] + "&"
+        for i, metric in enumerate(ACC_METRICS):
+            try:
+                row += ltx_acc(metrics_dict[metric])
+            except KeyError:
+                row += r" - "
+            if i < len(ACC_METRICS) - 1:
+                row += r" & "
+        row += r"\\"
+        print(row)
+        print(r'\hline')
+    print(r'\end{tabular}')
 
 def import_and_print(file_name, nmb_columns_for_params, renderable_params):
     results = None
@@ -194,3 +235,8 @@ def generate_deepfool_table(path='../json_results/deepfool_wrapper_map.json', nm
     renderable_params = sorted(deepfool_params, key=lambda dict: dict[ITER_MAX])
     import_and_print(path, nmb_columns, renderable_params)
 
+def generate_accuracy_table_for_all(path = '../json_results/accuracy_results.json'):
+    generate_accuracy_table(path)
+
+if __name__ == "__main__":
+    generate_accuracy_table_for_all(path='../../json_results/accuracy_results.json')

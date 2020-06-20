@@ -17,4 +17,8 @@ def get_cifar100_models():
         list[CIFAR100Model]:
     """
     from liar_liar.cifar_100_models.cifar_100_conv_model import CIFAR100ConvModel
-    return [CIFAR100ConvModel().load_model_data()]
+    from liar_liar.cifar_100_models.simplenet_cifar100 import SimpleNetCIFAR100
+    return [
+        # CIFAR100ConvModel().load_model_data(),
+        SimpleNetCIFAR100().load_model_data()
+    ]

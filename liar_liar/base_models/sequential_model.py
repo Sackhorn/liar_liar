@@ -61,7 +61,7 @@ class SequentialModel(Model, DataProvider):
 
     def test(self, test_data=None):
         test = self.get_dataset(Split.TEST) if test_data is None else test_data
-        self.evaluate(test, steps=self.test_steps)
+        return self.evaluate(test, steps=self.test_steps)
 
 
 def get_all_models():

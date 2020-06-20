@@ -18,5 +18,7 @@ def get_cifar10_models():
     """
     from liar_liar.cifar_10_models.cifar_10_conv_model import CIFAR10ConvModel
     from liar_liar.cifar_10_models.simplenet_cifar10 import SimpleNetCIFAR10
-    return [CIFAR10ConvModel().load_model_data(),
-            SimpleNetCIFAR10().load_model_data()]
+    return [
+        # CIFAR10ConvModel().load_model_data(),
+        SimpleNetCIFAR10().load_model_data()
+    ]
