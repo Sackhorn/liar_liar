@@ -6,8 +6,10 @@ import tensorflow as tf
 from tensorflow_datasets import Split
 
 from liar_liar.attacks.bfgs import bfgs_wrapper
+from liar_liar.attacks.c_and_w import carlini_wagner_wrapper
 from liar_liar.attacks.deepfool import deepfool_wrapper
 from liar_liar.attacks.gen_attack import gen_attack_wrapper
+from liar_liar.attacks.jsma import jsma_targeted_wrapper
 from liar_liar.base_models.model_names import *
 from liar_liar.base_models.sequential_model import get_all_models, SequentialModel
 from liar_liar.utils.general_names import *
@@ -17,7 +19,8 @@ from liar_liar.utils.utils import find_or_create_file_path
 def generate_side_by_side(attack_wrapper,
                           attack_params,
                           file_name,
-                          targeted=None):
+                          targeted=None,
+                          shuffle=100):
     all_models = get_all_models()
     classifier: SequentialModel
     for classifier in all_models:
@@ -27,7 +30,7 @@ def generate_side_by_side(attack_wrapper,
             print("{} model not found in interclass params dict".format(classifier.MODEL_NAME))
             continue
         parameters = model_dict[PARAMETERS_KEY]
-        dataset = classifier.get_dataset(Split.TEST, batch_size=1, shuffle=100)
+        dataset = classifier.get_dataset(Split.TEST, batch_size=1, shuffle=shuffle)
         for data_sample in dataset.take(-11):
             image, label = data_sample
             classification = classifier(image)
@@ -143,7 +146,7 @@ def genattack_generate_side_by_side():
         SIMPLENET_CIFAR100_NAME: {PARAMETERS_KEY: genattack_params},
         INCEPTION_V3_NAME: {PARAMETERS_KEY: genattack_params},
     }
-    generate_side_by_side(gen_attack_wrapper, genattack_model_params, "../../../latex/img/side_by_side_genattack", targeted=True)
+    generate_side_by_side(gen_attack_wrapper, genattack_model_params, "../../../latex/img/side_by_side_genattack", targeted=True, shuffle=10)
 
 def deepfool_generate_side_by_side():
     deepfool_params = [{ITER_MAX:1000}]
@@ -156,7 +159,31 @@ def deepfool_generate_side_by_side():
     }
     generate_side_by_side(deepfool_wrapper, deepfool_model_params, "../../../latex/img/side_by_side_deepfool", targeted=False)
 
+def carliniwagner_generate_side_by_side():
+    carlini_params = [{OPTIMIZATION_ITER:1000, BINARY_ITER:10, C_HIGH:100.0, C_LOW:0.0, KAPPA:0.0}]
+
+    carlini_model_params = {
+        MNIST_TF_NAME: {PARAMETERS_KEY: carlini_params},
+        SIMPLENET_CIFAR10_NAME: {PARAMETERS_KEY: carlini_params},
+        SIMPLENET_CIFAR100_NAME: {PARAMETERS_KEY: carlini_params},
+        INCEPTION_V3_NAME: {PARAMETERS_KEY: carlini_params},
+    }
+    generate_side_by_side(carlini_wagner_wrapper, carlini_model_params, "../../../latex/img/side_by_side_carlini", targeted=True)
+
+def jsma_targeted_generate_side_by_side():
+    jsma_params = [{MAX_PERTURBATION:0.1, THETA:1, IS_INCREASING:True, USE_LOGITS: False}]
+
+    jsma_model_params = {
+        # MNIST_TF_NAME : {PARAMETERS_KEY: jsma_params},
+        # SIMPLENET_CIFAR10_NAME : {PARAMETERS_KEY: jsma_params},
+        # SIMPLENET_CIFAR100_NAME : {PARAMETERS_KEY: jsma_params},
+        MOBILENETV2_NAME : {PARAMETERS_KEY: jsma_params},
+    }
+    generate_side_by_side(jsma_targeted_wrapper, jsma_model_params, "../../../latex/img/side_by_side_jsma_targeted", targeted=True)
+
 if __name__ == "__main__":
     # bfgs_generate_side_by_side()
     # genattack_generate_side_by_side()
-    deepfool_generate_side_by_side()
+    # deepfool_generate_side_by_side()
+    # carliniwagner_generate_side_by_side()
+    jsma_targeted_generate_side_by_side()

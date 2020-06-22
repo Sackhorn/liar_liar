@@ -16,16 +16,16 @@ attack_params = {
         PARAMETERS_KEY : [{MAX_PERTURBATION:0.1, THETA:1, IS_INCREASING:True, USE_LOGITS: False}],
         DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
     },
-    # MNIST_TF_NAME:
-    # {
-    #     PARAMETERS_KEY : [{MAX_PERTURBATION:0.1, THETA:1, IS_INCREASING:True, USE_LOGITS: False}],
-    #     DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
-    # },
-    # LE_NET_NAME:
-    # {
-    #     PARAMETERS_KEY : [{MAX_PERTURBATION:0.1, THETA:1, IS_INCREASING:True, USE_LOGITS: False}],
-    #     DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
-    # },
+    MNIST_TF_NAME:
+    {
+        PARAMETERS_KEY : [{MAX_PERTURBATION:0.1, THETA:1, IS_INCREASING:True, USE_LOGITS: False}],
+        DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
+    },
+    LE_NET_NAME:
+    {
+        PARAMETERS_KEY : [{MAX_PERTURBATION:0.1, THETA:1, IS_INCREASING:True, USE_LOGITS: False}],
+        DATASET_KEY: {BATCHES_KEY:1000, NMB_ELEMENTS_KEY:-1}
+    },
     # INCEPTION_V3_NAME:
     # {
     #     PARAMETERS_KEY : [{MAX_PERTURBATION:0.1, THETA:1, IS_INCREASING:True, USE_LOGITS: False}],
@@ -39,5 +39,5 @@ attack_params = {
 }
 
 if __name__ == "__main__":
-    attack_with_params_dict(attack_params, jsma_untargeted_wrapper, show_plot=False, targeted=False)
-    attack_with_params_dict(attack_params, jsma_targeted_wrapper, show_plot=True, targeted=True)
+    # attack_with_params_dict(attack_params, jsma_untargeted_wrapper, show_plot=False, targeted=False)
+    attack_with_params_dict(attack_params, jsma_targeted_wrapper, show_plot=False, targeted=True)

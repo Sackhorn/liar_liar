@@ -8,7 +8,6 @@ params_list = [
     {ITER_MAX: 10},
     {ITER_MAX: 100},
     {ITER_MAX: 1000},
-    {ITER_MAX: 10000},
 ]
 
 attack_params = {
