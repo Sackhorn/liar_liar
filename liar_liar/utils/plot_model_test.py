@@ -9,8 +9,6 @@ from liar_liar.cifar_10_models.cifar_10_conv_model import CIFAR10ConvModel
 from liar_liar.mnist_models.mnist_dense_model import MNISTDenseModel
 
 model = MNISTDenseModel()
-# TODO: implement model.get_shape() method
-# input = keras.layers.Input(model.get_shape())
 input = keras.layers.Input((28,28,1))
 first_layer = model.sequential_layers[0]
 output = first_layer(input)

@@ -52,7 +52,6 @@ def deepfool_wrapper(iter_max=10000, min=0.0, max=1.0):
         return deepfool(classifier, data_sample, iter_max=iter_max, min=min, max=max)
     return wrapper_deepfool
 
-#TODO: Rewrite this to run one calculation at the time - otherwise it's messing with results
 @tf.function
 def _deepfool(data_sample, classifier, iter_max=10000, min=0.0, max=1.0):
     """

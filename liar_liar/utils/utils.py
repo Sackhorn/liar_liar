@@ -6,11 +6,10 @@ import sys
 import tensorflow as tf
 import matplotlib.pyplot as plt
 
-
-#TODO: this could be improve not sure if correct
 from liar_liar.utils.general_names import PARAMETERS_KEY
 
 
+#TODO: this could be improve not sure if correct
 def batch_image_norm(image):
     return tf.norm(tf.norm(tf.norm(image, axis=3), axis=2), axis=1)
 
