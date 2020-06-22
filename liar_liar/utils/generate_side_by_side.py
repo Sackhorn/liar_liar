@@ -174,10 +174,9 @@ def jsma_targeted_generate_side_by_side():
     jsma_params = [{MAX_PERTURBATION:0.1, THETA:1, IS_INCREASING:True, USE_LOGITS: False}]
 
     jsma_model_params = {
-        # MNIST_TF_NAME : {PARAMETERS_KEY: jsma_params},
-        # SIMPLENET_CIFAR10_NAME : {PARAMETERS_KEY: jsma_params},
-        # SIMPLENET_CIFAR100_NAME : {PARAMETERS_KEY: jsma_params},
-        MOBILENETV2_NAME : {PARAMETERS_KEY: jsma_params},
+        MNIST_TF_NAME : {PARAMETERS_KEY: jsma_params},
+        SIMPLENET_CIFAR10_NAME : {PARAMETERS_KEY: jsma_params},
+        SIMPLENET_CIFAR100_NAME : {PARAMETERS_KEY: jsma_params},
     }
     generate_side_by_side(jsma_targeted_wrapper, jsma_model_params, "../../../latex/img/side_by_side_jsma_targeted", targeted=True)
 

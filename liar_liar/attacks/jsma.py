@@ -168,8 +168,15 @@ def saliency_map(model, image, true_label, target_label, all_pixels, is_targeted
     best_pair = None
 
     # for target_class in classes_to_iterate_over:
-    alpha = grds_by_cls[target_label, first_pix[:, 0], first_pix[:, 1], first_pix[:, 2]] + grds_by_cls[target_label, second_pix[:, 0], second_pix[:, 1], second_pix[:, 2]]
-    beta = grds_by_cls[:, first_pix[:, 0], first_pix[:, 1], first_pix[:, 2]] + grds_by_cls[:, second_pix[:, 0], second_pix[:, 1], second_pix[:, 2]]
+
+    #Here we differentiate between images with gray scale and images with color
+    # This is a dirty hack we should get rid of it
+    if tf.shape(tf.shape(tf.squeeze(image))).numpy() > 2:
+        alpha = grds_by_cls[target_label, first_pix[:, 0], first_pix[:, 1], first_pix[:, 2]] + grds_by_cls[target_label, second_pix[:, 0], second_pix[:, 1], second_pix[:, 2]]
+        beta = grds_by_cls[:, first_pix[:, 0], first_pix[:, 1], first_pix[:, 2]] + grds_by_cls[:, second_pix[:, 0], second_pix[:, 1], second_pix[:, 2]]
+    else:
+        alpha = grds_by_cls[target_label, first_pix[:, 0], first_pix[:, 1]] + grds_by_cls[target_label, second_pix[:, 0], second_pix[:, 1]]
+        beta = grds_by_cls[:, first_pix[:, 0], first_pix[:, 1]] + grds_by_cls[:, second_pix[:, 0], second_pix[:, 1]]
     beta[target_label] = 0.0
     beta = np.sum(beta, axis=0)
 
