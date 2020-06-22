@@ -6,6 +6,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from liar_liar.attacks.fgsm import fgsm_targeted_wrapper
+from liar_liar.attacks_tests.test_bfgs import bfgs_params
+from liar_liar.attacks_tests.test_carlini_wagner import carlini_wagner_params
 from liar_liar.attacks_tests.test_fgsm import params_list as fgsm_params
 from liar_liar.attacks_tests.test_deepfool import params_list as deepfool_params
 from liar_liar.attacks_tests.test_gen_attack import gen_attack_params
@@ -23,19 +25,19 @@ METRICS_NAME_MAP = {
 PARAMETERS_NAME_MAP = {
     ITER_MAX : r"i",
     EPS : r"\(\epsilon\)",
-    OPTIMIZATION_ITER : "optimization_iter",
-    BINARY_ITER : "binary_iter",
-    C_HIGH : "c_high",
-    C_LOW : "c_low",
-    KAPPA : "kappa",
+    OPTIMIZATION_ITER : "optimization\_iter",
+    BINARY_ITER : "binary\_iter",
+    C_HIGH : "c\_high",
+    C_LOW : "c\_low",
+    KAPPA : r"\(\kappa\)",
     GENERATION_NUMBER : "grtn nmbr",
     POPULATION_NMB : "pop nmbr",
     MUTATION_PROBABILITY : "mutn prob",
-    DELTA : "delta",
-    MAX_PERTURBATION : "max_perturbation",
-    THETA : "theta",
-    IS_INCREASING : "is_increasing",
-    USE_LOGITS : "use_logits"
+    DELTA : r"\(\delta\)",
+    MAX_PERTURBATION : "max\_perturbation",
+    THETA : r"\(\theta\)",
+    IS_INCREASING : "is\_increasing",
+    USE_LOGITS : "use\_logits"
 }
 
 MODEL_NAME_MAP = {
@@ -235,8 +237,13 @@ def generate_deepfool_table(path='../json_results/deepfool_wrapper_map.json', nm
     renderable_params = sorted(deepfool_params, key=lambda dict: dict[ITER_MAX])
     import_and_print(path, nmb_columns, renderable_params)
 
+def generate_bfgs_table(path='../json_results/bfgs_wrapper.json', nmb_columns=2):
+    renderable_params = sorted(bfgs_params, key=lambda dict: dict[ITER_MAX])
+    import_and_print(path, nmb_columns, renderable_params)
+
+def generate_carlini_table(path='../json_results/carlini_wagner_wrapper.json', nmb_columns=2):
+    renderable_params = sorted(carlini_wagner_params, key=lambda dict: dict[OPTIMIZATION_ITER])
+    import_and_print(path, nmb_columns, renderable_params)
+
 def generate_accuracy_table_for_all(path = '../json_results/accuracy_results.json'):
     generate_accuracy_table(path)
-
-if __name__ == "__main__":
-    generate_accuracy_table_for_all(path='../../json_results/accuracy_results.json')
