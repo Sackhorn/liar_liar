@@ -11,6 +11,8 @@ from tensorflow.python.keras.metrics import CategoricalAccuracy
 from tensorflow_datasets import Split
 
 from liar_liar.base_models.sequential_model import SequentialModel, get_all_models
+from liar_liar.utils.attack_metrics import AttackMetricsAccumulator, L2_Metrics, Accuracy, Robustness, \
+    Timing
 from liar_liar.utils.general_names import *
 from liar_liar.utils.generate_side_by_side import show_plot_comparison
 from liar_liar.utils.utils import batch_image_norm, disable_tensorflow_logging, get_results_for_model_and_parameter
@@ -36,6 +38,7 @@ def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=F
             # TODO: also each batch shouldn't have the same class but i don't know if this is acheivable without imapring performance
             target_class = tf.one_hot(randrange(0, nmb_classes), nmb_classes)
             target_class = target_class if targeted else None
+            print("MODEL: {} ATTACK: {} PARAMS: {}".format(model.MODEL_NAME, attack_wrapper.__name__, parameter_dict))
             results = run_test(model,
                      attack_wrapper(**parameter_dict),
                      target_class=target_class,
@@ -99,28 +102,21 @@ def run_test(classifier, attack, batch_size, target_class, nmb_elements=None, sh
         return tf.math.reduce_all(tf.math.equal(classification, label))
 
     filter_fnc = remove_misclassified if target_class is None else remove_misclassified_and_target_class
-    accuracy = CategoricalAccuracy()
-    l2_distance = np.array([])
-    mean_time_per_sample = np.array([])
-    total_time = time.time()
     dataset = classifier.get_dataset(Split.TEST, shuffle=1, batch_size=batch_size, filter=filter_fnc)
-    print("MODEL: {} ATTACK: {}".format(classifier.MODEL_NAME, attack.__name__))
+    metrics_accumulator = AttackMetricsAccumulator([Accuracy(), L2_Metrics(), Robustness(), Timing()])
     for data_sample in dataset.take(nmb_elements):
         image, labels = data_sample
-        start = time.time()
         if target_class is not None:
             ret_image, logits, parameters = attack(classifier, data_sample, target_class)
-            accuracy.update_state(target_class, logits)
-            accuracy_result = accuracy.result().numpy()
         else:
             ret_image, logits, parameters = attack(classifier, data_sample)
-            accuracy.update_state(labels, logits) #TODO: This is wrong for deepfool with imagenet
-            accuracy_result = 1.0 - accuracy.result().numpy()
 
-        l2_distance = np.append(l2_distance, batch_image_norm(image - ret_image).numpy().flatten())
-        cur_l2_median = np.median(l2_distance)
-        cur_l2_average = np.mean(l2_distance)
-
+        metrics_dict = metrics_accumulator.accumulate_metrics(image,
+                                                              labels,
+                                                              ret_image,
+                                                              logits,
+                                                              batch_size,
+                                                              target_class)
         if show_plots:
             show_plot_comparison(adv_image=ret_image[0],
                                  adv_logits=logits[0],
@@ -131,21 +127,23 @@ def run_test(classifier, attack, batch_size, target_class, nmb_elements=None, sh
                                  target_class = target_class,
                                  true_class=labels[0])
 
-        cur_time_per_batch = time.time() - start
-        cur_time_per_sample = cur_time_per_batch / batch_size
-        mean_time_per_sample = np.append(mean_time_per_sample, cur_time_per_sample)
+        log_string = "TIME_BATCH: {:2f} TIME_PER_SAMPLE {:2f} ATACK_ACC: {:2f} MEAN_L2 {:2f} ROBUSTNESS: {:2f}"
+        log_string = log_string.format(float(metrics_dict[TIME_PER_BATCH_KEY]),
+                                       float(metrics_dict[AVG_TIME_SAMPLE_KEY]),
+                                       float(metrics_dict[ACCURACY_KEY]),
+                                       float(metrics_dict[L2_AVERAGE_KEY]),
+                                       float(metrics_dict[ROBUSTNESS_KEY]))
+        print(log_string)
 
-        print("TIME_BATCH: {:2f} TIME_PER_SAMPLE {:2f} ATACK_ACC: {:2f} MEDIAN_L2 {:2f} MEAN_L2 {:2f}"
-              .format(cur_time_per_batch, cur_time_per_sample, accuracy_result, float(cur_l2_median), float(cur_l2_average)))
-    total_time = time.time() - total_time
+
     results = {
-        ACCURACY_KEY: float(accuracy_result),
-        L2_MEDIAN_KEY : float(cur_l2_median),
-        L2_AVERAGE_KEY: float(cur_l2_average),
-        PARAMETERS_KEY: parameters,
-        AVG_TIME_SAMPLE_KEY: float(np.mean(mean_time_per_sample)),
-        MODEL_NAME_KEY: classifier.MODEL_NAME,
-        ATTACK_NAME_KEY: attack.__name__,
-        TOTAL_TIME_KEY: total_time
+        ACCURACY_KEY : float(metrics_dict[ACCURACY_KEY]),
+        L2_MEDIAN_KEY : float(metrics_dict[L2_MEDIAN_KEY]),
+        L2_AVERAGE_KEY : float(metrics_dict[L2_AVERAGE_KEY]),
+        ROBUSTNESS_KEY : float(metrics_dict[ROBUSTNESS_KEY]),
+        PARAMETERS_KEY : parameters,
+        AVG_TIME_SAMPLE_KEY : float(float(metrics_dict[AVG_TIME_SAMPLE_KEY])),
+        MODEL_NAME_KEY : classifier.MODEL_NAME,
+        ATTACK_NAME_KEY : attack.__name__,
     }
     return results

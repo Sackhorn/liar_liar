@@ -5,10 +5,11 @@ NMB_ELEMENTS_KEY = "nmb_elements"
 MODEL_NAME_KEY = "model_name"
 L2_MEDIAN_KEY = "L2_median"
 L2_AVERAGE_KEY = "L2_average"
+ROBUSTNESS_KEY = "robustness_key"
 AVG_TIME_SAMPLE_KEY = "average_time_per_sample"
 ACCURACY_KEY = "accuracy_result"
 ATTACK_NAME_KEY = "attack_name"
-TOTAL_TIME_KEY = "total_time"
+TIME_PER_BATCH_KEY = "time_per_batch"
 
 #ATTACK PARAMS
 #GENERAL
