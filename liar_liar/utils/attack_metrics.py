@@ -71,7 +71,7 @@ class Robustness(AttackMetric):
 
     def accumulate(self, image, label, adv_image, logits, batch_size, target_class):
         image_norm = batch_image_norm(image).numpy().flatten()
-        adv_image_norm = batch_image_norm(adv_image).numpy().flatten()
+        adv_image_norm = (batch_image_norm(adv_image) - batch_image_norm(image)).numpy().flatten()
         batch_robustness = np.divide(adv_image_norm, image_norm)
         self.robustness = np.append(self.robustness, batch_robustness)
         return {ROBUSTNESS_KEY : np.mean(self.robustness)}
