@@ -103,6 +103,11 @@ def _deepfool(data_sample, classifier, iter_max=10000, min=0.0, max=1.0):
         f_l_prime = tf.gather_nd(f_prime, coef_val_argmin, batch_dims=1)
         scalar = tf.abs(f_l_prime)/tf.norm(tf.norm(w_l_prime, axis=[-2,-1]), axis=1)
         perturbation = tf.multiply(tf.reshape(scalar, [batch_size,1,1,1]),  w_l_prime)
+        #Perturbation masking - each element that is properly classified won't be perturbed anymore
+        # add_perturbation_mask = tf.map_fn(lambda x: tf.constant(x, shape=tf.shape(image)[1:]), is_properly_classified)
+        # add_perturbation_mask = tf.vectorized_map(lambda x: tf.fill(tf.shape(image)[1:], x), is_properly_classified)
+        add_perturbation_mask = tf.map_fn(lambda x: tf.fill(tf.shape(image)[1:], x), is_properly_classified)
+        perturbation = tf.where(add_perturbation_mask, perturbation, 0)
         image = image + perturbation
         image = tf.clip_by_value(image, min, max)
         iter += 1
