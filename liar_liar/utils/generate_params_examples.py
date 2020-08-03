@@ -2,8 +2,7 @@ from matplotlib.figure import Figure
 from tensorflow_datasets import Split
 
 from liar_liar.attacks.fgsm import fgsm_untargeted_wrapper
-from liar_liar.base_models.model_names import *
-from liar_liar.base_models.sequential_model import SequentialModel, get_all_models
+from liar_liar.models.base_models.sequential_model import SequentialModel, get_all_models
 from liar_liar.utils.general_names import *
 
 import tensorflow as tf

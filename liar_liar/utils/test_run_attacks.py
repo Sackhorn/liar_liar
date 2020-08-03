@@ -1,21 +1,18 @@
 import errno
 import json
 import os
-import time
 from os import path
 from random import randrange
 
-import numpy as np
 import tensorflow as tf
-from tensorflow.python.keras.metrics import CategoricalAccuracy
 from tensorflow_datasets import Split
 
-from liar_liar.base_models.sequential_model import SequentialModel, get_all_models
+from liar_liar.models.base_models.sequential_model import SequentialModel, get_all_models
 from liar_liar.utils.attack_metrics import AttackMetricsAccumulator, L2_Metrics, Accuracy, Robustness, \
     Timing
 from liar_liar.utils.general_names import *
 from liar_liar.utils.generate_side_by_side import show_plot_comparison
-from liar_liar.utils.utils import batch_image_norm, disable_tensorflow_logging, get_results_for_model_and_parameter
+from liar_liar.utils.utils import disable_tensorflow_logging, get_results_for_model_and_parameter
 
 
 def attack_with_params_dict(attack_params, attack_wrapper, targeted, show_plot=False):
@@ -102,6 +99,7 @@ def run_test(classifier, attack, batch_size, target_class, nmb_elements=None, sh
         return tf.math.reduce_all(tf.math.equal(classification, label))
 
     filter_fnc = remove_misclassified if target_class is None else remove_misclassified_and_target_class
+    # TODO: this should take into account min and max of model
     dataset = classifier.get_dataset(Split.TEST, shuffle=1, batch_size=batch_size, filter=filter_fnc)
     metrics_accumulator = AttackMetricsAccumulator([Accuracy(), L2_Metrics(), Robustness(), Timing()])
     for data_sample in dataset.take(nmb_elements):

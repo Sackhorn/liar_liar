@@ -2,7 +2,7 @@
 # https://arxiv.org/pdf/1805.11090.pdf
 import tensorflow as tf
 import tensorflow_probability as tfp
-from liar_liar.base_models.sequential_model import SequentialModel
+from liar_liar.models.base_models.sequential_model import SequentialModel
 
 # TODO:Add updating parameters during runtime (mutation probability and mutation_range)
 

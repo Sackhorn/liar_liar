@@ -3,6 +3,7 @@ from random import randrange
 import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
+from tensorflow.python.framework.errors_impl import InvalidArgumentError
 from tensorflow_datasets import Split
 
 from liar_liar.attacks.bfgs import bfgs_wrapper
@@ -10,8 +11,7 @@ from liar_liar.attacks.c_and_w import carlini_wagner_wrapper
 from liar_liar.attacks.deepfool import deepfool_wrapper
 from liar_liar.attacks.gen_attack import gen_attack_wrapper
 from liar_liar.attacks.jsma import jsma_targeted_wrapper
-from liar_liar.base_models.model_names import *
-from liar_liar.base_models.sequential_model import get_all_models, SequentialModel
+from liar_liar.models.base_models.sequential_model import get_all_models, SequentialModel
 from liar_liar.utils.general_names import *
 from liar_liar.utils.utils import find_or_create_file_path
 
@@ -71,15 +71,18 @@ def show_plot_comparison(adv_image,
     :type orig_logits: Tensor
     :type orig_image: Tensor
     """
-    file_name = find_or_create_file_path(file_name)
+    if file_name != "":
+        file_name = find_or_create_file_path(file_name)
     labels_names = np.arange(orig_logits.numpy().size) if labels_names is None else np.array(labels_names)
 
     orig_logits = orig_logits.numpy().flatten()
     orig_colors = ['blue'] * len(orig_logits)
     adv_logits = adv_logits.numpy().flatten()
     adv_colors = ['blue']*len(adv_logits)
-
-    true_class = int(tf.argmax(true_class, axis=1).numpy())
+    try:
+        true_class = int(tf.argmax(true_class, axis=1).numpy())
+    except InvalidArgumentError:
+        true_class = int(tf.argmax(true_class, axis=0).numpy())
     orig_colors[true_class], adv_colors[true_class] = 'green', 'green'
 
     if target_class is not None:

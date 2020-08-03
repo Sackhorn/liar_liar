@@ -1,6 +1,6 @@
 #This is the implementation of method given in this paper
 # Source https://arxiv.org/pdf/1511.04599.pdf
-from liar_liar.base_models.sequential_model import SequentialModel
+from liar_liar.models.base_models.sequential_model import SequentialModel
 import tensorflow as tf
 
 
@@ -49,10 +49,11 @@ def deepfool_wrapper(iter_max=10000, min=0.0, max=1.0):
         Returns: Wrapped deepfool for untargeted attack format
     """
     def wrapper_deepfool(classifier, data_sample):
+
         return deepfool(classifier, data_sample, iter_max=iter_max, min=min, max=max)
     return wrapper_deepfool
 
-@tf.function
+@tf.function()
 def _deepfool(data_sample, classifier, iter_max=10000, min=0.0, max=1.0):
     """
 
@@ -75,14 +76,14 @@ def _deepfool(data_sample, classifier, iter_max=10000, min=0.0, max=1.0):
     is_properly_classified = tf.math.reduce_all(tf.math.equal(output, label), axis=1)
 
 
-    while tf.math.reduce_any(is_properly_classified) and iter < iter_max:
+    while tf.math.reduce_any(is_properly_classified)  and iter < iter_max:
         gradients_by_cls = tf.TensorArray(tf.float32, size=nmb_classes, element_shape=[batch_size, width, height, color_space])
         with tf.GradientTape(persistent=True) as tape:
             tape.watch(image)
             tmp_image = tf.transpose(image, perm=[1,0,2,3])
             tape.watch(tmp_image)
             logits = classifier(image)
-
+            # TODO: maybe there is a way to do it in one step
             for k in tf.range(nmb_classes):
                 tmp = logits[:, k]
                 with tape.stop_recording():

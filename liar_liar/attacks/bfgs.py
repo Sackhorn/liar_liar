@@ -5,7 +5,7 @@ import tensorflow as tf
 import numpy as np
 from scipy.optimize import fmin_l_bfgs_b
 from tensorflow.python.keras.losses import categorical_crossentropy
-from liar_liar.base_models.sequential_model import SequentialModel
+from liar_liar.models.base_models.sequential_model import SequentialModel
 
 
 

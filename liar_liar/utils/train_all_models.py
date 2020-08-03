@@ -1,8 +1,8 @@
-from liar_liar.cifar_100_models.cifar_100_conv_model import CIFAR100ConvModel
-from liar_liar.cifar_10_models.cifar_10_conv_model import CIFAR10ConvModel
-from liar_liar.mnist_models.let_net_5 import LeNet5
-from liar_liar.mnist_models.mnist_conv_model import MNISTConvModel
-from liar_liar.mnist_models.mnist_dense_model import MNISTDenseModel
+from liar_liar.models.cifar_100_models import CIFAR100ConvModel
+from liar_liar.models.cifar_10_models import CIFAR10ConvModel
+from liar_liar.models.mnist_models.let_net_5 import LeNet5
+from liar_liar.models.mnist_models import MNISTConvModel
+from liar_liar.models.mnist_models.mnist_dense_model import MNISTDenseModel
 
 model = CIFAR10ConvModel()
 model.train(epochs=150)

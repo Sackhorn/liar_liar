@@ -1,25 +1,24 @@
 import json
-import os
 from math import ceil
 
 import numpy as np
 import matplotlib.pyplot as plt
 
-from liar_liar.attacks.fgsm import fgsm_targeted_wrapper
-from liar_liar.attacks_tests.test_bfgs import bfgs_params
-from liar_liar.attacks_tests.test_carlini_wagner import carlini_wagner_params
-from liar_liar.attacks_tests.test_fgsm import params_list as fgsm_params
-from liar_liar.attacks_tests.test_deepfool import params_list as deepfool_params
-from liar_liar.attacks_tests.test_gen_attack import gen_attack_params
-from liar_liar.base_models.model_names import *
+from liar_liar.attacks_experiments.test_bfgs import bfgs_params
+from liar_liar.attacks_experiments.test_carlini_wagner import carlini_wagner_params
+from liar_liar.attacks_experiments.test_fgsm import params_list as fgsm_params
+from liar_liar.attacks_experiments.test_deepfool import params_list as deepfool_params
+from liar_liar.attacks_experiments.test_gen_attack import gen_attack_params
 from liar_liar.utils.general_names import *
 from liar_liar.utils.utils import get_results_for_model_and_parameter
 
 METRICS_NAME_MAP = {
-    "accuracy_result" : "Accuracy",
-    "L2_median" : "L2 Median",
-    "L2_average" : "L2 Average",
-    "average_time_per_sample" : "Time per sample",
+    ACCURACY_KEY : "Accuracy",
+    L2_MEDIAN_KEY : "L2 Median",
+    L2_AVERAGE_KEY : "L2 Average",
+    AVG_TIME_SAMPLE_KEY : "Time per sample",
+    ROBUSTNESS_KEY : r"\(\rho_{adw}\)"
+
 }
 
 PARAMETERS_NAME_MAP = {
@@ -61,7 +60,7 @@ def ltx_prcnt(float):
 def ltx_acc(float):
     return r"{:04.2f}".format(float * 100) + r"\%"
 
-PRINTABLE_METRICS = ["accuracy_result", "L2_median", "L2_average", "average_time_per_sample"]
+PRINTABLE_METRICS = [ACCURACY_KEY, L2_MEDIAN_KEY, L2_AVERAGE_KEY, AVG_TIME_SAMPLE_KEY, ROBUSTNESS_KEY]
 
 
 ACC_METRICS = ["categorical_accuracy", "top_k_categorical_accuracy"]

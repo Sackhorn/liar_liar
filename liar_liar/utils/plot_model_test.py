@@ -1,12 +1,8 @@
 import tensorflow as tf
 from tensorflow.python import keras
 
-import os
-
-from liar_liar.cifar_10_models.cifar_10_conv_model import CIFAR10ConvModel
-
 # os.environ["PATH"] += os.pathsep + 'C:\\Program Files\\Graphviz 2.43.20200408.0903'
-from liar_liar.mnist_models.mnist_dense_model import MNISTDenseModel
+from liar_liar.models.mnist_models.mnist_dense_model import MNISTDenseModel
 
 model = MNISTDenseModel()
 input = keras.layers.Input((28,28,1))

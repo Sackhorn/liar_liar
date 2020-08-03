@@ -156,6 +156,7 @@ def saliency_map(model, image, true_label, target_label, all_pixels, is_targeted
         tape.watch(image)
         logits = model(image, get_raw=use_logits)
         for k in range(nmb_classes):
+            #TODO: Add stop watch in tape ang get results in TensorArray
             grds_by_cls.append(tape.gradient(logits[0][k], image).numpy().squeeze())
 
     grds_by_cls = np.array(grds_by_cls)

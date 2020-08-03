@@ -2,7 +2,7 @@ import errno
 import json
 import os
 from os import path
-from liar_liar.base_models.sequential_model import get_all_models
+from liar_liar.models.base_models.sequential_model import get_all_models
 
 
 def generate_accuracy_dict():
