@@ -8,6 +8,7 @@ from tensorflow.python.keras.optimizer_v2.adam import Adam
 
 from liar_liar.attacks.deepfool import deepfool
 from liar_liar.utils.attack_metrics import *
+from liar_liar.utils.generate_side_by_side import show_plot_comparison
 
 
 def preprocess_data(x, y):
@@ -31,7 +32,7 @@ model = Sequential([Flatten(),
                    Dense(784, activation='sigmoid'),
                    Dense(800, activation='sigmoid'),
                    Dense(800, activation='sigmoid'),
-                   Dense(10, activation='softmax'),Dense(10, activation='softmax')])
+                   Dense(10, activation='softmax')])
 
 model.compile(optimizer=Adam(), loss=categorical_crossentropy, metrics=[categorical_accuracy])
 model.fit(train.repeat(),
@@ -39,11 +40,19 @@ model.fit(train.repeat(),
           steps_per_epoch=train_steps,
           validation_data=test,
           validation_steps=test_steps)
-
+def nmb_classes():
+    return 10
+model.get_number_of_classes = nmb_classes
 #Define metrics that we want to gather
 metrics_accumulator = AttackMetricsAccumulator([Accuracy(), L2_Metrics(), Robustness(), Timing()])
-for data_sample in test.take(10):
+for data_sample in test.take(100):
     image, labels = data_sample
-    ret_image, logits, parameters = deepfool(model, data_sample, iter_max=100) #Run the attack
-    metrics_dict = metrics_accumulator.accumulate_metrics(image, labels, ret_image, logits, BATCH_SIZE)
+    adv_image, adv_logits, parameters = deepfool(model, data_sample, iter_max=100) #Run the attack
+    metrics_dict = metrics_accumulator.accumulate_metrics(image, labels, adv_image, adv_logits, BATCH_SIZE)
 print(metrics_dict)
+show_plot_comparison(adv_image[0],
+                     adv_logits[0],
+                     image[0],
+                     model(tf.expand_dims(image[0], 0)),
+                     list(range(10)),
+                     true_class=labels[0])
