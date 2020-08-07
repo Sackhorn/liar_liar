@@ -1,7 +1,7 @@
 import tensorflow as tf
-from tensorflow.python.keras.initializers import glorot_normal, RandomNormal
 from tensorflow.python.keras.layers import Conv2D, BatchNormalization, Activation, Dropout, MaxPooling2D, Flatten, Dense
 from tensorflow.python.keras.metrics import categorical_accuracy
+from tensorflow.python.ops.init_ops_v2 import glorot_normal, RandomNormal
 
 from liar_liar.models.base_models.model_names import SIMPLENET_CIFAR10_NAME
 from liar_liar.models.cifar_10_models.cifar_10_model_base import CIFAR10Model

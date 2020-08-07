@@ -68,6 +68,7 @@ model.fit(train.repeat(),
 def nmb_classes():
     return 10
 model.get_number_of_classes = nmb_classes
+
 #Define metrics that we want to gather
 metrics_accumulator = AttackMetricsAccumulator([Accuracy(), L2_Metrics(), Robustness(), Timing()])
 for data_sample in test.take(100):
@@ -89,3 +90,16 @@ You should see something like this
 ```
 and an image
 ![comparing adversarial example and an original](https://github.com/Sackhorn/liar_liar/blob/master/readme_figure.png "Comparison"")
+if you want to generate a dataset of adversarial examples you can just do this
+```
+test_adv_dataset = create_adv_dataset(test, fgsm_untargeted_wrapper, model, {ITER_MAX: 100, EPS: 0.001})
+train_adv_dataset = create_adv_dataset(train, fgsm_untargeted_wrapper, model, {ITER_MAX: 100, EPS: 0.001})
+save_adv_dataset(test_adv_dataset, "test_adv_mnist")
+save_adv_dataset(train_adv_dataset, "train_adv_mnist")
+```
+this is a regular TensorFlow dataset so you can perform all the operations normally available
+If you want to load the saved dataset just call ```load_adv_dataset()```
+```python
+test_adv_dataset = load_adv_dataset("test_adv_mnist")
+train_adv_dataset = load_adv_dataset("train_adv_mnist")
+```

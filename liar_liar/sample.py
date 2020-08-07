@@ -1,14 +1,12 @@
-import tensorflow as tf
-import tensorflow_datasets as tfds
 from tensorflow.python.keras import Sequential
 from tensorflow.python.keras.layers import Flatten, Dense
 from tensorflow.python.keras.losses import categorical_crossentropy
 from tensorflow.python.keras.metrics import categorical_accuracy
 from tensorflow.python.keras.optimizer_v2.adam import Adam
 
-from liar_liar.attacks.deepfool import deepfool
+from liar_liar.attacks.fgsm import fgsm_untargeted_wrapper
 from liar_liar.utils.attack_metrics import *
-from liar_liar.utils.generate_side_by_side import show_plot_comparison
+from liar_liar.utils.dataset_creator import *
 
 
 def preprocess_data(x, y):
@@ -40,19 +38,18 @@ model.fit(train.repeat(),
           steps_per_epoch=train_steps,
           validation_data=test,
           validation_steps=test_steps)
-def nmb_classes():
-    return 10
-model.get_number_of_classes = nmb_classes
+
 #Define metrics that we want to gather
 metrics_accumulator = AttackMetricsAccumulator([Accuracy(), L2_Metrics(), Robustness(), Timing()])
 for data_sample in test.take(100):
     image, labels = data_sample
-    adv_image, adv_logits, parameters = deepfool(model, data_sample, iter_max=100) #Run the attack
+    fgsm = fgsm_untargeted_wrapper(iter_max=100, eps=0.001)
+    adv_image, adv_logits, parameters = fgsm(model, data_sample) #Run the attack
     metrics_dict = metrics_accumulator.accumulate_metrics(image, labels, adv_image, adv_logits, BATCH_SIZE)
 print(metrics_dict)
-show_plot_comparison(adv_image[0],
-                     adv_logits[0],
-                     image[0],
-                     model(tf.expand_dims(image[0], 0)),
-                     list(range(10)),
-                     true_class=labels[0])
+
+#Create adversary datasets for both test and train datasets
+test_adv_dataset = create_adv_dataset(test, fgsm_untargeted_wrapper, model, {ITER_MAX: 100, EPS: 0.001})
+train_adv_dataset = create_adv_dataset(train, fgsm_untargeted_wrapper, model, {ITER_MAX: 100, EPS: 0.001})
+save_adv_dataset(test_adv_dataset, "test_adv_mnist")
+save_adv_dataset(train_adv_dataset, "train_adv_mnist")
