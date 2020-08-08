@@ -32,15 +32,19 @@ def gen_attack(classifier,
 
     """
     images, _ = data_sample
-    ret_image = tf.map_fn(lambda x: _gen_attack(classifier,
-                                                x,
-                                                target_class,
-                                                generation_nmb,
-                                                population_nmb,
-                                                min,
-                                                max,
-                                                mutation_probability,
-                                                delta), images)
+    ret_image = None
+    for i in range(tf.shape(images)[0]):
+        adv_image = _gen_attack(classifier,
+                    images[i],
+                    target_class,
+                    generation_nmb,
+                    population_nmb,
+                    min,
+                    max,
+                    mutation_probability,
+                    delta)
+        ret_image = adv_image if ret_image is None else tf.concat([ret_image, adv_image], 0)
+
     parameters = {
         # "target_class": True,
         "generation_nmb": generation_nmb,

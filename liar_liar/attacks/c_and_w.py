@@ -2,6 +2,8 @@
 # https://arxiv.org/abs/1608.04644
 import tensorflow as tf
 import numpy as np
+from tensorflow.python.keras.optimizers import Adam
+from tensorflow.python.training.adam import AdamOptimizer
 from tensorflow.python.training.gradient_descent import GradientDescentOptimizer
 
 from liar_liar.utils.general_names import *
@@ -33,7 +35,7 @@ def carlini_wagner(classifier,
 
     """
     image, label = data_sample
-    perturbation = tf.Variable(np.random.uniform(0.0, 1.0, image.shape), dtype=tf.float32)
+    perturbation = tf.Variable(np.random.uniform(0.0, 1.0, tf.shape(image)), dtype=tf.float32)
     cw = tf.function(_c_and_w)
     # cw = _c_and_w
     return_image = cw(image, classifier, target_class, perturbation, optimizer, optimization_iter, binary_iter, c_high, c_low, kappa)
@@ -48,7 +50,8 @@ def carlini_wagner(classifier,
     }
     return (return_image, classifier(return_image), parameters)
 
-def carlini_wagner_wrapper(optimizer=GradientDescentOptimizer(1e-2),
+# TODO: Try to use adam as an optimizer - authors suggest it converges the fastest
+def carlini_wagner_wrapper(optimizer=AdamOptimizer(),
                            optimization_iter=10000,
                            binary_iter=20,
                            c_high=1000.0,
@@ -62,7 +65,6 @@ def carlini_wagner_wrapper(optimizer=GradientDescentOptimizer(1e-2),
     def wrapped_carlini_wagner(classifier, data_sample, target_class):
         return carlini_wagner(classifier, data_sample, target_class, optimizer, optimization_iter, binary_iter, c_high, c_low, kappa)
     return wrapped_carlini_wagner
-
 
 def _optimize_c_and_w(image, classifier, iter_max, target_class, c_val, perturbation, optimizer, kappa):
     target_label_index = tf.argmax(target_class, output_type=tf.int32, axis=0)
@@ -89,8 +91,8 @@ def _optimize_c_and_w(image, classifier, iter_max, target_class, c_val, perturba
     return 0.5 * (tf.tanh(perturbation) + 1)
 
 def _c_and_w(image, model, target_class, perturbation, optimizer, optimization_iter, binary_iter, c_high, c_low, kappa):
-    c_high = tf.fill([image.shape[0]], c_high)
-    c_low = tf.fill([image.shape[0]], c_low)
+    c_high = tf.fill([tf.shape(image)[0]], c_high)
+    c_low = tf.fill([tf.shape(image)[0]], c_low)
     prev_high = c_high
 
     for _ in tf.range(binary_iter):
@@ -102,6 +104,6 @@ def _c_and_w(image, model, target_class, perturbation, optimizer, optimization_i
         prev_high = c_high
         c_high = tf.where(has_succeed, c_half, c_high)
         c_low = tf.where(has_succeed, c_low, c_half)
-        tf.compat.v1.assign(perturbation, tf.random.uniform(perturbation.shape))
+        tf.compat.v1.assign(perturbation, tf.random.uniform(tf.shape(perturbation)))
 
     return _optimize_c_and_w(image, model, optimization_iter, target_class, prev_high, perturbation, optimizer, kappa)

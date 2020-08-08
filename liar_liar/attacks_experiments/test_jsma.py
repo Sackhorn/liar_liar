@@ -3,6 +3,11 @@ from liar_liar.models.base_models.model_names import *
 from liar_liar.utils.general_names import *
 from liar_liar.utils.test_run_attacks import attack_with_params_dict
 
+
+jsma_params = [
+    {MAX_PERTURBATION:0.1, THETA:1, IS_INCREASING:True, USE_LOGITS: False},
+]
+
 attack_params = {
     SIMPLENET_CIFAR10_NAME :
     {
