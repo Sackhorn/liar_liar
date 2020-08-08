@@ -68,7 +68,7 @@
 \RequirePackage{xspace}     % Remove duplicated spaces
 
 
-\RequirePackage{cite}
+\RequirePackage[space]{cite}
 \RequirePackage{listing}
 \RequirePackage{subcaption}
 \RequirePackage{algorithm}% http://ctan.org/pkg/algorithms
