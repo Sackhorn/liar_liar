@@ -43,7 +43,7 @@ def gen_attack(classifier,
                     max,
                     mutation_probability,
                     delta)
-        ret_image = adv_image if ret_image is None else tf.concat([ret_image, adv_image], 0)
+        ret_image = tf.expand_dims(adv_image, 0) if ret_image is None else tf.concat([ret_image, tf.expand_dims(adv_image, 0)], 0)
 
     parameters = {
         # "target_class": True,
@@ -54,7 +54,7 @@ def gen_attack(classifier,
         # "min": min,
         # "max": max
     }
-    return (ret_image, classifier(ret_image), parameters)
+    return (ret_image, classifier(tf.reshape(ret_image, tf.shape(images))), parameters)
 
 def gen_attack_wrapper(generation_nmb=100000, population_nmb=6, min=0.0, max=1.0, mutation_probability=0.05, delta=0.05):
     """
