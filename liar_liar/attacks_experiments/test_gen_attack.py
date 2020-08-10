@@ -4,7 +4,7 @@ from liar_liar.utils.general_names import *
 from liar_liar.utils.test_run_attacks import attack_with_params_dict
 
 gen_attack_params = [
-    {GENERATION_NUMBER:10000, POPULATION_NMB:5, DELTA:0.05, MUTATION_PROBABILITY:0.05},
+    {GENERATION_NUMBER:1000, POPULATION_NMB:5, DELTA:0.05, MUTATION_PROBABILITY:0.05},
 ]
 
 attack_params = {

@@ -1,5 +1,6 @@
 import json
 import sys
+import traceback
 from math import ceil
 
 import numpy as np
@@ -10,6 +11,7 @@ from liar_liar.attacks_experiments.test_carlini_wagner import carlini_wagner_par
 from liar_liar.attacks_experiments.test_fgsm import params_list as fgsm_params
 from liar_liar.attacks_experiments.test_deepfool import params_list as deepfool_params
 from liar_liar.attacks_experiments.test_gen_attack import gen_attack_params
+from liar_liar.attacks_experiments.test_jsma import jsma_params
 from liar_liar.models.base_models.model_names import *
 from liar_liar.utils.general_names import *
 from liar_liar.utils.utils import get_results_for_model_and_parameter
@@ -24,18 +26,18 @@ METRICS_NAME_MAP = {
 }
 
 PARAMETERS_NAME_MAP = {
-    ITER_MAX : r"i",
+    ITER_MAX : r"$\textit{i}$",
     EPS : r"\(\epsilon\)",
-    OPTIMIZATION_ITER : "optimization\_iter",
-    BINARY_ITER : "binary\_iter",
+    OPTIMIZATION_ITER : "$i$",
+    BINARY_ITER : "$i_{b}$",
     C_HIGH : "c\_high",
     C_LOW : "c\_low",
     KAPPA : r"\(\kappa\)",
-    GENERATION_NUMBER : "grtn nmbr",
-    POPULATION_NMB : "pop nmbr",
-    MUTATION_PROBABILITY : "mutn prob",
+    GENERATION_NUMBER : r"$i$",
+    POPULATION_NMB : "N",
+    MUTATION_PROBABILITY : r"$\alpha$",
     DELTA : r"\(\delta\)",
-    MAX_PERTURBATION : "max\_perturbation",
+    MAX_PERTURBATION : "$\epsilon_\max$",
     THETA : r"\(\theta\)",
     IS_INCREASING : "is\_increasing",
     USE_LOGITS : "use\_logits"
@@ -125,7 +127,7 @@ def import_and_print(file_name, nmb_columns_for_params, renderable_params):
         for i in range(starting_param_index, starting_param_index + number_of_params_in_fold):
             params_string = ""
             for key, val in renderable_params[i].items():
-                params_string += r" {}={} ".format(PARAMETERS_NAME_MAP[key], str(val))
+                params_string += r" {} = {} ".format(PARAMETERS_NAME_MAP[key], str(val))
             header_row += r"& \multicolumn{" + str(nmb_metrics) + r"}{c|}{" + r"{}}}".format(params_string)
         header_row += r" \\ \hline"
         main_string += header_row+ "\n"
@@ -227,7 +229,8 @@ def print_on_no_except(func):
             main_string = func(*args, **kwargs)
             print(main_string)
         except Exception as e:
-            sys.stderr.write(str(e.__traceback__))
+            traceback.print_tb(e.__traceback__)
+            sys.stderr.write(str(e))
             sys.stderr.write(func.__name__ + "failed")
             return
 
@@ -256,7 +259,7 @@ def generate_getattack_table(path='../json_results/gen_attack_wrapper.json', nmb
     return import_and_print(path, nmb_columns, renderable_params)
 
 @print_on_no_except
-def generate_deepfool_table(path='../json_results/deepfool_wrapper_map.json', nmb_columns=2):
+def generate_deepfool_table(path='../json_results/deepfool_wrapper.json', nmb_columns=1):
     renderable_params = sorted(deepfool_params, key=lambda dict: dict[ITER_MAX])
     return import_and_print(path, nmb_columns, renderable_params)
 
@@ -268,11 +271,16 @@ def generate_bfgs_table(path='../json_results/bfgs_wrapper.json', nmb_columns=2)
 @print_on_no_except
 def generate_carlini_table(path='../json_results/carlini_wagner_wrapper.json', nmb_columns=2):
     renderable_params = sorted(carlini_wagner_params, key=lambda dict: dict[OPTIMIZATION_ITER])
+    for param_set in renderable_params:
+        del param_set[C_HIGH]
+        del param_set[C_LOW]
+    return import_and_print(path, nmb_columns, renderable_params)
+
+@print_on_no_except
+def generate_jsma_table(path='../json_results/jsma_targeted_wrapper.json', nmb_columns=1):
+    renderable_params = [{MAX_PERTURBATION: 0.1, THETA: 1}]
     return import_and_print(path, nmb_columns, renderable_params)
 
 @print_on_no_except
 def generate_accuracy_table_for_all(path = '../json_results/accuracy_results.json'):
-    generate_accuracy_table(path)
-
-
-# generate_llfgsm_table()
+    return generate_accuracy_table(path)

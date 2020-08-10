@@ -531,5 +531,6 @@
     \fi
 
     \standardappendix
-    \renewcommand{\thesection}{\@appendixtitle~\arabic{section}}
+%TODO: this messes with the appendix list of contents - disabled for now
+%    \renewcommand{\thesection}{\@appendixtitle~\arabic{section}}
 }
