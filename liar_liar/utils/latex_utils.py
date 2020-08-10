@@ -245,12 +245,12 @@ def generate_fgsm_table(path='../json_results/fgsm_untargeted_wrapper.json', nmb
 @print_on_no_except
 def generate_ifgsm_table(path='../json_results/fgsm_untargeted_wrapper.json', nmb_columns=2):
     renderable_params = filter(lambda dict: dict[ITER_MAX] > 1, fgsm_params)
-    renderable_params = sorted(renderable_params, key=lambda dict: dict[ITER_MAX])
+    renderable_params = sorted(renderable_params, key=lambda dict: (dict[ITER_MAX], dict[EPS]))
     return import_and_print(path, nmb_columns, renderable_params)
 
 @print_on_no_except
 def generate_llfgsm_table(path='../json_results/fgsm_targeted_wrapper.json', nmb_columns=2):
-    renderable_params = sorted(fgsm_params, key=lambda dict: dict[ITER_MAX])
+    renderable_params = sorted(fgsm_params, key=lambda dict: (dict[ITER_MAX], dict[EPS]))
     return import_and_print(path, nmb_columns, renderable_params)
 
 @print_on_no_except
