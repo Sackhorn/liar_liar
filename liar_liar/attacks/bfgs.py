@@ -1,13 +1,19 @@
 #This is the implementation of method given in this paper
 #https://arxiv.org/pdf/1312.6199.pdf opis metody
 
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 from scipy.optimize import fmin_l_bfgs_b
 from tensorflow.python.keras.losses import categorical_crossentropy
+
+from liar_liar.attacks.attack import Attack
 from liar_liar.models.base_models.sequential_model import SequentialModel
 
 
+class BFGS(Attack):
+
+    def init_wrapper(self, *args, **kwargs):
+        self._wrapper = bfgs_wrapper(*args, **kwargs)
 
 def bfgs(classifier, data_sample, target_class, iter_max, min=0.0, max=1.0):
     image, label = data_sample

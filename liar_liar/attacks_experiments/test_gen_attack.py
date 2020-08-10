@@ -1,4 +1,4 @@
-from liar_liar.attacks.gen_attack import gen_attack_wrapper
+from liar_liar.attacks.gen_attack import GenAttack
 from liar_liar.models.base_models.model_names import *
 from liar_liar.utils.general_names import *
 from liar_liar.utils.test_run_attacks import attack_with_params_dict
@@ -41,6 +41,4 @@ attack_params = {
 }
 
 if __name__ == "__main__":
-    import tensorflow as tf
-    tf.profiler.experimental.server.start(6009)
-    attack_with_params_dict(attack_params, gen_attack_wrapper, show_plot=False, targeted=True)
+    attack_with_params_dict(attack_params, GenAttack, show_plot=False, targeted=True)

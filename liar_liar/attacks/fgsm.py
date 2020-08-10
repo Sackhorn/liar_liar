@@ -3,6 +3,19 @@
 from tensorflow.python.ops.losses.losses_impl import softmax_cross_entropy
 import tensorflow as tf
 
+from liar_liar.attacks.attack import Attack
+
+
+class FGSMTargeted(Attack):
+
+    def init_wrapper(self, *args, **kwargs):
+        self._wrapper = fgsm_targeted_wrapper(*args, **kwargs)
+
+class FGSMUntargeted(Attack):
+
+    def init_wrapper(self, *args, **kwargs):
+        self._wrapper = fgsm_untargeted_wrapper(*args, **kwargs)
+
 def fgsm(classifier, data_sample, target_class=None, iter_max=1, eps=0.01, min=0.0, max=1.0):
     """
 

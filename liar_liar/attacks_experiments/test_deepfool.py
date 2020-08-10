@@ -1,4 +1,4 @@
-from liar_liar.attacks.deepfool import deepfool_wrapper
+from liar_liar.attacks.deepfool import DeepFool
 from liar_liar.models.base_models.model_names import *
 from liar_liar.utils.general_names import *
 from liar_liar.utils.test_run_attacks import attack_with_params_dict
@@ -43,4 +43,4 @@ attack_params = {
 }
 
 if __name__ == "__main__":
-    attack_with_params_dict(attack_params, deepfool_wrapper, show_plot=False, targeted=False)
+    attack_with_params_dict(attack_params, DeepFool, show_plot=False, targeted=False)

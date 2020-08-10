@@ -1,10 +1,23 @@
 #This is the implementation of method given in this paper
 # Source https://arxiv.org/pdf/1511.07528.pdf
 import time
-import numpy as np
-import tensorflow as tf
 from math import floor
 
+import numpy as np
+import tensorflow as tf
+
+from liar_liar.attacks.attack import Attack
+
+
+class JSMATargeted(Attack):
+
+    def init_wrapper(self, *args, **kwargs):
+        self._wrapper = jsma_targeted_wrapper(*args, **kwargs)
+
+class JSMAUntargeted(Attack):
+
+    def init_wrapper(self, *args, **kwargs):
+        self._wrapper = jsma_untargeted_wrapper(*args, **kwargs)
 
 def jsma(classifier,
          data_sample,

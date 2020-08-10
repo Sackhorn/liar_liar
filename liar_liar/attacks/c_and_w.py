@@ -1,14 +1,19 @@
 #This is the implementation of method given in this paper
 # https://arxiv.org/abs/1608.04644
-import tensorflow as tf
 import numpy as np
-from tensorflow.python.keras.optimizers import Adam
+import tensorflow as tf
 from tensorflow.python.training.adam import AdamOptimizer
 from tensorflow.python.training.gradient_descent import GradientDescentOptimizer
 
+from liar_liar.attacks.attack import Attack
 from liar_liar.utils.general_names import *
 from liar_liar.utils.utils import batch_image_norm
 
+
+class CarliniWagner(Attack):
+
+    def init_wrapper(self, *args, **kwargs):
+        self._wrapper = carlini_wagner_wrapper(*args, **kwargs)
 
 def carlini_wagner(classifier,
                    data_sample,

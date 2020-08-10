@@ -1,10 +1,9 @@
 from unittest import TestCase
 
-from liar_liar.attacks.fgsm import fgsm_targeted_wrapper, fgsm_untargeted_wrapper
+from liar_liar.attacks.fgsm import FGSMTargeted, FGSMUntargeted
 from liar_liar.models.base_models.model_names import *
 from liar_liar.utils.general_names import *
 from liar_liar.utils.test_run_attacks import attack_with_params_dict
-
 
 attack_params = {
     SIMPLENET_CIFAR10_NAME :
@@ -41,7 +40,7 @@ attack_params = {
 
 class FGSMSanityCheck(TestCase):
     def test_sanitycheck(self):
-        fgsm_targeted_wrapper.__name__ += "_sanity_check"
-        fgsm_untargeted_wrapper.__name__ += "_sanity_check"
-        attack_with_params_dict(attack_params, fgsm_targeted_wrapper, show_plot=False, targeted=True)
-        attack_with_params_dict(attack_params, fgsm_untargeted_wrapper, show_plot=False, targeted=False)
+        FGSMTargeted.__name__ += "_sanity_check"
+        FGSMUntargeted.__name__ += "_sanity_check"
+        attack_with_params_dict(attack_params, FGSMTargeted, show_plot=False, targeted=True)
+        attack_with_params_dict(attack_params, FGSMUntargeted, show_plot=False, targeted=False)

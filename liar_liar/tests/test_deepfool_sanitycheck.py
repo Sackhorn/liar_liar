@@ -1,7 +1,7 @@
 from unittest import TestCase
 
+from liar_liar.attacks.deepfool import DeepFool
 from liar_liar.models.base_models.model_names import *
-from liar_liar.attacks.deepfool import deepfool_wrapper
 from liar_liar.utils.general_names import *
 from liar_liar.utils.test_run_attacks import attack_with_params_dict
 
@@ -39,5 +39,5 @@ attack_params = {
 }
 class DeepFoolSanityCheck(TestCase):
     def test_sanitycheck(self):
-        deepfool_wrapper.__name__ += "_sanity_check"
-        attack_with_params_dict(attack_params, deepfool_wrapper, show_plot=False, targeted=False)
+        DeepFool.__name__ += "_sanity_check"
+        attack_with_params_dict(attack_params, DeepFool, show_plot=False, targeted=False)

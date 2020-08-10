@@ -1,10 +1,9 @@
 from unittest import TestCase
 
+from liar_liar.attacks.gen_attack import GenAttack
 from liar_liar.models.base_models.model_names import *
-from liar_liar.attacks.gen_attack import gen_attack_wrapper
 from liar_liar.utils.general_names import *
 from liar_liar.utils.test_run_attacks import attack_with_params_dict
-
 
 attack_params = {
     SIMPLENET_CIFAR10_NAME :
@@ -40,5 +39,5 @@ attack_params = {
 }
 class GenAttackSanityCheck(TestCase):
     def test_sanitycheck(self):
-        gen_attack_wrapper.__name__ = gen_attack_wrapper.__name__ + "_sanity_check"
-        attack_with_params_dict(attack_params, gen_attack_wrapper, show_plot=False, targeted=True)
+        GenAttack.__name__ += "_sanity_check"
+        attack_with_params_dict(attack_params, GenAttack, show_plot=False, targeted=True)

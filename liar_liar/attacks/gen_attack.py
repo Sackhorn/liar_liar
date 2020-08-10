@@ -2,9 +2,17 @@
 # https://arxiv.org/pdf/1805.11090.pdf
 import tensorflow as tf
 import tensorflow_probability as tfp
+
+from liar_liar.attacks.attack import Attack
 from liar_liar.models.base_models.sequential_model import SequentialModel
 
+
 # TODO:Add updating parameters during runtime (mutation probability and mutation_range)
+
+class GenAttack(Attack):
+
+    def init_wrapper(self, *args, **kwargs):
+        self._wrapper = gen_attack_wrapper(*args, **kwargs)
 
 def gen_attack(classifier,
                data_sample,

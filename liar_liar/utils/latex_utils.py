@@ -237,39 +237,39 @@ def print_on_no_except(func):
     return no_except
 
 @print_on_no_except
-def generate_fgsm_table(path='../json_results/fgsm_untargeted_wrapper.json', nmb_columns=2):
+def generate_fgsm_table(path='../json_results/FGSMUntargeted.json', nmb_columns=2):
     renderable_params = filter(lambda dict : dict[ITER_MAX] == 1, fgsm_params)
     renderable_params = sorted(renderable_params, key=lambda dict : dict[EPS])
     return import_and_print(path, nmb_columns, renderable_params)
 
 @print_on_no_except
-def generate_ifgsm_table(path='../json_results/fgsm_untargeted_wrapper.json', nmb_columns=2):
+def generate_ifgsm_table(path='../json_results/FGSMUntargeted.json', nmb_columns=2):
     renderable_params = filter(lambda dict: dict[ITER_MAX] > 1, fgsm_params)
     renderable_params = sorted(renderable_params, key=lambda dict: (dict[ITER_MAX], dict[EPS]))
     return import_and_print(path, nmb_columns, renderable_params)
 
 @print_on_no_except
-def generate_llfgsm_table(path='../json_results/fgsm_targeted_wrapper.json', nmb_columns=2):
+def generate_llfgsm_table(path='../json_results/FGSMTargeted.json', nmb_columns=2):
     renderable_params = sorted(fgsm_params, key=lambda dict: (dict[ITER_MAX], dict[EPS]))
     return import_and_print(path, nmb_columns, renderable_params)
 
 @print_on_no_except
-def generate_getattack_table(path='../json_results/gen_attack_wrapper.json', nmb_columns=1):
+def generate_getattack_table(path='../json_results/GenAttack.json', nmb_columns=1):
     renderable_params = sorted(gen_attack_params, key=lambda dict: dict[GENERATION_NUMBER])
     return import_and_print(path, nmb_columns, renderable_params)
 
 @print_on_no_except
-def generate_deepfool_table(path='../json_results/deepfool_wrapper.json', nmb_columns=1):
+def generate_deepfool_table(path='../json_results/DeepFool.json', nmb_columns=1):
     renderable_params = sorted(deepfool_params, key=lambda dict: dict[ITER_MAX])
     return import_and_print(path, nmb_columns, renderable_params)
 
 @print_on_no_except
-def generate_bfgs_table(path='../json_results/bfgs_wrapper.json', nmb_columns=2):
+def generate_bfgs_table(path='../json_results/BFGS.json', nmb_columns=2):
     renderable_params = sorted(bfgs_params, key=lambda dict: dict[ITER_MAX])
     return import_and_print(path, nmb_columns, renderable_params)
 
 @print_on_no_except
-def generate_carlini_table(path='../json_results/carlini_wagner_wrapper.json', nmb_columns=2):
+def generate_carlini_table(path='../json_results/CarliniWagner.json', nmb_columns=2):
     renderable_params = sorted(carlini_wagner_params, key=lambda dict: dict[OPTIMIZATION_ITER])
     for param_set in renderable_params:
         del param_set[C_HIGH]
@@ -277,7 +277,7 @@ def generate_carlini_table(path='../json_results/carlini_wagner_wrapper.json', n
     return import_and_print(path, nmb_columns, renderable_params)
 
 @print_on_no_except
-def generate_jsma_table(path='../json_results/jsma_targeted_wrapper.json', nmb_columns=1):
+def generate_jsma_table(path='../json_results/JSMATargeted.json', nmb_columns=1):
     renderable_params = [{MAX_PERTURBATION: 0.1, THETA: 1}]
     return import_and_print(path, nmb_columns, renderable_params)
 

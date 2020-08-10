@@ -1,7 +1,15 @@
 #This is the implementation of method given in this paper
 # Source https://arxiv.org/pdf/1511.04599.pdf
-from liar_liar.models.base_models.sequential_model import SequentialModel
 import tensorflow as tf
+
+from liar_liar.attacks.attack import Attack
+from liar_liar.models.base_models.sequential_model import SequentialModel
+
+
+class DeepFool(Attack):
+
+    def init_wrapper(self, *args, **kwargs):
+        self._wrapper = deepfool_wrapper(*args, **kwargs)
 
 
 def deepfool(classifier, data_sample, iter_max=10000, min=0.0, max=1.0):

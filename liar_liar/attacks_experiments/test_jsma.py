@@ -1,4 +1,4 @@
-from liar_liar.attacks.jsma import jsma_targeted_wrapper
+from liar_liar.attacks.jsma import JSMATargeted
 from liar_liar.models.base_models.model_names import *
 from liar_liar.utils.general_names import *
 from liar_liar.utils.test_run_attacks import attack_with_params_dict
@@ -33,5 +33,5 @@ attack_params = {
 
 if __name__ == "__main__":
     # TODO: Fix untargeted version of jsma
-    # attack_with_params_dict(attack_params, jsma_untargeted_wrapper, show_plot=False, targeted=False)
-    attack_with_params_dict(attack_params, jsma_targeted_wrapper, show_plot=False, targeted=True)
+    # attack_with_params_dict(attack_params, JSMAUntargeted, show_plot=False, targeted=False)
+    attack_with_params_dict(attack_params, JSMATargeted, show_plot=False, targeted=True)
