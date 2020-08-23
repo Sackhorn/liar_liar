@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.python.keras.layers import Conv2D, BatchNormalization, Activation, Dropout, MaxPooling2D, Flatten, Dense
-from tensorflow.python.keras.metrics import categorical_accuracy
+from tensorflow.python.keras.metrics import categorical_accuracy, top_k_categorical_accuracy
 from tensorflow.python.ops.init_ops_v2 import glorot_normal, RandomNormal
 
 from liar_liar.models.base_models.model_names import SIMPLENET_CIFAR10_NAME
@@ -32,7 +32,10 @@ s = 2
 
 class SimpleNetCIFAR10(CIFAR10Model):
 
-    def __init__(self, optimizer=tf.keras.optimizers.Adadelta(lr=0.9, rho=0.9), loss=tf.keras.losses.categorical_crossentropy, metrics=[categorical_accuracy]):
+    def __init__(self,
+                 optimizer=tf.keras.optimizers.Adadelta(lr=0.9, rho=0.9),
+                 loss=tf.keras.losses.categorical_crossentropy,
+                 metrics=[categorical_accuracy, top_k_categorical_accuracy]):
         super().__init__(optimizer=optimizer, loss=loss, metrics=metrics, MODEL_NAME=SIMPLENET_CIFAR10_NAME)
         self.sequential_layers = [
             # Block 1
