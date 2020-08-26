@@ -11,7 +11,7 @@ class Attack(abc.ABC):
 
     def __init__(self, *args, **kwargs):
         self.init_wrapper(*args, **kwargs)
-        self.__name__ = self._wrapper.__name__
+        self.__name__ = self.__class__.__name__
 
     def __call__(self, model, data_sample, target_class=None):
         """
@@ -25,7 +25,3 @@ class Attack(abc.ABC):
             return self._wrapper(model, data_sample)
         else :
             return self._wrapper(model, data_sample, target_class)
-
-
-
-
