@@ -1,6 +1,8 @@
 import json
 import os.path
 
+import matplotlib.pyplot as plt
+
 from liar_liar.models.base_models.model_names import *
 from liar_liar.utils.general_names import *
 
@@ -48,7 +50,7 @@ MNIST_TF_NAME : "MNIST TF Model"
 def ltx_frmt(float):
     return r"{:04.5f}".format(float)
 def ltx_prcnt(float):
-    return r"{:04.5f}".format(float * 100) + r"\%"
+    return r"{:4.1f}".format(float * 100) + r"\%"
 def ltx_acc(float):
     return r"{:04.2f}".format(float * 100) + r"\%"
 
@@ -144,18 +146,30 @@ ATTACK_NAMES_MAP = {
     "wrapped_jsma": "JSMA",
 }
 
+ATTACK_NAMES_MAP_MATPLOT = {
+    "wrapper_deepfool": "DeepFool",
+    "wrapped_bfgs": "L-BFGS-B",
+    "wrapped_carlini_wagner": "Carlini & Wagner",
+    "wrapped_fgsm": "LL-FGSM",
+    "wrapped_fgsm_untargeted": "FGSM",
+    "wrapped_gen_attack": "GenAttack",
+    "wrapped_jsma": "JSMA",
+}
+
 
 
 BUDGET_RANGES = [ 10, 100, 1000, 10000, 100000]
 
 def generate_header():
     nmb_metrics = len(PRINTABLE_METRICS)
-    header = r'\begin{tabular}{|c|c||' + (r'c|' * nmb_metrics) + r'}' + "\n"
+    header = r'\begin{tabular}{|c|c||' + (r'r|' * nmb_metrics) + r'}' + "\n"
     header += r'\hline' + "\n"
 
-    header += r"Budżet & Atak & "
+    header += r"\multicolumn{1}{|C|}{Budżet} & \multicolumn{1}{|C||}{Atak} & "
     for i in range(nmb_metrics):
+        header += r'\multicolumn{1}{C|}{'
         header += (METRICS_NAME_MAP[PRINTABLE_METRICS[i % nmb_metrics]])
+        header += r"}"
         if i < nmb_metrics - 1:
             header += r' & '
     header += r'\\ \hline' + "\n"
@@ -239,4 +253,41 @@ def print_dataset_table(dataset_name):
     main_string += generate_footer()
     print(main_string)
 
-# print_mnist_table()
+ATTACK_NAMES_LIST = [k for k ,v in ATTACK_NAMES_MAP.items()]
+ATTACK_COLORS = {
+    "wrapper_deepfool": "blue",
+    "wrapped_bfgs": "red",
+    "wrapped_carlini_wagner": "orange",
+    "wrapped_fgsm": "green",
+    "wrapped_fgsm_untargeted": "purple",
+    "wrapped_gen_attack": "brown",
+    "wrapped_jsma": "pink",
+}
+
+def generate_plot_data():
+    attack_dict_flat = {key : [] for key in ATTACK_NAMES_LIST}
+    ds_dict = load_results_into_dicts()
+    for dataset_name, attack_dict in ds_dict.items():
+        for attack_name, budget_dict in attack_dict.items():
+            for budget, result_list in budget_dict.items():
+                attack_dict_flat[attack_name] += result_list
+    for attack_name, result_list in attack_dict_flat.items():
+        tmp_list = list(map(lambda x: (x[ROBUSTNESS_KEY], x[ACCURACY_KEY]), result_list))
+        tmp_list = sorted(tmp_list, key= lambda x: ( (1/x[0]) * x[1]), reverse=True)
+        if len(tmp_list) >=10:
+            tmp_list = tmp_list[:9]
+        robustness_list, acc_list = zip(*tmp_list)
+        attack_dict_flat[attack_name] = (list(robustness_list), list(acc_list))
+    print(attack_dict_flat)
+    fig, ax = plt.subplots()
+    for attack_key, color in ATTACK_COLORS.items():
+        x, y = attack_dict_flat[attack_key]
+        scale = 200.0
+        ax.scatter(x, y, c=color, s=scale, label=ATTACK_NAMES_MAP_MATPLOT[attack_key],
+                   alpha=0.7, edgecolors='none')
+    ax.legend()
+    ax.grid(True)
+    plt.xlabel(r"$\rho_{adw}$")
+    plt.ylabel("ACC")
+    plt.savefig("../../latex/img/attack_comparison.png")
+    plt.show()

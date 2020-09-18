@@ -60,9 +60,9 @@ MNIST_TF_NAME : "MNIST TF Model"
 def ltx_frmt(float):
     return r"{:04.5f}".format(float)
 def ltx_prcnt(float):
-    return r"{:04.5f}".format(float * 100) + r"\%"
+    return r"{:4.1f}".format(float * 100) + r"\%"
 def ltx_acc(float):
-    return r"{:04.2f}".format(float * 100) + r"\%"
+    return r"{:4.1f}".format(float * 100) + r"\%"
 
 PRINTABLE_METRICS = [ACCURACY_KEY, L2_MEDIAN_KEY, L2_AVERAGE_KEY, AVG_TIME_SAMPLE_KEY, ROBUSTNESS_KEY]
 
