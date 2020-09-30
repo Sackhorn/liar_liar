@@ -516,21 +516,21 @@
     \fi
 }
 
-\let\standardappendix\appendix
-\renewcommand\appendix[1]{%
-    \tocless\section{\hspace*{1.5em} #1}
-    \addcontentsline{app}{subsection}{\hspace*{-1.1em}\arabic{section}.\hspace*{0.5em} #1}
-}
-
-\newcommand\listofappendicestoc{
-    \ifnum \pdf@strcmp{\@lang}{polish} = 0
-        \section*{Spis załączników}\@starttoc{app}
-    \fi
-    \ifnum \pdf@strcmp{\@lang}{english} = 0
-        \section*{List of Appendices}\@starttoc{app}
-    \fi
-
-    \standardappendix
+%\let\standardappendix\appendix
+%\renewcommand\appendix[1]{%
+%    \tocless\section{\hspace*{1.5em} #1}
+%    \addcontentsline{app}{subsection}{\hspace*{-1.1em}\arabic{section}.\hspace*{0.5em} #1}
+%}
+%
+%\newcommand\listofappendicestoc{
+%    \ifnum \pdf@strcmp{\@lang}{polish} = 0
+%        \section*{Spis załączników}\@starttoc{app}
+%    \fi
+%    \ifnum \pdf@strcmp{\@lang}{english} = 0
+%        \section*{List of Appendices}\@starttoc{app}
+%    \fi
+%
+%    \standardappendix
 %TODO: this messes with the appendix list of contents - disabled for now
 %    \renewcommand{\thesection}{\@appendixtitle~\arabic{section}}
-}
+%}

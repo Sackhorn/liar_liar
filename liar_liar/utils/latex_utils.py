@@ -57,6 +57,20 @@ MOBILENETV2_NAME : "MobileNetV2",
 MNIST_TF_NAME : "MNIST TF Model"
 }
 
+MODEL_DATASET_NAME_MAP = {
+CIFAR_10_CONV_NAME : "CIFAR-10",
+CIFAR_100_CONV_NAME : "CIFAR-100",
+INCEPTION_V3_NAME : "ILSVRC2012",
+RESNET_NAME : "ILSVRC2012",
+MNIST_CONV_NAME : "MNIST",
+MNIST_DENSE_NAME : "MNIST",
+LE_NET_NAME : "MNIST",
+SIMPLENET_CIFAR10_NAME : "CIFAR-10",
+SIMPLENET_CIFAR100_NAME : "CIFAR-100",
+MOBILENETV2_NAME : "ILSVRC2012",
+MNIST_TF_NAME : "MNIST"
+}
+
 def ltx_frmt(float):
     return r"{:04.5f}".format(float)
 def ltx_prcnt(float):
@@ -75,11 +89,11 @@ def generate_accuracy_table(file_name):
     with open(file_name, 'r') as file:
         acc_results = json.load(file)
 
-    row_columns = r'\begin{tabular}{|c||' + (r'c|' * len(ACC_METRICS)) + r'}'
+    row_columns = r'\begin{tabular}{|c|c||' + (r'c|' * len(ACC_METRICS)) + r'}'
     main_string += row_columns+ "\n"
     main_string += r'\hline'+ "\n"
 
-    header_row = r"Model Name & "
+    header_row = r"Model & Zbiór &"
     for i, metric in enumerate(ACC_METRICS):
         header_row += ACC_METRICS_NAMES[metric]
         if i < len(ACC_METRICS) - 1:
@@ -89,7 +103,7 @@ def generate_accuracy_table(file_name):
     main_string += r'\hline'+ "\n"
 
     for model, metrics_dict in acc_results.items():
-        row = MODEL_NAME_MAP[model] + "&"
+        row = MODEL_NAME_MAP[model] + "&" + MODEL_DATASET_NAME_MAP[model] + "&"
         for i, metric in enumerate(ACC_METRICS):
             try:
                 row += ltx_acc(metrics_dict[metric])

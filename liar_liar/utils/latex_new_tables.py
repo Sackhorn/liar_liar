@@ -176,7 +176,7 @@ def generate_header():
     return header
 
 def generate_footer():
-    footer = r'\end{tabular}' + "\n"
+    footer = r'\end{tabular}'
     return footer
 
 def print_budget_multirow(budget, attacks_dict):
@@ -251,17 +251,41 @@ def print_dataset_table(dataset_name):
     for budget, result in mnist_dict.items():
         main_string += print_budget_multirow(budget, result)
     main_string += generate_footer()
-    print(main_string)
+    print(main_string, end='')
 
 ATTACK_NAMES_LIST = [k for k ,v in ATTACK_NAMES_MAP.items()]
 ATTACK_COLORS = {
     "wrapper_deepfool": "blue",
-    "wrapped_bfgs": "red",
+    "wrapped_bfgs": "magenta",
     "wrapped_carlini_wagner": "orange",
     "wrapped_fgsm": "green",
     "wrapped_fgsm_untargeted": "purple",
     "wrapped_gen_attack": "brown",
-    "wrapped_jsma": "pink",
+    "wrapped_jsma": "red",
+}
+
+ATTACK_SHAPES = {
+    "wrapper_deepfool": "o",
+    "wrapped_bfgs": "v",
+    "wrapped_carlini_wagner": "s",
+    "wrapped_fgsm": "X",
+    "wrapped_fgsm_untargeted": "*",
+    "wrapped_gen_attack": "d",
+    "wrapped_jsma": "1",
+}
+
+DATASET_SHAPES = {
+    MNIST_NAME: "X",
+    CIFAR_10_NAME: "v",
+    IMAGENET_NAME: "s",
+    CIFAR_100_NAME: "*",
+}
+
+DATASET_NAME_MAP_PLOT = {
+    MNIST_NAME: "MNIST",
+    CIFAR_10_NAME: "CIFAR-10",
+    IMAGENET_NAME: "ILSVRC2012",
+    CIFAR_100_NAME: "CIFAR-100",
 }
 
 def generate_plot_data():
@@ -270,24 +294,39 @@ def generate_plot_data():
     for dataset_name, attack_dict in ds_dict.items():
         for attack_name, budget_dict in attack_dict.items():
             for budget, result_list in budget_dict.items():
-                attack_dict_flat[attack_name] += result_list
+                new_result_list = []
+                for result_dict in result_list:
+                    new_result_dict = result_dict
+                    new_result_dict[DATASET_KEY] = dataset_name
+                    new_result_list.append(new_result_dict)
+                attack_dict_flat[attack_name] += new_result_list
     for attack_name, result_list in attack_dict_flat.items():
-        tmp_list = list(map(lambda x: (x[ROBUSTNESS_KEY], x[ACCURACY_KEY]), result_list))
+        tmp_list = list(map(lambda x: (x[ROBUSTNESS_KEY], x[ACCURACY_KEY], x[DATASET_KEY]), result_list))
         tmp_list = sorted(tmp_list, key= lambda x: ( (1/x[0]) * x[1]), reverse=True)
         if len(tmp_list) >=10:
             tmp_list = tmp_list[:9]
-        robustness_list, acc_list = zip(*tmp_list)
-        attack_dict_flat[attack_name] = (list(robustness_list), list(acc_list))
+        robustness_list, acc_list, dataset_name = zip(*tmp_list)
+        attack_dict_flat[attack_name] = (list(robustness_list), list(acc_list), list(dataset_name))
     print(attack_dict_flat)
     fig, ax = plt.subplots()
+    fig.set_size_inches(7.68, 5.76)
     for attack_key, color in ATTACK_COLORS.items():
-        x, y = attack_dict_flat[attack_key]
-        scale = 200.0
-        ax.scatter(x, y, c=color, s=scale, label=ATTACK_NAMES_MAP_MATPLOT[attack_key],
-                   alpha=0.7, edgecolors='none')
-    ax.legend()
+        x, y, dataset_name = attack_dict_flat[attack_key]
+        scale = 175.0
+        for i, ds_name in  enumerate(dataset_name):
+            ax.scatter(x[i], y[i], c=color, s=scale, alpha=0.6, edgecolors='none', marker=DATASET_SHAPES[ds_name])
+    from matplotlib.lines import Line2D
+    legend_items = [Line2D([0], [0], marker='o', color='w', markerfacecolor=color, markersize=15,  label=ATTACK_NAMES_MAP_MATPLOT[attack_name]) for attack_name, color in  ATTACK_COLORS.items()]
+    legend_items_ds = [Line2D([0], [0], marker=shape, color='w', markerfacecolor="black", markersize=15,  label=DATASET_NAME_MAP_PLOT[dataset_name]) for dataset_name, shape in  DATASET_SHAPES.items()]
+    legend1 = plt.legend(handles=legend_items, loc=1)
+    legend2 = plt.legend(handles=legend_items_ds, loc=5)
+    ax.add_artist(legend1)
+    ax.add_artist(legend2)
+
+    # ax.legend()
     ax.grid(True)
     plt.xlabel(r"$\rho_{adw}$")
     plt.ylabel("ACC")
-    plt.savefig("../../latex/img/attack_comparison.png")
+    plt.savefig("../../latex/img/attack_comparison.png", dpi=fig.dpi)
     plt.show()
+# generate_plot_data()
