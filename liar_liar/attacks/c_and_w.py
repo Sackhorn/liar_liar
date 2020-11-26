@@ -56,7 +56,7 @@ def carlini_wagner(classifier,
     return (return_image, classifier(return_image), parameters)
 
 # TODO: Try to use adam as an optimizer - authors suggest it converges the fastest
-def carlini_wagner_wrapper(optimizer=AdamOptimizer(),
+def carlini_wagner_wrapper(optimizer=tf.optimizers.Adam(),
                            optimization_iter=10000,
                            binary_iter=20,
                            c_high=1000.0,
@@ -99,6 +99,7 @@ def _c_and_w(image, model, target_class, perturbation, optimizer, optimization_i
     c_high = tf.fill([tf.shape(image)[0]], c_high)
     c_low = tf.fill([tf.shape(image)[0]], c_low)
     prev_high = c_high
+    prev_prev_high = prev_high
 
     for _ in tf.range(binary_iter):
         c_half = (c_high + c_low) / 2
@@ -106,9 +107,10 @@ def _c_and_w(image, model, target_class, perturbation, optimizer, optimization_i
         output = model(new_image)
         output = tf.one_hot(tf.argmax(output, axis=1), model.get_number_of_classes())
         has_succeed = tf.math.reduce_all(tf.math.equal(output, target_class), axis=1)
-        prev_high = c_high
-        c_high = tf.where(has_succeed, c_half, c_high)
+        c_high = tf.where(has_succeed, c_half, prev_high)
         c_low = tf.where(has_succeed, c_low, c_half)
         tf.compat.v1.assign(perturbation, tf.random.uniform(tf.shape(perturbation)))
+        prev_prev_high = prev_high
+        prev_high = c_high
 
-    return _optimize_c_and_w(image, model, optimization_iter, target_class, prev_high, perturbation, optimizer, kappa)
+    return _optimize_c_and_w(image, model, optimization_iter, target_class, prev_prev_high, perturbation, optimizer, kappa)
