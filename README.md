@@ -86,7 +86,7 @@ You should see something like this
 {'accuracy_result': 0.9993750000139698, 'L2_average': 1.2045974825398298, 'L2_median': 1.2455607652664185, 'robustness_key': 0.1307359296904724, 'time_per_batch': 0.1600356101989746, 'average_time_per_sample': 0.007932707667350769}
 ```
 and an image
-![comparing adversarial example and an original](https://github.com/Sackhorn/liar_liar/blob/master/readme_figure.png "Comparison"")
+![comparing adversarial example and an original](https://github.com/Sackhorn/liar_liar/blob/master/readme_figure.png?raw=true)
 if you want to generate a dataset of adversarial examples you can just do this
 ```
 test_adv_dataset = create_adv_dataset(test, fgsm_untargeted_wrapper, model, {ITER_MAX: 100, EPS: 0.001})
