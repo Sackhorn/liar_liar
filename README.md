@@ -1,7 +1,7 @@
 Liar Liar - Adversarial Attacks Testing Suite
 =============================================
-Liar Liar is a library based on Tensorflow 2 and Keras implementing multiple known adversarial attacks.
-It was created as a part of my Bachelor's thesis.
+Liar Liar is a library based on Tensorflow 2 and Keras implementing multiple known adversarial attacks.\
+It was created as a part of my Bachelor's thesis.\
 It's goal is to provide a simple API for testing models resistance and for creating samples for adversarial training.
 
 Requirements
